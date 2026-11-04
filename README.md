@@ -21,6 +21,7 @@
 - [Стратегия и план тестирования](docs/test-strategy.md)
 - [Каталог тест-кейсов](docs/test-cases.md)
 - [Структура Jira-бэклога](docs/jira-backlog.md)
+- [Техническая спецификация AQA-фреймворка](docs/technical-specification.md)
 
 ## Основной подход
 
