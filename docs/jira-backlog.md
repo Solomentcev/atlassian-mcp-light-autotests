@@ -33,7 +33,17 @@
 - Task: проверка структуры результата.
 - Task: обработка ошибки инструмента.
 
-### Feature 1.4 — JSON-RPC Validation
+### Feature 1.4 — Stateless MCP Mode
+**Story:** Проверка stateless MCP-взаимодействия без классической инициализации.
+- Task: вызов `server/discover` с версией `2026-07-28`.
+- Task: проверка supportedVersions, capabilities, ttlMs, cacheScope и serverInfo metadata.
+- Task: stateless `tools/list` без initialize.
+- Task: stateless `tools/call` без initialize.
+- Task: проверка обязательных ключей `_meta`.
+- Task: обработка неподдерживаемой protocolVersion (`-32022`).
+- Task: проверка, что stateless-запросы не меняют классическое состояние lifecycle.
+
+### Feature 1.5 — JSON-RPC Validation
 **Story:** Обработка некорректных JSON-RPC сообщений.
 - Task: некорректный JSON.
 - Task: некорректная структура запроса.
