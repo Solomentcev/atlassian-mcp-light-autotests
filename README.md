@@ -2,7 +2,7 @@
 
 Внешний black-box AQA-проект для проверки [Atlassian MCP Light](https://github.com/Solomentcev/atlassian-mcp-light).
 
-Тесты проверяют Atlassian MCP Light как black-box приложение. AQA Client подключается по TCP к STDIO Bridge в отдельном Docker-контейнере; Bridge запускает дочерний процесс MCP-сервера и прозрачно проксирует stdin/stdout. Внутренние Java-классы основного приложения не являются объектом тестирования.
+Тесты проверяют Atlassian MCP Light как black-box приложение. Фактический контракт классического и stateless MCP-режимов, JSON-RPC ошибок и всех 13 инструментов зафиксирован в [mcp-contract.md](docs/mcp-contract.md) по исходному коду основного проекта. AQA Client подключается по TCP к STDIO Bridge в отдельном Docker-контейнере; Bridge запускает дочерний процесс MCP-сервера и прозрачно проксирует stdin/stdout. Внутренние Java-классы основного приложения не являются объектом тестирования.
 
 ## Технологии
 
@@ -22,6 +22,7 @@
 - [Каталог тест-кейсов](docs/test-cases.md)
 - [Структура Jira-бэклога](docs/jira-backlog.md)
 - [Техническая спецификация AQA-фреймворка](docs/technical-specification.md)
+- [Фактический MCP/JSON-RPC контракт сервера](docs/mcp-contract.md)
 
 ## Основной подход
 
