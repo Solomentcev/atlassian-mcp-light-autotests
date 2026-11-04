@@ -234,34 +234,32 @@ AQA устанавливает TCP-соединение с Bridge и перед�
 
 ### 7.2. Поддерживаемые режимы MCP
 
-В целевой набор протокольных проверок включены классический handshake и stateless discovery. До реализации тестов наличие обоих режимов, их точные методы, поля metadata и версии протокола необходимо подтвердить по исходному коду основной ветки и контрольному обмену с сервером. Неподтверждённый режим не включать в обязательный набор и не считать поддерживаемой возможностью.
+Фактическая реализация основного проекта проверена. Полный контракт с точными именами metadata, версиями, кодами ошибок и схемами инструментов описан в [mcp-contract.md](mcp-contract.md). Оба режима входят в обязательный объём AQA.
 
-**Классический handshake:**
+**Классический MCP lifecycle:**
+- Поддерживаемые версии: `2024-11-05` и `2025-11-25`.
+- `initialize` требует `protocolVersion`, объект `capabilities` и `clientInfo` с непустыми строковыми `name` и `version`.
+- Сервер возвращает выбранную версию, `capabilities.tools` и `serverInfo`.
+- Если передана другая непустая версия, сервер выбирает `2025-11-25`.
+- После initialize клиент отправляет notification `notifications/initialized` без id.
+- До READY методы `tools/list` и `tools/call` возвращают `-32001`; повторный initialize возвращает `-32600`.
 
-1. Отправить initialize с protocolVersion, capabilities и clientInfo.
-2. Проверить ответ initialize и согласованную версию.
-3. Отправить notifications/initialized без request ID.
-4. Проверить tools/list.
-5. Выполнить tools/call.
+**Stateless MCP режим:**
+- Версия: `2026-07-28`.
+- Поддерживаемые методы: `server/discover`, `tools/list`, `tools/call`.
+- В каждом запросе в `params._meta` передаются `io.modelcontextprotocol/protocolVersion` и объект `io.modelcontextprotocol/clientCapabilities`; `io.modelcontextprotocol/clientInfo` необязателен.
+- `server/discover` возвращает supportedVersions, capabilities, ttlMs=300000, cacheScope=public и serverInfo metadata.
+- Успешные stateless-ответы содержат `resultType=complete` и `io.modelcontextprotocol/serverInfo` в result._meta.
+- Stateless-запросы не требуют initialize и не изменяют состояние классического lifecycle.
+- Неподдерживаемая версия возвращает `-32022`.
 
-Уведомление notifications/initialized не должно получать ответ.
-
-**Stateless discovery (проверить поддержку до включения тестов):**
-
-1. Отправить метод discovery, только если его точное имя подтверждено исходным кодом.
-2. Проверить возвращаемые версии и возможности, если discovery реализован.
-3. Выполнить tools/list с metadata, если она требуется фактическим контрактом.
-4. Выполнить tools/call с metadata, если она требуется фактическим контрактом.
-
-Если такой режим действительно реализован сервером, структура metadata определяется по его исходному коду и фактическому ответу discovery. В качестве проверяемых полей рассматривать только подтверждённые контрактом значения; не считать следующий перечень заранее гарантированным:
-
-- io.modelcontextprotocol/protocolVersion;
-- io.modelcontextprotocol/clientCapabilities;
-- io.modelcontextprotocol/clientInfo — если передаётся информация о клиенте.
-
-Не фиксировать версию протокола и имена metadata в тестах до проверки фактической реализации. После проверки сохранить подтверждённый контракт в одном месте тестового проекта и обновлять его вместе с изменениями основного сервера.
-
-Не смешивать classic handshake и stateless-режим в рамках одной тестовой сессии.
+**Практические правила реализации клиента:**
+1. Поддержать два явных режима клиента, не смешивать их в одном сценарии.
+2. Для classic session выполнять initialize → notifications/initialized → tools/list/tools/call.
+3. Для stateless session выполнять server/discover и затем stateless tools/list/tools/call без initialize.
+4. В stateless metadata использовать точные ключи, приведённые в контракте.
+5. Проверять как валидную, так и отсутствующую/неполную metadata.
+6. Сверять список и схемы инструментов с ответом tools/list, а не только с локальными ожиданиями.
 
 ### 7.3. JSON-RPC и MCP-ошибки
 
