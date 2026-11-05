@@ -180,7 +180,7 @@ Control channel — отдельный TCP listener и отдельный про
 | `DATA_CONNECT_TIMEOUT_MS` | 2 000 | Таймаут AQA подключения к data listener |
 | `PROCESS_START_TIMEOUT_MS` | 10 000 | Верхняя граница создания OS-процесса; не означает готовность MCP-протокола |
 | `PROCESS_STOP_TIMEOUT_MS` | 5 000 | Ожидание штатного завершения до force kill |
-| `IDLE_SESSION_TIMEOUT_MS` | 60 000 | Таймаут бездействия MCP-сессии |
+| `IDLE_SESSION_TIMEOUT_MS` | 90 000 | Таймаут бездействия MCP-сессии; больше MCP response timeout AQA |
 
 AQA `AQA_PARALLELISM` по умолчанию равен 2 и не может превышать `MAX_ACTIVE_SESSIONS`. Значения конфигурации валидируются на старте; production-подобные значения могут быть изменены только явной конфигурацией и повторным прогоном reliability-набора. При закрытии data connection Bridge закрывает stdin процесса, ожидает штатного завершения в пределах `PROCESS_STOP_TIMEOUT_MS`, затем принудительно завершает процесс. При остановке Bridge сначала прекращается приём новых control/data connections, затем завершаются активные процессы. Потоки, сокеты и регистрации освобождаются при всех путях завершения.
 
