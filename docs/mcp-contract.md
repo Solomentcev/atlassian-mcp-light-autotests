@@ -205,6 +205,8 @@ Confluence URL необязателен: при отсутствии испол�
 
 Приоритет источников конфигурации: JVM properties → environment → `.env` → `application.properties`. Имена JVM properties: `jira.url`, `jira.email`, `jira.token`, `confluence.url`, `mcp.max-text-length`, `mcp.max-response-bytes`. Для файлов поддерживаются пути через `ATLASSIAN_ENV_FILE` / `ATLASSIAN_PROPERTIES_FILE` или JVM properties `atlassian.env.file` / `atlassian.properties.file`.
 
+`ATLASSIAN_LOG_LEVEL` — отдельная настройка Logback: `DEBUG`, `INFO`, `WARN` или `ERROR`, default `INFO`. Логи приложения направляются только в stderr; stdout остаётся зарезервирован под JSON-RPC.
+
 Ошибки обязательной конфигурации приводят к завершению процесса с exit code 1 до запуска STDIO-цикла. URL Jira и явно заданный URL Confluence должны быть абсолютными HTTPS URL без user-info, query и fragment.
 
 ## 10. Обязательные группы AQA-проверок
