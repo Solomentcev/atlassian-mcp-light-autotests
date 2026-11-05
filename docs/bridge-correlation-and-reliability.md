@@ -190,6 +190,15 @@ AQA `AQA_PARALLELISM` по умолчанию равен 2 и не может п
 
 `PROCESS_START_TIMEOUT_MS` ограничивает время от принятия data connection до успешного создания OS-процесса. `PROCESS_STARTED` означает только успешный возврат `ProcessBuilder.start()` и не подтверждает готовность MCP-протокола; MCP readiness проверяется первым `initialize`/`server/discover` запросом и отдельным AQA response timeout. `PROCESS_START_FAILED` записывается, если создание процесса завершилось IOException или истёк startup deadline. Если Java executable запустился, но JAR некорректен и дочерний процесс завершился, Bridge записывает `PROCESS_STARTED`, затем `PROCESS_EXITED` с ненулевым exit code и терминальное `SESSION_CLOSED`.
 
+### Передача конфигурации дочернему процессу
+
+Bridge запускает child process через `ProcessBuilder` с массивом аргументов (`BRIDGE_CHILD_JAVA`, `-jar`, `MCP_SERVER_JAR_PATH`), без shell. Environment дочернего процесса формируется из явного allowlist, а не копируется целиком:
+
+- для основного MCP JAR: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN`, `CONFLUENCE_URL`, `MCP_MAX_TEXT_LENGTH`, `MCP_MAX_RESPONSE_BYTES`, `ATLASSIAN_ENV_FILE`, `ATLASSIAN_PROPERTIES_FILE` (только заданные значения);
+- для test-fixture JAR: только `BRIDGE_TEST_FIXTURE_MODE`; Jira/Confluence credentials и config file paths не передаются.
+
+`BRIDGE_CHILD_JAVA`, `MCP_SERVER_JAR_PATH`, control/data ports, session tokens, `BRIDGE_TEST_DROP_*` и прочие Bridge settings не передаются дочернему процессу. Полный environment dump запрещён; значения credentials, Authorization и sessionToken не попадают в логи. AQA container не получает Atlassian credentials.
+
 ## 8. Политика повторов и неопределённый результат
 
 Автоматические повторы допустимы только для read-only вызовов, если доказано, что запрос не был отправлен. Запрещён общий retry для `jira_create_issue`, `jira_add_comment`, `jira_transition`, `confluence_create_page` и `confluence_update_page`.
