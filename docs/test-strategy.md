@@ -168,7 +168,7 @@ Stateless-запросы не требуют initialize и не переводя
 - ключ тестового Confluence space;
 - уникальный `AQA_RUN_ID`.
 
-Путь к JAR, параметры запуска Java-процесса и конфигурация Jira/Confluence основного приложения не передаются AQA Client. JAR и секреты Atlassian доступны только MCP Server container. Jenkins выбирает ревизию основного проекта, передаёт JAR в MCP Server container и фиксирует commit SHA в параметрах/метаданных прогона.
+Путь к JAR, параметры запуска Java-процесса и конфигурация Jira/Confluence основного приложения не передаются AQA Client. JAR передаётся через `mcp-artifact` от Build container к MCP Server container; AQA container volume не монтирует. Atlassian secrets доступны только MCP Server container. Jenkins выбирает ревизию основного проекта, передаёт JAR и фиксирует commit SHA в параметрах/метаданных прогона.
 
 
 Не выводить токены, Authorization headers и секреты в Allure, stdout, stderr или Jenkins console log.
