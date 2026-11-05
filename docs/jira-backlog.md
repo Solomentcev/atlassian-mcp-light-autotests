@@ -73,7 +73,6 @@
 - Task: поиск без результатов.
 - Task: ограничение количества результатов.
 - Task: проверка значения `limit` по умолчанию и допустимого диапазона; MCP-клиент не передаёт offset/cursor, внутренняя пагинация Jira выполняется сервисом через `nextPageToken`.
-- Task: проверка default limit=5 для confluence_search и default limit=25 для confluence_list_spaces.
 - Task: обработка некорректного JQL.
 
 ### Feature 2.3 — Jira Issue Creation
@@ -122,6 +121,7 @@
 - Task: получение существующего пространства.
 - Task: получение списка пространств.
 - Task: обработка пустого списка.
+- Task: проверка default limit=25 для confluence_list_spaces.
 - Task: проверка ограничения количества элементов параметром `limit`; внутренняя пагинация Confluence выполняется сервисом через `_links.next` и локальный `start`, отдельный токен MCP-клиенту не предоставляется.
 
 ### Feature 3.3 — Confluence Content Search
@@ -130,6 +130,7 @@
 - Task: поиск без результатов.
 - Task: проверка ограничения количества результатов параметром `limit`; внутренняя пагинация Confluence выполняется сервисом через `_links.next` и локальный `start`, отдельный токен MCP-клиенту не предоставляется.
 - Task: обработка некорректного CQL.
+- Task: проверка default limit=5 для confluence_search.
 
 ### Feature 3.4 — Confluence Page Creation
 **Story:** Создание страницы Confluence.
