@@ -194,7 +194,7 @@ Stateless-запросы не требуют initialize и не переводя
 - регистрировать endpoint через `MCP_BRIDGE_CONTROL_HOST:MCP_BRIDGE_CONTROL_PORT`;
 - подключать к `MCP_BRIDGE_DATA_HOST:MCP_BRIDGE_DATA_PORT` тот же socket, который был зарегистрирован;
 - получать status/diagnostics и отменять неиспользованную регистрацию через control channel;
-- использовать отдельные `CONTROL_CONNECT_TIMEOUT_MS` и `CONTROL_RESPONSE_TIMEOUT_MS`; таймаут регистрации не должен приводить к автоматическому повтору команды без проверки состояния.
+- использовать отдельные `CONTROL_CONNECT_TIMEOUT_MS` и `CONTROL_RESPONSE_TIMEOUT_MS`; при потере ответа `REGISTER_SESSION` разрешён ровно один recovery retry с теми же `requestId`, `clientSessionId`, endpoint и неизменным payload. Новый requestId для такого повтора запрещён; если ответ снова потерян, data connection не открывается, регистрация ожидает TTL expiry.
 
 `AQA_REGISTRATION_TTL_MS` задаёт TTL только для незапущенной регистрации в состоянии REGISTERED. После data binding Bridge отменяет registration TTL; активная MCP-сессия управляется `IDLE_SESSION_TIMEOUT_MS` и `PROCESS_STOP_TIMEOUT_MS`.
 
