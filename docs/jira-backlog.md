@@ -207,6 +207,7 @@
 - Task: отдельная сверка неопределённых результатов write-операций; запрет retry для jira_transition также обязателен.
 - Task: архивирование реестров и логов в Jenkins post/always при доступных agent/workspace/Docker daemon.
 - Task: документирование и проверка host-level очистки orphan-контейнеров при потере Jenkins agent/host.
+- Task: проверка безопасного удаления только ресурсов с метками AQA_RUN_ID и истёкшим TTL; немаркированные ресурсы не затрагиваются.
 
 ## EPIC 6 — Test Data Management
 
