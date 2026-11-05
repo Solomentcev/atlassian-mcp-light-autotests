@@ -1,89 +1,160 @@
 # Спецификация корреляции и надёжности Bridge
 
-Документ дополняет техническую спецификацию AQA. Он устраняет неоднозначность связи тестов с диагностикой Bridge и фиксирует правила отказоустойчивости. Описанные решения являются целевыми; они не считаются реализованными до появления кода и прохождения тестов.
+Документ дополняет техническую спецификацию AQA и является обязательным контрактом для реализации Bridge и AQA Client. Описанные решения целевые; наличие требований в документации не означает, что компонент уже реализован.
 
-## 1. Цепочка идентификаторов
+## 1. Цепочка идентификаторов и границы доверия
 
-Для каждого прогона создаётся AQA_RUN_ID. Для каждого теста используется стабильный testId. Для каждого TCP-соединения AQA создаёт UUID clientSessionId. Bridge назначает connectionId и PID дочернего процесса.
+Для каждого прогона создаётся уникальный `AQA_RUN_ID`. Для каждого тест-кейса используется стабильный `testId`. Для каждой MCP-сессии AQA создаёт UUID `clientSessionId`. Bridge назначает `connectionId`, а после успешного запуска дочернего процесса фиксирует PID.
 
-Обязательная цепочка: AQA_RUN_ID → testId → clientSessionId → connectionId → PID.
+Обязательная цепочка: `AQA_RUN_ID → testId → clientSessionId → connectionId → PID`.
+
+### Сетевые предпосылки
+
+- AQA и MCP Server подключены к одной выделенной user-defined Docker network.
+- К этой сети подключены только AQA и MCP Server; посторонние контейнеры не должны иметь к ней доступ.
+- Между AQA и Bridge нет NAT, TCP proxy, service mesh или другого посредника, меняющего source IP/source port. Bridge должен видеть исходный IP:port AQA data socket.
+- Data port и control port слушают только внутренний интерфейс контейнерной сети и не публикуются на host.
+- Для первой версии процессы внутри AQA-контейнера считаются доверенными. Проверка IP и endpoint не защищает от другого скомпрометированного процесса внутри того же контейнера. Защита от такого противника не входит в модель угроз первой версии.
+- Если сетевую топологию с сохранением endpoint гарантировать нельзя, описанный механизм применять нельзя: требуется отдельное изменение архитектуры корреляции до реализации, а не fallback по времени/PID.
 
 ## 2. Регистрация соединения без изменения MCP-потока
 
-Используется отдельный control TCP port Bridge. Он не является MCP transport и не передаёт данные в STDIO-поток.
+AQA использует Java TCP socket, который привязывается к локальному адресу и свободному порту до регистрации. Вызов `Socket.bind(localAddress:0)` выполняется до `connect()`; socket остаётся открытым, поэтому порт зарезервирован этим процессом до подключения к Bridge. После регистрации именно этот экземпляр socket подключается к data port. Другой локальный процесс не может занять уже зарезервированный source port.
 
-1. AQA создаёт clientSessionId и открывает локальный TCP socket, привязывая его к локальному IP и свободному ephemeral port, но не подключая к data port.
-2. По control channel AQA отправляет REGISTER_SESSION: AQA_RUN_ID, testId, clientSessionId, local IP, local source port и TTL регистрации.
-3. Bridge проверяет, что заявленный IP совпадает с IP control-channel клиента; поля валидны; clientSessionId уникален; регистрация не истекла и ещё не использована.
-4. Bridge возвращает registrationId и срок действия.
-5. AQA подключает тот же заранее привязанный socket к MCP data port.
-6. Bridge сопоставляет фактический remote IP:port принятого соединения с одной незанятой регистрацией, создаёт connectionId и запускает дочерний процесс.
-7. Bridge фиксирует SESSION_BOUND и PROCESS_STARTED; AQA получает connectionId через control channel по clientSessionId.
-8. Регистрация становится одноразовой и удаляется после закрытия сессии или истечения TTL.
+Последовательность:
 
-Если регистрации нет, она истекла, использована повторно или endpoint не совпал, Bridge отклоняет соединение и не запускает дочерний процесс. Нельзя пытаться подобрать сессию по времени, PID или порядку событий.
+1. AQA создаёт `clientSessionId`, привязывает socket к IP интерфейса Docker network и ephemeral source port, не вызывая `connect()`.
+2. По control channel отправляет JSONL-команду `REGISTER_SESSION` с `AQA_RUN_ID`, `testId`, `clientSessionId`, заявленным data local IP:port и `registrationTtlMs`.
+3. Bridge получает реальный peer IP control connection и проверяет, что заявленный data IP совпадает с ним. Проверяет формат/длину полей, TTL, UUID и допустимость endpoint.
+4. Bridge атомарно резервирует endpoint tuple (address family, normalized IP, source port) и `clientSessionId`. Повторная регистрация, конфликт endpoint или уже использованный ID отклоняются.
+5. Bridge возвращает `registrationId`, случайный `sessionToken` и `expiresAt`. Token применяется только для последующих control-команд этой сессии; он не передаётся в MCP data stream.
+6. AQA подключает тот же заранее привязанный socket к data port. Bridge принимает соединение и сопоставляет фактический remote IP:port с одной незанятой и неистёкшей регистрацией.
+7. Сопоставление и перевод регистрации в BOUND выполняются атомарно. Bridge назначает `connectionId`, запускает дочерний процесс и фиксирует PID после успешного старта.
+8. AQA запрашивает `GET_SESSION_STATUS` по `clientSessionId` и `sessionToken`, получает `connectionId` и состояние. PID берётся из точной диагностической записи Bridge.
+9. После закрытия сессии или истечения TTL endpoint освобождается; использованная регистрация не может быть повторно активирована.
 
-## 3. Требования к control channel
+Bridge не запускает дочерний процесс при одной только регистрации: запуск происходит только после успешного сопоставления data connection. Незарегистрированное, просроченное, повторное или неоднозначное соединение закрывается до запуска процесса и фиксируется как `SESSION_REJECTED`.
 
-- Отдельный порт, не совпадающий с MCP data port.
-- Доступ только из выделенной Docker network; публикация на host запрещена.
-- Ограниченный набор команд: REGISTER_SESSION, GET_SESSION_STATUS, GET_SESSION_DIAGNOSTICS. Никаких shell-команд, произвольного запуска процессов или доступа к переменным окружения.
-- Проверка IP источника, UUID, типов и длины полей, TTL и одноразовости регистрации.
-- Ограничения размера сообщения, времени обработки, частоты запросов и числа незавершённых регистраций.
-- Control channel не принимает и не возвращает секреты Atlassian.
-- При отказе control channel существующий MCP data stream не меняет формат; тест, которому нужна проверка lifecycle, завершается ошибкой корреляции.
+Data stream остаётся полностью прозрачным: никаких registration token, preamble или служебных полей в MCP TCP-поток не добавляется.
 
-## 4. Формат диагностических событий
+## 3. Контракт control channel
+
+Control channel — отдельный TCP listener и отдельный протокол JSON Lines. Одна строка — один JSON request, одна строка — один JSON response. Максимальный размер request/response — 16 KiB. Соединение закрывается при некорректном JSON, превышении размера, превышении времени обработки или нарушении протокола.
+
+### Формат запроса
+
+Общие поля:
+- `requestId` — UUID запроса;
+- `command` — команда из allowlist;
+- дополнительные поля определяются командой.
+
+Команды:
+
+| Команда | Обязательные поля | Назначение |
+|---|---|---|
+| `REGISTER_SESSION` | `runId`, `testId`, `clientSessionId`, `dataLocalAddress`, `dataSourcePort`, `registrationTtlMs` | Зарегистрировать заранее привязанный data endpoint |
+| `GET_SESSION_STATUS` | `clientSessionId`, `sessionToken` | Получить состояние и connectionId/PID, если уже назначены |
+| `GET_SESSION_DIAGNOSTICS` | `clientSessionId`, `sessionToken` | Получить события только указанной сессии |
+| `CANCEL_SESSION` | `clientSessionId`, `sessionToken` | Отменить ещё не использованную регистрацию или закрыть незапущенную сессию |
+
+Успешный ответ содержит `requestId`, `ok: true` и `result`. Ошибочный ответ содержит `requestId`, `ok: false`, `error.code` и безопасное `error.message`.
+
+Обязательные коды ошибок: `INVALID_REQUEST`, `UNKNOWN_COMMAND`, `UNAUTHORIZED`, `INVALID_ENDPOINT`, `ENDPOINT_CONFLICT`, `SESSION_CONFLICT`, `REGISTRATION_EXPIRED`, `REGISTRATION_NOT_FOUND`, `SESSION_ALREADY_BOUND`, `SESSION_LIMIT_REACHED`, `RATE_LIMITED`, `MESSAGE_TOO_LARGE`, `INTERNAL_ERROR`.
+
+### Состояния регистрации и сессии
+
+Допустимые состояния: `REGISTERED` → `BOUND` → `STARTING` → `RUNNING` → `STOPPING` → `CLOSED`. Отдельные конечные состояния: `REJECTED`, `START_FAILED`, `STOP_FAILED`, `EXPIRED`, `CANCELLED`.
+
+Переходы состояния и резервирование endpoint должны быть атомарными. Повторная команда не должна повторно создавать процесс или переиспользовать регистрацию. Запрос статуса является read-only и не меняет состояние.
+
+### Защитные ограничения
+
+- Control listener доступен только внутри выделенной Docker network; порт не публикуется на host.
+- В сети находятся только AQA и MCP Server. Docker network сама по себе не является ACL для отдельных процессов внутри контейнера.
+- Разрешены только перечисленные команды; shell, произвольный запуск процессов, чтение environment и файловые операции отсутствуют.
+- Проверяются peer IP, совпадение data IP, UUID, длина/тип полей, допустимый диапазон TTL, уникальность endpoint и одноразовость регистрации.
+- `sessionToken` генерируется криптографически стойким генератором, не логируется и не включается в Allure. Он защищает status/diagnostics/cancel команды, но не заменяет проверку endpoint.
+- Ограничиваются размер сообщения, число control connections, число незавершённых регистраций, частота запросов и время обработки.
+- Control channel не принимает и не возвращает Jira/Confluence credentials или другие секреты.
+- При недоступности control channel MCP data protocol не меняется; lifecycle-тест завершается ошибкой корреляции.
+- Ошибки не должны раскрывать environment, секреты, локальные пути или stack trace клиенту.
+
+## 4. Правила сопоставления endpoint и обработка гонок
+
+Ключ сопоставления — фактическая пара remote IP:source port, полученная Bridge из принятого data socket, и заранее зарегистрированная пара. Сравнение адресов выполняется в нормализованном бинарном представлении с учётом address family; текстовые варианты одного IPv6/IPv4 адреса не должны давать разные ключи.
+
+- Регистрация создаётся до data connect и имеет конечный TTL.
+- Endpoint и clientSessionId резервируются атомарно; две регистрации не могут владеть одним endpoint.
+- Data connection может потребить регистрацию только один раз.
+- Если data connect пришёл до регистрации, с неверного endpoint, после TTL или с уже использованным endpoint, Bridge закрывает его и не запускает процесс.
+- Если data connect не состоялся, AQA отправляет CANCEL_SESSION; при потере control connection регистрация освобождается по TTL.
+- Если несколько data connections одновременно претендуют на один endpoint, ровно одна может перевести регистрацию в BOUND; остальные отклоняются.
+- При переполнении очереди/лимита сессий Bridge возвращает контролируемую ошибку и не создаёт процесс.
+- Нельзя восстанавливать связь по timestamp, порядку подключений, имени потока или PID без connectionId.
+
+## 5. Формат диагностических событий
 
 Формат — JSON Lines, одна JSON-запись на строку. Обязательные поля:
+- `timestamp` — UTC ISO-8601;
+- `event` — тип события;
+- `runId`, `testId`, `clientSessionId`;
+- `connectionId` — после связывания;
+- `remoteAddress`, `remotePort`;
+- `pid` — после запуска процесса;
+- `reason`, `exitCode` — если применимо.
 
-- timestamp — UTC ISO-8601;
-- event — тип события;
-- runId, testId, clientSessionId;
-- connectionId — после связывания;
-- remoteAddress и remotePort;
-- pid — после запуска процесса;
-- reason и exitCode — если применимо.
+Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`.
 
-Минимальные события: SESSION_REGISTERED, SESSION_BOUND, PROCESS_START_REQUESTED, PROCESS_STARTED, PROCESS_START_FAILED, CLIENT_DISCONNECTED, PROCESS_EXITED, PROCESS_KILLED, SESSION_CLOSED, SESSION_REJECTED.
+Для одной сессии допускается ровно одно терминальное событие. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId. sessionToken не записывается.
 
-Для одной сессии допускается ровно одно терминальное событие. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и в MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId.
-
-## 5. Параллельность
+## 6. Параллельность
 
 - Один тестовый класс использует одну MCP-сессию и один дочерний процесс.
 - Методы внутри класса выполняются последовательно.
 - Параллелятся только классы; каждому классу выделяются отдельные socket, clientSessionId, connectionId и PID.
-- AQA_PARALLELISM не может превышать MAX_ACTIVE_SESSIONS Bridge.
-- При превышении лимита Bridge отклоняет новую сессию контролируемо; клиент не должен зависать.
+- `AQA_PARALLELISM` не может превышать `MAX_ACTIVE_SESSIONS` Bridge; проверка выполняется до запуска набора.
+- При превышении лимита Bridge отклоняет новую регистрацию/data session контролируемо; клиент не должен зависать.
 
-## 6. Таймауты и завершение
+## 7. Таймауты и завершение
 
-Должны быть конфигурируемы и проверяться на старте: REGISTRATION_TTL, PROCESS_START_TIMEOUT, PROCESS_STOP_TIMEOUT, IDLE_SESSION_TIMEOUT, MAX_ACTIVE_SESSIONS.
+Обязательные конфигурационные параметры:
+- `MCP_BRIDGE_CONTROL_HOST`, `MCP_BRIDGE_CONTROL_PORT`;
+- `MCP_BRIDGE_DATA_HOST`, `MCP_BRIDGE_DATA_PORT`;
+- `REGISTRATION_TTL_MS`;
+- `CONTROL_CONNECT_TIMEOUT_MS`, `CONTROL_RESPONSE_TIMEOUT_MS`;
+- `DATA_CONNECT_TIMEOUT_MS`;
+- `PROCESS_START_TIMEOUT_MS`, `PROCESS_STOP_TIMEOUT_MS`;
+- `IDLE_SESSION_TIMEOUT_MS`;
+- `MAX_ACTIVE_SESSIONS`, `MAX_PENDING_REGISTRATIONS`.
 
-При закрытии data connection Bridge закрывает stdin процесса, ожидает штатного завершения в пределах PROCESS_STOP_TIMEOUT, затем принудительно завершает процесс. При остановке Bridge сначала прекращается приём новых соединений, затем завершаются активные процессы. Потоки, сокеты и регистрации освобождаются при всех путях завершения.
+Все значения валидируются на старте. При закрытии data connection Bridge закрывает stdin процесса, ожидает штатного завершения в пределах `PROCESS_STOP_TIMEOUT_MS`, затем принудительно завершает процесс. При остановке Bridge сначала прекращается приём новых control/data connections, затем завершаются активные процессы. Потоки, сокеты и регистрации освобождаются при всех путях завершения.
 
-## 7. Политика повторов
+## 8. Политика повторов и неопределённый результат
 
-Автоматические повторы допустимы только для read-only вызовов, если доказано, что запрос не был отправлен. Запрещён общий retry для jira_create_issue, jira_add_comment, jira_transition, confluence_create_page и confluence_update_page.
+Автоматические повторы допустимы только для read-only вызовов, если доказано, что запрос не был отправлен. Запрещён общий retry для `jira_create_issue`, `jira_add_comment`, `jira_transition`, `confluence_create_page` и `confluence_update_page`.
 
-Если write-запрос мог быть отправлен, но ответ потерян, результат фиксируется как UNKNOWN_OUTCOME. До любого разрешённого повтора выполняется сверка по уникальному маркеру или ID. Создание повторяется только после доказательства отсутствия объекта. Комментарии, переходы и обновления не повторяются общим retry-механизмом. Конфликт версии Confluence update приводит к перечитыванию для диагностики и падению сценария, а не к автоматической перезаписи.
+Если write-запрос мог быть отправлен, но ответ потерян, результат фиксируется как `UNKNOWN_OUTCOME`. До разрешённого повтора выполняется сверка по уникальному маркеру или ID. Создание повторяется только после доказательства отсутствия объекта. Комментарии, переходы и обновления не повторяются общим retry-механизмом. Конфликт версии Confluence update приводит к перечитыванию для диагностики и падению сценария, а не к автоматической перезаписи.
 
-## 8. Реестр тестовых данных
+## 9. Устойчивый реестр тестовых данных
 
-Реестр — JSONL, одна запись на подтверждённо созданный объект: runId, testId, objectType, objectId, objectKey (если применимо), marker, createdAt. Каждая запись сбрасывается на диск сразу после подтверждения создания; конкурентная запись сериализуется. Неопределённые write-исходы регистрируются отдельно и не смешиваются с подтверждёнными объектами.
+Реестр — append-only JSONL event log, одна запись на каждое действие записи. До отправки write-запроса AQA синхронно сохраняет `WRITE_INTENT` с `operationId`, runId, testId, инструментом, уникальным marker, временем и безопасными параметрами без секретов. Только после успешного ответа и получения ID сохраняется `WRITE_CONFIRMED` с objectType, objectId/objectKey. При доказанном отказе сохраняется `WRITE_REJECTED`; при потере ответа или аварии до подтверждения остаётся/добавляется `UNKNOWN_OUTCOME`.
 
-Jenkins архивирует реестр, UNKNOWN_OUTCOME и диагностику при любом исходе Pipeline. Автоматическое удаление Jira/Confluence-объектов через MCP не выполняется, поскольку соответствующих инструментов в контракте нет.
+Каждая строка дописывается атомарно под общей блокировкой и сбрасывается на диск через flush/force до продолжения операции. На старте восстановления незавершённые WRITE_INTENT без терминального события переводятся в UNKNOWN_OUTCOME и требуют сверки по marker/ID. Реестр не является транзакцией с Atlassian API, поэтому полностью исключить неопределённый исход нельзя; задача журнала — не потерять намерение и обеспечить безопасную последующую сверку.
 
-## 9. Обязательные негативные проверки
+Jenkins архивирует event log и диагностику при любом исходе Pipeline, если Jenkins agent и workspace остаются доступными. Автоматическое удаление Atlassian-объектов через MCP не выполняется, поскольку соответствующих инструментов в контракте нет.
+
+## 10. Обязательные негативные проверки
 
 - Истёкшая, повторно использованная и неизвестная регистрация.
-- Несовпадение IP control клиента с заявленным IP data socket.
+- Несовпадение IP control клиента с заявленным data IP.
+- Неизвестная команда, malformed JSON, превышение размера сообщения и rate limit control channel.
+- Конфликт двух регистраций на один endpoint и гонка нескольких data connections.
+- Data connection без регистрации и registration TTL expiry.
 - Параллельные сессии и отсутствие смешения ID, PID и логов.
 - Недоступность Bridge, TCP reset, EOF и частичный ответ.
 - Ошибка запуска JAR и зависание при завершении процесса.
 - Достижение MAX_ACTIVE_SESSIONS.
 - SIGTERM Bridge при активных соединениях.
 - Потеря ответа после отправки write-запроса и отсутствие автоматического повтора.
-- Аварийное завершение AQA/Jenkins и сохранность реестра.
+- Аварийное завершение AQA/Jenkins и восстановление незавершённого WRITE_INTENT.
 - Проверка отсутствия секретов в Jenkins logs, Bridge diagnostics и Allure.
