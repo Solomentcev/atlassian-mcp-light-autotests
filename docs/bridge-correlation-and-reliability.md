@@ -121,11 +121,11 @@ Control channel — отдельный TCP listener и отдельный про
 - `pid` — после успешного запуска процесса;
 - `reason`, `exitCode` — если применимо.
 
-Для отклонённого незарегистрированного data connection runId/testId/clientSessionId могут отсутствовать; такая запись содержит фактический remote endpoint и причину отказа. Секреты и sessionToken никогда не записываются.
+Для отклонённого незарегистрированного data connection runId/testId/clientSessionId могут отсутствовать; такая запись содержит уникальный `connectionAttemptId`, фактический remote endpoint и причину отказа. Секреты и sessionToken никогда не записываются.
 
 Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_STOP_FAILED`.
 
-`sequence` назначается Bridge атомарно в момент добавления события в общий append-only журнал. Для события отклонённого незарегистрированного соединения, у которого нет `clientSessionId`, используется отдельная последовательность по `connectionAttemptId`.
+`sequence` назначается Bridge атомарно в момент добавления события в общий append-only журнал. Для события отклонённого незарегистрированного соединения, у которого нет `clientSessionId`, используется отдельная последовательность по `connectionAttemptId`; поле `sequence` монотонно только внутри соответствующего потока идентификатора.
 
 Для каждой регистрации допускается ровно одно терминальное событие из `PROCESS_START_FAILED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_CLOSED` или `SESSION_STOP_FAILED`. `PROCESS_EXITED` и `PROCESS_KILLED` являются событиями процесса и не заменяют терминальное событие сессии. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId. sessionToken не записывается.
 
@@ -147,6 +147,7 @@ Control channel — отдельный TCP listener и отдельный про
 | `BRIDGE_DATA_PORT` | 8 090 | TCP data port, не публикуется на host |
 | `BRIDGE_CONTROL_BIND_ADDRESS` | `0.0.0.0` | Bind address control listener внутри контейнера |
 | `BRIDGE_CONTROL_PORT` | 8 091 | TCP control port, не публикуется на host |
+| `MCP_SERVER_JAR_PATH` | `/artifacts/atlassian-mcp-light.jar` | Путь к дочернему JAR; для изолированных process-тестов заменяется fixture JAR |
 | `REGISTRATION_TTL_MS` | 10 000 | Допустимый диапазон 1 000–30 000 |
 | `MAX_ACTIVE_SESSIONS` | 2 | Верхняя граница параллельных дочерних процессов |
 | `MAX_PENDING_REGISTRATIONS` | 4 | Не более двух ожидающих регистраций на один активный слот |
