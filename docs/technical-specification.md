@@ -570,7 +570,7 @@ Performance/load testing не входит в первую версию. Про�
 - Запускает выбранные JUnit-наборы.
 - Сохраняет surefire-reports, Allure results, реестр созданных Atlassian-объектов и диагностические материалы в каталог, доступный Jenkins.
 
-Контейнеры должны иметь ограниченные ресурсы и корректные health checks. Jenkins выполняет cleanup контейнеров, network и volume в `post/always`, если Jenkins agent и Docker daemon остаются доступны. Потеря/авария агента или Docker host не позволяет гарантировать cleanup из того же Pipeline; для таких отказов требуется внешняя host-level процедура очистки orphan-ресурсов.
+Контейнеры должны иметь ограниченные ресурсы и корректные health checks. Jenkins выполняет cleanup контейнеров, network и volume в `post/always`, если Jenkins agent и Docker daemon остаются доступны. Потеря/авария агента или Docker host не позволяет гарантировать cleanup из того же Pipeline; для таких отказов требуется внешняя host-level процедура очистки orphan-ресурсов. Для этого все временные ресурсы маркируются `managed-by=atlassian-mcp-light-autotests`, `aqa-run-id` и `expires-at`; host-level janitor удаляет только ресурсы с такими метками после истечения TTL 24 часа. Немаркированные ресурсы и ресурсы действующих прогонов не затрагиваются.
 
 ## 14. Jenkins Pipeline
 
