@@ -57,7 +57,7 @@ AQA проверяет MCP-сервер как самостоятельное п
 
 1. Jenkins получает исходный код AQA-проекта и выбранную ревизию основного проекта.
 2. Build container собирает основной проект и создаёт JAR.
-3. JAR передаётся в MCP Server container через временный Docker volume или общий каталог Jenkins workspace.
+3. Build container записывает JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`; MCP Server container подключает этот volume только для чтения. Передача через Jenkins workspace не используется.
 4. MCP Server container запускает STDIO Bridge с отдельными control и data listeners.
 5. AQA container подключается к выделенной внутренней Docker network.
 6. Перед каждой MCP-сессией AQA привязывает локальный TCP socket к IP:port и регистрирует endpoint вместе с AQA_RUN_ID/testId/clientSessionId через control channel.
@@ -388,7 +388,11 @@ McpSessionManager учитывает активные сессии. JUnit extens
 
 | Переменная | Начальное значение | Назначение |
 |---|---:|---|
-| REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации, 1 000–30 000 мс |
+| BRIDGE_DATA_BIND_ADDRESS | 0.0.0.0 | Bind data listener внутри контейнера |
+| BRIDGE_DATA_PORT | 8090 | Data listener, не публикуется на host |
+| BRIDGE_CONTROL_BIND_ADDRESS | 0.0.0.0 | Bind control listener внутри контейнера |
+| BRIDGE_CONTROL_PORT | 8091 | Control listener, не публикуется на host |
+| REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации в состоянии REGISTERED, 1 000–30 000 мс |
 | MAX_ACTIVE_SESSIONS | 2 | Максимальное число активных дочерних MCP-процессов |
 | MAX_PENDING_REGISTRATIONS | 4 | Максимум ожидающих data connection регистраций |
 | CONTROL_MAX_MESSAGE_BYTES | 16 384 | Максимальный размер control request/response |
@@ -555,13 +559,15 @@ Performance/load testing не входит в первую версию. Про�
 - Использует JDK 17 и Maven Wrapper основного проекта.
 - Получает исходный код выбранной ревизии основного проекта.
 - Выполняет сборку Maven.
-- Передаёт исполняемый JAR в общий временный volume или каталог Jenkins workspace.
+- Записывает исполняемый JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`.
+- Завершает работу после успешной передачи артефакта.
 - После сборки не остаётся постоянно работающим.
 
 ### MCP Server container
 
 - Использует Java 17 runtime.
-- Содержит JAR основного приложения и STDIO Bridge.
+- Подключает volume `mcp-artifact` только для чтения и запускает JAR по пути `/artifacts/atlassian-mcp-light.jar`.
+- Содержит STDIO Bridge.
 - Запускает Bridge как управляющий процесс.
 - Bridge запускает дочерние процессы MCP-сервера по одному на клиентское соединение.
 - Получает конфигурацию Jira/Confluence через ENV.
