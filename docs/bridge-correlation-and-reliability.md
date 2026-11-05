@@ -177,6 +177,7 @@ Jenkins архивирует event log и диагностику при любо
 - Неизвестная команда, malformed JSON, превышение размера сообщения и rate limit control channel.
 - Конфликт двух регистраций на один endpoint и гонка нескольких data connections.
 - Data connection без регистрации и registration TTL expiry.
+- Неверный sessionToken для status/diagnostics/cancel и отмена неиспользованной регистрации.
 - Параллельные сессии и отсутствие смешения ID, PID и логов.
 - Недоступность Bridge, TCP reset, EOF и частичный ответ.
 - Ошибка запуска JAR и зависание при завершении процесса.
