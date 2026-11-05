@@ -189,6 +189,9 @@ Bridge добавляет fixture stderr-маркеры в структурир�
     │   │   └── bridge/
     │   └── tests/
     │       └── Dockerfile
+    ├── test-fixture/
+    │   ├── src/main/java/ru/solomentsev/mcp/fixture/
+    │   └── pom.xml
     ├── docs/
     ├── pom.xml
     ├── Jenkinsfile
