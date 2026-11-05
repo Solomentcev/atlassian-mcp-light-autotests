@@ -19,13 +19,15 @@
 - Task: проверка fallback на `2025-11-25` для неизвестной непустой classic protocolVersion.
 - Task: проверка информации о сервере.
 - Task: отправка `notifications/initialized`.
+- Task: повторный `initialize` после READY отклоняется с `-32600` без повреждения текущей сессии.
+- Task: `tools/list` в состоянии INITIALIZATION_PENDING возвращает `-32001`.
 
 ### Feature 1.2 — Tools Discovery
 **Story:** Получение и проверка списка MCP-инструментов.
 - Task: вызов `tools/list`.
 - Task: наличие всех 13 инструментов.
 - Task: проверка названий и описаний.
-- Task: проверка JSON Schema параметров.
+- Task: проверка JSON Schema параметров и annotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint).
 
 ### Feature 1.3 — Tool Execution
 **Story:** Вызов MCP-инструментов.
@@ -85,8 +87,8 @@
 
 ### Feature 2.5 — Jira Issue Comments
 **Story:** Добавление комментария к задаче.
-- Task: добавление корректного комментария.
-- Task: проверка пустого комментария.
+- Task: успешное добавление комментария по MCP-ответу `jira_add_comment`.
+- Task: проверка пустого комментария; независимое чтение комментария через MCP не входит в проверку, поскольку соответствующего инструмента нет.
 - Task: обработка ошибки доступа.
 
 ### Feature 2.6 — Jira Project Retrieval
@@ -154,8 +156,11 @@
 - Task: обработка ошибки запуска JAR.
 - Task: соблюдение лимита активных сессий и таймаутов.
 - Task: структурированные JSONL диагностические события Bridge с timestamp, runId, testId, clientSessionId, connectionId, endpoint, PID, причиной и результатом завершения.
-- Task: отдельный control channel для одноразовой регистрации заранее привязанного AQA socket endpoint.
-- Task: валидация IP control клиента, TTL, уникальности и одноразовости регистрации.
+- Task: отдельный control channel с JSONL-контрактом REGISTER_SESSION/GET_SESSION_STATUS/GET_SESSION_DIAGNOSTICS/CANCEL_SESSION.
+- Task: заранее привязанный AQA socket endpoint и сопоставление remote IP:port без NAT/proxy.
+- Task: атомарное резервирование endpoint, TTL, одноразовость, sessionToken и конечные состояния регистрации.
+- Task: валидация размера сообщений, allowlist команд, rate limit, числа незавершённых регистраций и недоступности порта с host.
+- Task: проверка доверенной сетевой границы: в выделенной Docker network находятся только AQA и MCP Server; процессы внутри AQA container являются доверенными.
 - Task: проверка детерминированной корреляции событий с тестовыми сессиями, включая параллельные сессии.
 - Task: отклонение отсутствующей/неоднозначной корреляции и сохранение логов в Jenkins.
 - Task: обработка ошибок запуска/остановки, TCP reset, лимита сессий и graceful shutdown.
@@ -195,10 +200,12 @@
 
 ### Feature 5.3 — Durable Test Data Registry
 **Story:** Сохранение реестра тестовых данных при любом исходе.
-- Task: JSONL-реестр с немедленной записью каждой созданной сущности.
-- Task: безопасная конкурентная запись и принудительный flush.
-- Task: отдельный журнал неопределённых результатов write-операций.
-- Task: архивирование реестров и логов в Jenkins post/always.
+- Task: append-only JSONL event log с WRITE_INTENT до отправки write-запроса.
+- Task: WRITE_CONFIRMED/WRITE_REJECTED и восстановление незавершённого intent как UNKNOWN_OUTCOME.
+- Task: безопасная конкурентная запись, атомарная строка и flush/force.
+- Task: отдельная сверка неопределённых результатов write-операций; запрет retry для jira_transition также обязателен.
+- Task: архивирование реестров и логов в Jenkins post/always при доступных agent/workspace/Docker daemon.
+- Task: документирование и проверка host-level очистки orphan-контейнеров при потере Jenkins agent/host.
 
 ## EPIC 6 — Test Data Management
 
