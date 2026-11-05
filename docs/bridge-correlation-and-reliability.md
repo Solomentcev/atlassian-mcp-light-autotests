@@ -31,7 +31,7 @@ AQA использует Java TCP socket, который привязывает�
 6. AQA подключает тот же заранее привязанный socket к data port. Bridge принимает соединение и сопоставляет фактический remote IP:port с одной незанятой и неистёкшей регистрацией.
 7. Сопоставление и перевод регистрации в BOUND выполняются атомарно. Bridge назначает `connectionId`, запускает дочерний процесс и фиксирует PID после успешного старта.
 8. AQA запрашивает `GET_SESSION_STATUS` по `clientSessionId` и `sessionToken`, получает `connectionId` и состояние. PID берётся из точной диагностической записи Bridge.
-9. После закрытия сессии или истечения TTL endpoint освобождается; использованная регистрация не может быть повторно активирована.
+9. TTL действует только до успешного перехода `REGISTERED` → `BOUND`. При binding TTL регистрации отменяется; активная сессия не истекает по registration TTL и завершается по закрытию data connection, `IDLE_SESSION_TIMEOUT_MS` или остановке Bridge. Endpoint освобождается после терминального состояния; использованная регистрация не может быть повторно активирована.
 
 Bridge не запускает дочерний процесс при одной только регистрации: запуск происходит только после успешного сопоставления data connection. Незарегистрированное, просроченное, повторное или неоднозначное соединение закрывается до запуска процесса и фиксируется как `SESSION_REJECTED`.
 
@@ -57,9 +57,9 @@ Control channel — отдельный TCP listener и отдельный про
 | `REGISTER_SESSION` | `runId`, `testId`, `clientSessionId`, `dataLocalAddress`, `dataSourcePort`, `registrationTtlMs` | Зарегистрировать заранее привязанный data endpoint |
 | `GET_SESSION_STATUS` | `clientSessionId`, `sessionToken` | Получить состояние и connectionId/PID, если уже назначены |
 | `GET_SESSION_DIAGNOSTICS` | `clientSessionId`, `sessionToken` | Получить события только указанной сессии |
-| `CANCEL_SESSION` | `clientSessionId`, `sessionToken` | Отменить ещё не использованную регистрацию или закрыть незапущенную сессию |
+| `CANCEL_SESSION` | `clientSessionId`, `sessionToken` | Отменить только регистрацию в состоянии REGISTERED до data binding |
 
-Успешный ответ `REGISTER_SESSION` содержит `requestId`, `ok: true` и `result.registrationId`, `result.sessionToken`, `result.expiresAt`. `registrationId` — созданный Bridge UUID; `sessionToken` — случайное значение не менее 256 бит. Успешный `GET_SESSION_STATUS` возвращает `clientSessionId`, `state`, `connectionId` и `pid`, если они уже назначены. `GET_SESSION_DIAGNOSTICS` возвращает только события указанной сессии. `CANCEL_SESSION` успешен только для состояния REGISTERED; после BOUND отмена регистрации запрещена. Ошибочный ответ содержит `requestId`, `ok: false`, `error.code` и безопасное `error.message`.
+Успешный ответ `REGISTER_SESSION` содержит `requestId`, `ok: true` и `result.registrationId`, `result.sessionToken`, `result.expiresAt`. `registrationId` — созданный Bridge UUID; `sessionToken` — случайное значение не менее 256 бит. Успешный `GET_SESSION_STATUS` возвращает `clientSessionId`, `state`, `connectionId` и `pid`, если они уже назначены. `GET_SESSION_DIAGNOSTICS` возвращает только события указанной сессии. `CANCEL_SESSION` успешен только для состояния REGISTERED; после BOUND команда возвращает `SESSION_ALREADY_BOUND` и не завершает активную сессию. Активная сессия закрывается только закрытием data connection, idle timeout или остановкой Bridge. Ошибочный ответ содержит `requestId`, `ok: false`, `error.code` и безопасное `error.message`.
 
 Пример регистрации:
 
@@ -103,7 +103,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 Ключ сопоставления — фактическая пара remote IP:source port, полученная Bridge из принятого data socket, и заранее зарегистрированная пара. Сравнение адресов выполняется в нормализованном бинарном представлении с учётом address family; текстовые варианты одного IPv6/IPv4 адреса не должны давать разные ключи.
 
-- Регистрация создаётся до data connect и имеет конечный TTL.
+- Регистрация создаётся до data connect и имеет конечный TTL. TTL применяется только к состоянию REGISTERED и атомарно прекращается при переходе в BOUND; активная сессия управляется idle/stop timeout.
 - Endpoint и clientSessionId резервируются атомарно; две регистрации не могут владеть одним endpoint.
 - Data connection может потребить регистрацию только один раз.
 - Если data connect пришёл до регистрации, с неверного endpoint, после TTL или с уже использованным endpoint, Bridge закрывает его и не запускает процесс.
@@ -114,8 +114,9 @@ Control channel — отдельный TCP listener и отдельный про
 
 ## 5. Формат диагностических событий
 
-Формат — JSON Lines, одна JSON-запись на строку. Обязательные поля:
+Формат — JSON Lines, одна JSON-запись на строку. Обязательные поля каждой записи: `timestamp` (UTC ISO-8601), `sequence` (монотонный целый номер в пределах `clientSessionId`, начиная с 1) и `event`. Поля контекста добавляются по мере появления:
 - `timestamp` — UTC ISO-8601;
+- `sequence` — монотонный номер события;
 - `event` — тип события;
 - `runId`, `testId`, `clientSessionId`, `registrationId` — после успешной регистрации;
 - `controlPeerAddress`, `dataLocalAddress`, `dataSourcePort` — при регистрации;
