@@ -420,7 +420,7 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | CONTROL_RATE_LIMIT_PER_MINUTE | 60 | Лимит команд на один source IP |
 | PROCESS_START_TIMEOUT_MS | 10 000 | Таймаут запуска дочернего процесса |
 | PROCESS_STOP_TIMEOUT_MS | 5 000 | Таймаут штатного завершения до принудительного завершения |
-| IDLE_SESSION_TIMEOUT_MS | 60 000 | Таймаут бездействия MCP-сессии |
+| IDLE_SESSION_TIMEOUT_MS | 90 000 | Таймаут бездействия MCP-сессии; больше максимального MCP response timeout |
 
 Начальные значения рассчитаны на AQA_PARALLELISM=2. Их изменение требует согласованного изменения конфигурации и повторного прогона reliability-тестов.
 
