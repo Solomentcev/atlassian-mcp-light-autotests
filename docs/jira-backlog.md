@@ -57,6 +57,8 @@
 - Task: пустые STDIO-строки, trailing JSON tokens, корневое JSON-значение не object и запрос метода без id.
 - Task: сохранение string/integer request id в response.
 - Task: tools/call до READY возвращает -32001 и не вызывает инструмент.
+- Task: ping до READY возвращает пустой result и не меняет classic lifecycle.
+- Task: проверка обязательных полей initialize и типа capabilities.
 
 ## EPIC 2 — Jira Integration Testing
 
@@ -171,6 +173,8 @@
 - Task: валидация размера сообщений, allowlist команд, rate limit, числа незавершённых регистраций и недоступности порта с host.
 - Task: проверка sessionToken для status/diagnostics/cancel и освобождение endpoint по CANCEL_SESSION.
 - Task: отказ CANCEL_SESSION для уже связанной сессии без остановки активного MCP-процесса.
+- Task: повтор CANCEL_SESSION для CANCELLED возвращает успешный идемпотентный ответ без повторного terminal event.
+- Task: неизвестный clientSessionId и известная сессия с неверным sessionToken возвращают неразличимый UNAUTHORIZED.
 - Task: пагинация GET_SESSION_DIAGNOSTICS по afterSequence/nextAfterSequence без пропусков и дублей.
 - Task: проверка отсутствия canary secrets в Jenkins logs, Bridge diagnostics и Allure attachments.
 - Task: проверка доверенной сетевой границы: в выделенной Docker network находятся только AQA и MCP Server; процессы внутри AQA container являются доверенными.
