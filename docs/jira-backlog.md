@@ -217,6 +217,7 @@
 - Task: документирование и проверка host-level очистки orphan-контейнеров при потере Jenkins agent/host.
 - Task: проверка безопасного удаления только ресурсов с метками AQA_RUN_ID и истёкшим TTL; немаркированные ресурсы не затрагиваются.
 - Task: маркировка всех Docker containers/networks/volumes тремя labels: `managed-by`, `aqa-run-id`, `expires-at` (UTC Unix epoch seconds); janitor запускается ежечасно, TTL 24 часа, Pipeline timeout не более 12 часов.
+- Task: уникальный `COMPOSE_PROJECT_NAME=aml-${AQA_RUN_ID}` для каждого Jenkins run; проверить параллельные Pipeline на одном Docker host и независимый cleanup.
 
 ## EPIC 6 — Test Data Management
 
