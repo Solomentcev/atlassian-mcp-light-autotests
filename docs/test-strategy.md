@@ -254,13 +254,14 @@ Bridge пишет JSONL-события с обязательными `timestamp`
 
 Последовательность:
 1. Checkout AQA-репозитория и выбранной ревизии основного проекта.
-2. Сборка JAR основного проекта в Build container.
-3. Передача JAR в MCP Server container и запуск STDIO Bridge.
-4. Сборка AQA-образа.
-5. Запуск выбранного набора тестов в AQA container через внутреннюю Docker network.
-6. Публикация JUnit XML и Allure report.
-7. Сохранение диагностических логов Bridge и реестра созданных Atlassian-объектов.
-8. Cleanup контейнеров, сети и временных томов. Atlassian-объекты в первой версии не удаляются.
+2. Сборка JAR основного проекта в Build container и запись в именованный volume `mcp-artifact`.
+3. Для process/reliability-набора — сборка отдельного `test-fixture/pom.xml` и запись fixture JAR в `mcp-fixtures`.
+4. Сборка AQA и MCP Server образов.
+5. Запуск MCP Server container с read-only volume `mcp-artifact`; `mcp-fixtures` подключается только для process/reliability-набора.
+6. Запуск выбранного набора тестов в AQA container через внутреннюю Docker network.
+7. Публикация JUnit XML и Allure report.
+8. Сохранение диагностических логов Bridge и реестра созданных Atlassian-объектов.
+9. Cleanup контейнеров, сети и временных томов. Atlassian-объекты в первой версии не удаляются.
 
 Build container и MCP Server используют общий именованный Docker volume `mcp-artifact`: Build записывает `/artifacts/atlassian-mcp-light.jar`, MCP Server монтирует volume read-only. AQA container не подключается к этому volume. Максимальная длительность Jenkins Pipeline — 12 часов; TTL orphan-ресурсов — 24 часа. Host-level janitor запускается не реже одного раза в час и удаляет только ресурсы с `managed-by=atlassian-mcp-light-autotests`, `aqa-run-id` и истёкшим `expires-at` (UTC Unix epoch seconds).
 
