@@ -194,6 +194,7 @@ Stateless-запросы не требуют initialize и не переводя
 - регистрировать endpoint через `MCP_BRIDGE_CONTROL_HOST:MCP_BRIDGE_CONTROL_PORT`;
 - подключать к `MCP_BRIDGE_DATA_HOST:MCP_BRIDGE_DATA_PORT` тот же socket, который был зарегистрирован;
 - получать status/diagnostics и отменять неиспользованную регистрацию через control channel.
+- использовать отдельные `CONTROL_CONNECT_TIMEOUT_MS` и `CONTROL_RESPONSE_TIMEOUT_MS`; таймаут регистрации не должен приводить к автоматическому повтору команды без проверки состояния.
 
 `McpClient` должен:
 - передавать MCP/JSON-RPC сообщения по TCP как UTF-8 JSON Lines без собственного дополнительного framing;
@@ -202,7 +203,7 @@ Stateless-запросы не требуют initialize и не переводя
 - поддерживать несколько последовательных запросов в рамках одного TCP-соединения;
 - поддерживать отдельные классический и stateless режимы согласно `mcp-contract.md`;
 - различать JSON-RPC error и MCP tool result с `isError=true`;
-- иметь отдельные таймауты control connect/response, data connect, ожидания MCP-ответа и закрытия соединения;
+- использовать ограниченный таймаут ожидания MCP-ответа и закрытия data-соединения;
 - при ошибке сохранять диагностические данные без секретов;
 - корректно закрывать TCP-соединение и освобождать клиентские ресурсы;
 - обнаруживать преждевременное закрытие соединения и неполный ответ.
@@ -224,7 +225,7 @@ Confluence update проверяет версию страницы. При ко�
 
 ### 11.3. Диагностика
 
-Bridge пишет JSONL-события с UTC timestamp, event, runId, testId, clientSessionId, connectionId, remote endpoint, PID, reason и exitCode. Jenkins архивирует полный лог; Allure прикладывает только записи конкретной сессии. Секреты, Authorization headers и полный environment dump запрещены.
+Bridge пишет JSONL-события с UTC timestamp, sequence и event; runId/testId/clientSessionId/registrationId добавляются после регистрации, connectionId/remote endpoint — после binding, PID — после старта процесса. Для отклонённого незарегистрированного соединения контекст теста может отсутствовать. Jenkins архивирует полный лог; Allure прикладывает только записи точно сопоставленной сессии. sessionToken, секреты, Authorization headers и полный environment dump запрещены.
 
 ## 12. Allure
 
