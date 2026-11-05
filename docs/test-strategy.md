@@ -196,6 +196,8 @@ Stateless-запросы не требуют initialize и не переводя
 - получать status/diagnostics и отменять неиспользованную регистрацию через control channel;
 - использовать отдельные `CONTROL_CONNECT_TIMEOUT_MS` и `CONTROL_RESPONSE_TIMEOUT_MS`; таймаут регистрации не должен приводить к автоматическому повтору команды без проверки состояния.
 
+`AQA_REGISTRATION_TTL_MS` задаёт TTL только для незапущенной регистрации в состоянии REGISTERED. После data binding Bridge отменяет registration TTL; активная MCP-сессия управляется `IDLE_SESSION_TIMEOUT_MS` и `PROCESS_STOP_TIMEOUT_MS`.
+
 `McpClient` должен:
 - передавать MCP/JSON-RPC сообщения по TCP как UTF-8 JSON Lines без собственного дополнительного framing;
 - читать ответы из TCP-потока и сопоставлять их с `request id`;
@@ -225,7 +227,7 @@ Confluence update проверяет версию страницы. При ко�
 
 ### 11.3. Диагностика
 
-Bridge пишет JSONL-события с UTC timestamp, sequence и event; runId/testId/clientSessionId/registrationId добавляются после регистрации, connectionId/remote endpoint — после binding, PID — после старта процесса. Для отклонённого незарегистрированного соединения контекст теста может отсутствовать. Jenkins архивирует полный лог; Allure прикладывает только записи точно сопоставленной сессии. sessionToken, секреты, Authorization headers и полный environment dump запрещены.
+Bridge пишет JSONL-события с обязательными `timestamp`, `sequence` и `event`; runId/testId/clientSessionId/registrationId добавляются после регистрации, connectionId/remote endpoint — после binding, PID — после старта процесса. Для отклонённого незарегистрированного соединения используется connectionAttemptId и фактический remote endpoint. Jenkins архивирует полный лог; Allure прикладывает только записи точно сопоставленной сессии. Отсутствие обязательных событий/корреляции является ошибкой process-теста. sessionToken, секреты, Authorization headers и полный environment dump запрещены.
 
 ## 12. Allure
 
@@ -260,7 +262,7 @@ Bridge пишет JSONL-события с UTC timestamp, sequence и event; runI
 7. Сохранение диагностических логов Bridge и реестра созданных Atlassian-объектов.
 8. Cleanup контейнеров, сети и временных томов. Atlassian-объекты в первой версии не удаляются.
 
-Build container и MCP Server используют общий именованный Docker volume `mcp-artifact`: Build записывает `/artifacts/atlassian-mcp-light.jar`, MCP Server монтирует volume read-only. AQA container не подключается к этому volume.
+Build container и MCP Server используют общий именованный Docker volume `mcp-artifact`: Build записывает `/artifacts/atlassian-mcp-light.jar`, MCP Server монтирует volume read-only. AQA container не подключается к этому volume. Максимальная длительность Jenkins Pipeline — 12 часов; TTL orphan-ресурсов — 24 часа. Host-level janitor запускается не реже одного раза в час и удаляет только ресурсы с `managed-by=atlassian-mcp-light-autotests`, `aqa-run-id` и истёкшим `expires-at` (UTC Unix epoch seconds).
 
 Сбор артефактов и cleanup должны выполняться в Jenkins post/always при доступных агенте, workspace и Docker daemon. Потеря агента/host не может быть обработана самим Pipeline; orphan-ресурсы требуют отдельной host-level процедуры.
 
