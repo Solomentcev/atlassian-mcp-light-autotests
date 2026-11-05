@@ -412,6 +412,7 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | BRIDGE_CHILD_JAVA | `java` | Исполняемый файл Java дочернего процесса; передаётся без shell |
 | MCP_SERVER_JAR_PATH | `/artifacts/atlassian-mcp-light.jar` | Путь к исполняемому JAR дочернего MCP-процесса; в изолированных process-тестах заменяется на fixture/invalid JAR |
 | REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации в состоянии REGISTERED, 1 000–30 000 мс |
+| SESSION_RECORD_RETENTION_MS | 3 600 000 | Хранение status/diagnostics и tombstone после terminal event; 60 000–86 400 000 мс |
 | MAX_ACTIVE_SESSIONS | 2 | Максимальное число активных дочерних MCP-процессов |
 | MAX_PENDING_REGISTRATIONS | 4 | Максимум ожидающих data connection регистраций |
 | CONTROL_MAX_MESSAGE_BYTES | 16 384 | Максимальный размер control request/response |
