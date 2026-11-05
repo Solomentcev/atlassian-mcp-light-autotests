@@ -127,6 +127,19 @@ Bridge отвечает за TCP-соединение, создание доче
 
 Bridge не должен содержать бизнес-логику Jira/Confluence и не должен знать назначение MCP-инструментов.
 
+### 4.5. Тестовый STDIO fixture
+
+Для детерминированных process/reliability-сценариев используется отдельный минимальный `bridge-test-fixture.jar`, который реализует только STDIO-поведение и не обращается к Jira/Confluence. Он собирается как отдельный тестовый артефакт и монтируется в MCP Server container только в тестовых конфигурациях, read-only.
+
+Bridge получает путь к дочернему JAR через `MCP_SERVER_JAR_PATH`. В обычном прогоне значение указывает на `/artifacts/atlassian-mcp-light.jar`; в fixture-сценариях — на `/fixtures/bridge-test-fixture.jar`. Bridge не принимает произвольные параметры командной строки или environment от AQA: разрешены только `BRIDGE_TEST_FIXTURE_MODE=ECHO|IGNORE_STDIN_EOF|PARTIAL_RESPONSE` и `BRIDGE_TEST_FIXTURE_HOLD_MS` в тестовом профиле.
+
+- `ECHO` — возвращает детерминированные JSONL-ответы на входные строки;
+- `IGNORE_STDIN_EOF` — продолжает работать после EOF stdin, чтобы проверить force kill после `PROCESS_STOP_TIMEOUT_MS`;
+- `PARTIAL_RESPONSE` — отправляет неполный JSON без завершающего newline, flush-ит stdout, пишет `FIXTURE_PARTIAL_RESPONSE_WRITTEN` в stderr и остаётся активным до закрытия соединения/завершения Bridge.
+
+Bridge добавляет fixture stderr-маркеры в структурированную диагностику с точными `clientSessionId`/`connectionId`, не пересылая их в MCP data stream. Fixture не используется в контрактных и Jira/Confluence integration-тестах. В production-профиле fixture mode запрещён.
+
+
 ## 5. Архитектура AQA-проекта
 
 Предлагаемая структура:
@@ -392,6 +405,7 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | BRIDGE_DATA_PORT | 8090 | Data listener, не публикуется на host |
 | BRIDGE_CONTROL_BIND_ADDRESS | 0.0.0.0 | Bind control listener внутри контейнера |
 | BRIDGE_CONTROL_PORT | 8091 | Control listener, не публикуется на host |
+| MCP_SERVER_JAR_PATH | `/artifacts/atlassian-mcp-light.jar` | Путь к исполняемому JAR дочернего MCP-процесса; в изолированных process-тестах заменяется на fixture/invalid JAR |
 | REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации в состоянии REGISTERED, 1 000–30 000 мс |
 | MAX_ACTIVE_SESSIONS | 2 | Максимальное число активных дочерних MCP-процессов |
 | MAX_PENDING_REGISTRATIONS | 4 | Максимум ожидающих data connection регистраций |
