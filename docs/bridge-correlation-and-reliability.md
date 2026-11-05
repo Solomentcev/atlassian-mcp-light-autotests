@@ -117,11 +117,13 @@ Control channel — отдельный TCP listener и отдельный про
 Формат — JSON Lines, одна JSON-запись на строку. Обязательные поля:
 - `timestamp` — UTC ISO-8601;
 - `event` — тип события;
-- `runId`, `testId`, `clientSessionId`;
-- `connectionId` — после связывания;
-- `remoteAddress`, `remotePort`;
-- `pid` — после запуска процесса;
+- `runId`, `testId`, `clientSessionId`, `registrationId` — после успешной регистрации;
+- `controlPeerAddress`, `dataLocalAddress`, `dataSourcePort` — при регистрации;
+- `connectionId`, `remoteAddress`, `remotePort` — после binding data connection;
+- `pid` — после успешного запуска процесса;
 - `reason`, `exitCode` — если применимо.
+
+Для отклонённого незарегистрированного data connection runId/testId/clientSessionId могут отсутствовать; такая запись содержит фактический remote endpoint и причину отказа. Секреты и sessionToken никогда не записываются.
 
 Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`.
 
