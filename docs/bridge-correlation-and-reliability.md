@@ -143,6 +143,10 @@ Control channel — отдельный TCP listener и отдельный про
 
 | Параметр | Начальное значение | Ограничение/назначение |
 |---|---:|---|
+| `BRIDGE_DATA_BIND_ADDRESS` | `0.0.0.0` | Bind address data listener внутри контейнера |
+| `BRIDGE_DATA_PORT` | 8 090 | TCP data port, не публикуется на host |
+| `BRIDGE_CONTROL_BIND_ADDRESS` | `0.0.0.0` | Bind address control listener внутри контейнера |
+| `BRIDGE_CONTROL_PORT` | 8 091 | TCP control port, не публикуется на host |
 | `REGISTRATION_TTL_MS` | 10 000 | Допустимый диапазон 1 000–30 000 |
 | `MAX_ACTIVE_SESSIONS` | 2 | Верхняя граница параллельных дочерних процессов |
 | `MAX_PENDING_REGISTRATIONS` | 4 | Не более двух ожидающих регистраций на один активный слот |
