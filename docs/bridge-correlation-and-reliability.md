@@ -194,7 +194,7 @@ AQA `AQA_PARALLELISM` по умолчанию равен 2 и не может п
 
 Bridge запускает child process через `ProcessBuilder` с массивом аргументов (`BRIDGE_CHILD_JAVA`, `-jar`, `MCP_SERVER_JAR_PATH`), без shell. Environment дочернего процесса формируется из явного allowlist, а не копируется целиком:
 
-- для основного MCP JAR: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN`, `CONFLUENCE_URL`, `MCP_MAX_TEXT_LENGTH`, `MCP_MAX_RESPONSE_BYTES`, `ATLASSIAN_ENV_FILE`, `ATLASSIAN_PROPERTIES_FILE` (только заданные значения);
+- для основного MCP JAR: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN`, `CONFLUENCE_URL`, `MCP_MAX_TEXT_LENGTH`, `MCP_MAX_RESPONSE_BYTES`, `ATLASSIAN_LOG_LEVEL`, `ATLASSIAN_ENV_FILE`, `ATLASSIAN_PROPERTIES_FILE` (только заданные значения);
 - для test-fixture JAR: только `BRIDGE_TEST_FIXTURE_MODE`; Jira/Confluence credentials и config file paths не передаются.
 
 `BRIDGE_CHILD_JAVA`, `MCP_SERVER_JAR_PATH`, control/data ports, session tokens, `BRIDGE_TEST_DROP_*` и прочие Bridge settings не передаются дочернему процессу. Полный environment dump запрещён; значения credentials, Authorization и sessionToken не попадают в логи. AQA container не получает Atlassian credentials.
