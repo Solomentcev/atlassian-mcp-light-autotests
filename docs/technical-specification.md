@@ -143,7 +143,10 @@ Bridge не должен содержать бизнес-логику Jira/Confl
     │   │       │   ├── JsonRpcRequest.java
     │   │       │   ├── JsonRpcResponse.java
     │   │       │   └── McpMessage.java
-    │   │       ├── config/
+    │   │       ├── control/
+    │       │       │   ├── BridgeControlClient.java
+    │       │       │   └── SessionRegistration.java
+    │       │       ├── config/
     │   │       │   └── TestConfig.java
     │   │       ├── data/
     │   │       │   ├── TestRunContext.java
@@ -186,7 +189,9 @@ Bridge не должен содержать бизнес-логику Jira/Confl
 |---|---|
 | McpClient | Отправка MCP/JSON-RPC запросов и проверка ответов |
 | McpSession | Одно TCP-соединение с Bridge и одна изолированная MCP-сессия |
-| McpSessionManager | Создание, учёт и закрытие сессий |
+| McpSessionManager | Координация регистрации endpoint, создания data-сессий, учёта и закрытия сессий |
+| BridgeControlClient | JSONL control-команды регистрации, статуса, диагностики и отмены |
+| SessionRegistration | Контекст регистрации: runId, testId, clientSessionId, endpoint, registrationId и sessionToken |
 | protocol | Модели JSON-RPC и MCP-сообщений |
 | TestConfig | Загрузка и валидация настроек AQA |
 | TestRunContext | Идентификатор прогона и контекст тестовых данных |
