@@ -123,7 +123,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 Для отклонённого незарегистрированного data connection runId/testId/clientSessionId могут отсутствовать; такая запись содержит уникальный `connectionAttemptId`, фактический remote endpoint и причину отказа. Секреты и sessionToken никогда не записываются.
 
-Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_STOP_FAILED`, `FIXTURE_PARTIAL_RESPONSE_WRITTEN` и `TEST_RESPONSE_TRUNCATED` (только в test profile).
+Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_STOP_FAILED`, `FIXTURE_PARTIAL_RESPONSE_WRITTEN`, `TEST_RESPONSE_TRUNCATED` и `TEST_CONTROL_RESPONSE_DROPPED` (только в test profile).
 
 `sequence` назначается Bridge атомарно в момент добавления события в общий append-only журнал. Для события отклонённого незарегистрированного соединения, у которого нет `clientSessionId`, используется отдельная последовательность по `connectionAttemptId`; поле `sequence` монотонно только внутри соответствующего потока идентификатора.
 
@@ -150,6 +150,7 @@ Control channel — отдельный TCP listener и отдельный про
 | `BRIDGE_CHILD_JAVA` | `java` | Исполняемый файл Java для дочернего процесса; передаётся отдельным аргументом, без shell |
 | `MCP_SERVER_JAR_PATH` | `/artifacts/atlassian-mcp-light.jar` | Путь к дочернему JAR; для изолированных process-тестов заменяется fixture JAR |
 | `BRIDGE_TEST_DROP_RESPONSE_AFTER_BYTES` | disabled | В test profile: целое N 1–4096; для каждой отдельной data-сессии однократно пересылает первые N байт stdout дочернего процесса, затем закрывает data connection; MCP/JSON-RPC не разбирает |
+| `BRIDGE_TEST_DROP_CONTROL_RESPONSE_ONCE` | false | В test profile один раз закрывает control connection без ответа после успешного резервирования первой REGISTER_SESSION; используется только для проверки recovery retry |
 | `REGISTRATION_TTL_MS` | 10 000 | Допустимый диапазон 1 000–30 000 |
 | `SESSION_RECORD_RETENTION_MS` | 3 600 000 | Хранение terminal status/diagnostics и tombstone после terminal event; 60 000–86 400 000 мс |
 | `MAX_ACTIVE_SESSIONS` | 2 | Верхняя граница параллельных дочерних процессов |
@@ -165,6 +166,8 @@ Control channel — отдельный TCP listener и отдельный про
 | `IDLE_SESSION_TIMEOUT_MS` | 60 000 | Таймаут бездействия MCP-сессии |
 
 AQA `AQA_PARALLELISM` по умолчанию равен 2 и не может превышать `MAX_ACTIVE_SESSIONS`. Значения конфигурации валидируются на старте; production-подобные значения могут быть изменены только явной конфигурацией и повторным прогоном reliability-набора. При закрытии data connection Bridge закрывает stdin процесса, ожидает штатного завершения в пределах `PROCESS_STOP_TIMEOUT_MS`, затем принудительно завершает процесс. При остановке Bridge сначала прекращается приём новых control/data connections, затем завершаются активные процессы. Потоки, сокеты и регистрации освобождаются при всех путях завершения.
+
+`BRIDGE_TEST_DROP_CONTROL_RESPONSE_ONCE` разрешён только в test profile: для первой успешно обработанной `REGISTER_SESSION` Bridge сначала атомарно сохраняет регистрацию, затем закрывает control connection без response и пишет `TEST_CONTROL_RESPONSE_DROPPED`. Следующий точный повтор с тем же requestId возвращает исходный результат. В обычном профиле параметр отсутствует.
 
 `BRIDGE_TEST_DROP_RESPONSE_AFTER_BYTES` разрешён только в test profile и применяется к отдельной выделенной сессии с одним write-запросом: Bridge пересылает ровно N байт из stdout дочернего процесса, записывает `TEST_RESPONSE_TRUNCATED` с `bytesForwarded=N` и закрывает data connection. Fault injection выполняется независимо для каждой сессии, один раз на сессию. Bridge не разбирает JSON-RPC и не меняет payload; fault injection работает только на уровне количества байтов. В обычном профиле параметр отсутствует и механизм выключен.
 
