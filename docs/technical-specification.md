@@ -379,6 +379,19 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | CONFLUENCE_TEST_SPACE_KEY | Выделенный Confluence space |
 | AQA_RUN_ID | Уникальный идентификатор прогона |
 
+### Параметры Bridge
+
+| Переменная | Назначение |
+|---|---|
+| REGISTRATION_TTL_MS | Допустимый срок жизни регистрации endpoint |
+| MAX_ACTIVE_SESSIONS | Максимальное число активных дочерних MCP-процессов |
+| MAX_PENDING_REGISTRATIONS | Максимальное число ожидающих data connection регистраций |
+| CONTROL_MAX_MESSAGE_BYTES | Максимальный размер control request/response |
+| CONTROL_RATE_LIMIT_PER_MINUTE | Ограничение частоты control-команд |
+| PROCESS_START_TIMEOUT_MS | Таймаут запуска дочернего процесса |
+| PROCESS_STOP_TIMEOUT_MS | Таймаут штатного завершения до принудительного завершения |
+| IDLE_SESSION_TIMEOUT_MS | Таймаут бездействия MCP-сессии |
+
 ### Параметры основного MCP-сервера
 
 Сервер получает собственные настройки через ENV. Для текущей версии используются:
