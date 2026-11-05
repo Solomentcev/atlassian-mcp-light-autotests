@@ -161,7 +161,7 @@ Stateless-запросы не требуют initialize и не переводя
 Минимальные параметры AQA:
 - `MCP_BRIDGE_CONTROL_HOST` и `MCP_BRIDGE_CONTROL_PORT`;
 - `MCP_BRIDGE_DATA_HOST` и `MCP_BRIDGE_DATA_PORT`;
-- `REGISTRATION_TTL_MS`, `CONTROL_CONNECT_TIMEOUT_MS`, `CONTROL_RESPONSE_TIMEOUT_MS`, `DATA_CONNECT_TIMEOUT_MS`;
+- `AQA_REGISTRATION_TTL_MS`, `CONTROL_CONNECT_TIMEOUT_MS`, `CONTROL_RESPONSE_TIMEOUT_MS`, `DATA_CONNECT_TIMEOUT_MS`;
 - таймаут ожидания MCP-ответа, запуска процесса и закрытия сессии;
 - `AQA_PARALLELISM`;
 - ключ тестового Jira project;
