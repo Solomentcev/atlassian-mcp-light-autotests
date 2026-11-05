@@ -394,8 +394,8 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | CONTROL_CONNECT_TIMEOUT_MS | 1 000 мс | Таймаут подключения к control channel |
 | CONTROL_RESPONSE_TIMEOUT_MS | 1 000 мс | Таймаут ответа control channel |
 | DATA_CONNECT_TIMEOUT_MS | 2 000 мс | Таймаут подключения к data channel |
-| MCP_RESPONSE_TIMEOUT_SECONDS | Таймаут ожидания MCP-ответа |
-| MCP_SESSION_CLOSE_TIMEOUT_SECONDS | Таймаут закрытия MCP-сессии |
+| MCP_RESPONSE_TIMEOUT_SECONDS | 60 секунд | Таймаут ожидания MCP-ответа |
+| MCP_SESSION_CLOSE_TIMEOUT_SECONDS | 10 секунд | Таймаут закрытия MCP-сессии |
 | AQA_PARALLELISM | Число параллельных тестовых классов |
 | JIRA_TEST_PROJECT_KEY | Выделенный Jira project |
 | CONFLUENCE_TEST_SPACE_KEY | Выделенный Confluence space |
