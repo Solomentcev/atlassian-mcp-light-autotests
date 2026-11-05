@@ -49,7 +49,7 @@ AQA проверяет MCP-сервер как самостоятельное п
 | Компонент | Назначение |
 |---|---|
 | Build container | Получает исходный код основного проекта и собирает исполняемый JAR |
-| MCP Server container | Запускает STDIO Bridge и дочерние процессы MCP-сервера |
+| MCP Server container | Запускает STDIO Bridge как PID 1 и дочерние процессы MCP-сервера |
 | AQA container | Запускает Maven, JUnit 5, MCP Client и формирует результаты тестирования |
 | Jenkins | Управляет этапами сборки, запуском контейнеров, тестированием, публикацией отчётов и очисткой |
 
@@ -59,7 +59,7 @@ AQA проверяет MCP-сервер как самостоятельное п
 2. Build container собирает основной проект и создаёт JAR.
 3. Build container записывает JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`; MCP Server container подключает этот volume только для чтения. Передача через Jenkins workspace не используется.
 4. Для process/reliability-набора Build container дополнительно собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в `mcp-fixtures`; volume подключается только в тестовом профиле.
-5. MCP Server container запускает STDIO Bridge с отдельными control и data listeners.
+5. MCP Server container запускает STDIO Bridge с отдельными control и data listeners. Bridge является PID 1 контейнера (exec-form entrypoint, без shell wrapper), чтобы получать SIGTERM напрямую; Docker Compose `stop_grace_period` устанавливается в 15 секунд, что превышает `PROCESS_STOP_TIMEOUT_MS` и время закрытия listeners.
 6. AQA container подключается к выделенной внутренней Docker network.
 7. Перед каждой MCP-сессией AQA привязывает локальный TCP socket к IP:port и регистрирует endpoint вместе с AQA_RUN_ID/testId/clientSessionId через control channel.
 8. AQA подключает тот же socket к data port; Bridge атомарно связывает endpoint с регистрацией, назначает connectionId и запускает дочерний MCP-процесс.
