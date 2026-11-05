@@ -176,7 +176,7 @@ Jenkins архивирует event log и диагностику при любо
 
 - Истёкшая, повторно использованная и неизвестная регистрация.
 - Несовпадение IP control клиента с заявленным data IP и несовпадение заявленного source port с фактическим remote port.
-- Неизвестная команда, malformed JSON, превышение размера сообщения и rate limit control channel.
+- Неизвестная команда, malformed JSON, превышение размера сообщения, лимита одновременных control connections и rate limit control channel.
 - Конфликт двух регистраций на один endpoint и гонка нескольких data connections.
 - Data connection без регистрации и registration TTL expiry.
 - Неверный sessionToken для status/diagnostics/cancel и отмена неиспользованной регистрации.
