@@ -457,11 +457,15 @@ AQA не получает токен Atlassian, если ему не требу�
 
 Для интеграционных тестов выделяются:
 
-- отдельный Jira project;
-- отдельный Confluence space;
-- отдельная тестовая учётная запись с минимально необходимыми правами.
+- отдельный Jira project и Confluence space, предназначенные только для автотестов;
+- основная Atlassian-учётная запись с Browse Projects, Create Issues, Transition Issues и Add Comments в Jira, а также View/Create/Edit в тестовом Confluence space;
+- отдельные permission profiles для негативных сценариев без Browse Projects, без Add Comments и без доступа к Confluence spaces;
+- Jira project без дополнительных обязательных custom fields: публичный MCP-инструмент создания принимает только project_key, summary, description и optional issue_type; тип Bug должен быть доступен по умолчанию;
+- Jira workflow с доступным переходом, однозначно определяемым по передаваемому фрагменту имени, и заранее определёнными исходными статусами.
 
-Тесты не должны изменять пользовательские объекты вне выделенного тестового пространства.
+Permission profiles запускаются последовательно в отдельных конфигурациях MCP Server container/Bridge; Jenkins передаёт соответствующие credentials только MCP Server container. AQA Client не получает и не передаёт Atlassian credentials через MCP или control channel. Негативный сценарий считается environment-blocked, если требуемую комбинацию прав невозможно изолировать в tenant.
+
+Тесты не должны изменять пользовательские объекты вне выделенных project/space.
 
 ### 10.2. Уникальность данных
 
