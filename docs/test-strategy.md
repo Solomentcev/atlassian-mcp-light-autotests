@@ -258,7 +258,7 @@ Bridge пишет JSONL-события с UTC timestamp, event, runId, testId, c
 7. Сохранение диагностических логов Bridge и реестра созданных Atlassian-объектов.
 8. Cleanup контейнеров, сети и временных томов. Atlassian-объекты в первой версии не удаляются.
 
-Сбор артефактов и cleanup должны выполняться в Jenkins post/always, включая падение тестов и промежуточных этапов.
+Сбор артефактов и cleanup должны выполняться в Jenkins post/always при доступных агенте, workspace и Docker daemon. Потеря агента/host не может быть обработана самим Pipeline; orphan-ресурсы требуют отдельной host-level процедуры.
 
 GitHub Actions не используется. Секреты интеграционного окружения хранить в Jenkins Credentials.
 
