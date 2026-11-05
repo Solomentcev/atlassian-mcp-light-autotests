@@ -774,7 +774,7 @@ AQA получает адрес Bridge и параметры тестового 
 - истёкшая, повторно использованная, неизвестная или конфликтующая регистрация сессии;
 - точный recovery retry REGISTER_SESSION после потери ответа, конфликтующий повтор и replay;
 - несовпадение IP control-channel клиента с заявленным IP data socket и несовпадение заявленного source port с фактическим remote port;
-- неверный sessionToken для status/diagnostics/cancel; CANCEL_SESSION для REGISTERED и отказ отмены после BOUND;
+- неверный sessionToken для status/diagnostics/cancel; одинаковый UNAUTHORIZED для неизвестного clientSessionId и неверного token; идемпотентный CANCEL_SESSION для CANCELLED и отказ отмены после BOUND;
 - пагинация GET_SESSION_DIAGNOSTICS, монотонность sequence и сохранение terminal diagnostics в течение retention;
 - неизвестные control-команды, malformed/oversized JSONL, rate limit, лимит control connections и отсутствие host port publishing;
 - control channel недоступен, data channel доступен; lifecycle-тест не должен ложно пройти без корреляции;
