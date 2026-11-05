@@ -39,7 +39,7 @@
 ## Важно
 
 - Не использовать production-проекты, пространства и данные.
-- Секреты хранить в локальных переменных окружения или Jenkins Credentials.
+- Atlassian credentials хранить в локальном окружении MCP Server container или Jenkins Credentials; передавать только в MCP Server container. AQA и Build containers не получают Jira/Confluence credentials; Bridge передаёт основному MCP-процессу только allowlisted параметры.
 - Не направлять диагностические сообщения в MCP-поток: stdout дочернего процесса зарезервирован под JSON-RPC.
 - AQA-контейнер не запускает JAR напрямую и не использует `ProcessBuilder` для управления процессом в другом контейнере.
 - TCP data port и control port доступны только внутри выделенной Docker network; к ней подключены только MCP Server и AQA containers, порты не публикуются на host. Сеть является границей доверия control channel.
