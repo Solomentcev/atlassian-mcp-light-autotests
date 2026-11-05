@@ -169,6 +169,7 @@ Stateless-запросы не требуют initialize и не переводя
 - `AQA_PARALLELISM`;
 - ключ тестового Jira project;
 - ключ тестового Confluence space;
+- `JIRA_TEST_USER_IDENTIFIER` для проверки jira_get_user; `JIRA_PRIVATE_FIELDS_USER_IDENTIFIER` — необязательный пользователь для проверки скрытых полей;
 - уникальный `AQA_RUN_ID`.
 
 Путь к JAR, параметры запуска Java-процесса и конфигурация Jira/Confluence основного приложения не передаются AQA Client. JAR передаётся через `mcp-artifact` от Build container к MCP Server container; AQA container volume не монтирует. Atlassian secrets доступны только MCP Server container. Jenkins выбирает ревизию основного проекта, передаёт JAR и фиксирует commit SHA в параметрах/метаданных прогона.
