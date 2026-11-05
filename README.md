@@ -33,7 +33,7 @@
 4. AQA Client регистрирует тестовую сессию через отдельный control channel Bridge до открытия MCP TCP-соединения.
 5. Bridge связывает регистрацию с TCP-соединением, создаёт отдельный дочерний процесс MCP-сервера и фиксирует connectionId/PID.
 6. MCP Client проверяет JSON-RPC/MCP, инструменты и интеграцию с Jira/Confluence.
-6. Jenkins публикует JUnit XML и Allure Report, сохраняет диагностические логи Bridge и реестр созданных Atlassian-объектов, затем удаляет временные контейнеры и Docker-ресурсы.
+7. Jenkins публикует JUnit XML и Allure Report, сохраняет диагностические логи Bridge и реестр созданных Atlassian-объектов, затем удаляет временные контейнеры и Docker-ресурсы.
 
 ## Важно
 
