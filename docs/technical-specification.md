@@ -399,6 +399,8 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | AQA_PARALLELISM | `2` | Число параллельных тестовых классов; не выше MAX_ACTIVE_SESSIONS |
 | JIRA_TEST_PROJECT_KEY | — | Ключ выделенного Jira project; обязателен для Jira integration |
 | CONFLUENCE_TEST_SPACE_KEY | — | Ключ выделенного Confluence space; обязателен для Confluence integration |
+| JIRA_TEST_USER_IDENTIFIER | — | Идентификатор пользователя для jira_get_user |
+| JIRA_PRIVATE_FIELDS_USER_IDENTIFIER | — | Необязательный пользователь с ограниченными email/displayName для JIRA-022 |
 | AQA_RUN_ID | Генерируется Jenkins | Уникальный идентификатор прогона |
 
 ### Параметры Bridge
