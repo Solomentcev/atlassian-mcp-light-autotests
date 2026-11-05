@@ -224,7 +224,7 @@
 **Story:** Сохранение реестра тестовых данных при любом исходе.
 - Task: append-only JSONL event log с WRITE_INTENT до отправки write-запроса.
 - Task: WRITE_CONFIRMED/WRITE_REJECTED и восстановление незавершённого intent как UNKNOWN_OUTCOME.
-- Task: безопасная конкурентная запись, атомарная строка и flush/force.
+- Task: конкурентная сериализация JSONL, flush/force полного intent до отправки запроса и recovery повреждённого незавершённого хвоста; полный intent без outcome переводится в UNKNOWN_OUTCOME.
 - Task: отдельная сверка неопределённых результатов write-операций; запрет retry для jira_transition обязателен. Чтение текущего статуса не подтверждает историю перехода; неоднозначный исход передаётся на ручную сверку.
 - Task: архивирование реестров и логов в Jenkins post/always при доступных agent/workspace/Docker daemon.
 - Task: документирование и проверка host-level очистки orphan-контейнеров при потере Jenkins agent/host.
