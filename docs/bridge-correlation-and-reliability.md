@@ -79,7 +79,7 @@ Control channel — отдельный TCP listener и отдельный про
 {"requestId":"4b9b57f4-12a2-4ad8-97b7-c5c96f1e9d10","ok":false,"error":{"code":"ENDPOINT_CONFLICT","message":"Endpoint is already reserved"}}
 ```
 
-Обязательные коды ошибок: `INVALID_REQUEST`, `UNKNOWN_COMMAND`, `UNAUTHORIZED`, `INVALID_ENDPOINT`, `ENDPOINT_CONFLICT`, `SESSION_CONFLICT`, `REGISTRATION_EXPIRED`, `REGISTRATION_NOT_FOUND`, `SESSION_ALREADY_BOUND`, `REGISTRATION_LIMIT_REACHED`, `SESSION_LIMIT_REACHED`, `RATE_LIMITED`, `MESSAGE_TOO_LARGE`, `INTERNAL_ERROR`.
+Обязательные коды ошибок: `INVALID_REQUEST`, `UNKNOWN_COMMAND`, `UNAUTHORIZED`, `INVALID_ENDPOINT`, `ENDPOINT_CONFLICT`, `SESSION_CONFLICT`, `REGISTRATION_EXPIRED`, `SESSION_ALREADY_BOUND`, `REGISTRATION_LIMIT_REACHED`, `SESSION_LIMIT_REACHED`, `RATE_LIMITED`, `MESSAGE_TOO_LARGE`, `INTERNAL_ERROR`.
 
 ### Состояния регистрации и сессии
 
@@ -93,7 +93,7 @@ Control channel — отдельный TCP listener и отдельный про
 - В сети находятся только AQA и MCP Server. Docker network сама по себе не является ACL для отдельных процессов внутри контейнера.
 - Разрешены только перечисленные команды; shell, произвольный запуск процессов, чтение environment и файловые операции отсутствуют.
 - Проверяются peer IP, совпадение data IP, UUID, длина/тип полей, допустимый диапазон TTL, уникальность endpoint и одноразовость регистрации.
-- `sessionToken` генерируется криптографически стойким генератором, не менее 256 бит, не логируется и не включается в Allure. Он защищает status/diagnostics/cancel команды, но не заменяет проверку endpoint.
+- `sessionToken` генерируется криптографически стойким генератором, не менее 256 бит, не логируется и не включается в Allure. Он защищает status/diagnostics/cancel команды, но не заменяет проверку endpoint. Сравнение token выполняется constant-time. Для неизвестного `clientSessionId` и неверного token возвращается одинаковый `UNAUTHORIZED`, чтобы не раскрывать существование сессии.
 - Ограничиваются размер сообщения, число control connections, число незавершённых регистраций, частота запросов и время обработки. `GET_SESSION_DIAGNOSTICS` выдаёт события страницами не более 8 записей, чтобы ответ укладывался в лимит control message.
 - Control channel не принимает и не возвращает Jira/Confluence credentials или другие секреты.
 - При недоступности control channel MCP data protocol не меняется; lifecycle-тест завершается ошибкой корреляции.
