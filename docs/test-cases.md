@@ -175,14 +175,17 @@
 | `jira_search` | JIRA-004, JIRA-005, JIRA-006, JIRA-007, JIRA-008 |
 | `jira_create_issue` | JIRA-009, JIRA-010 |
 | `jira_transition` | JIRA-011, JIRA-012 |
-| `jira_add_comment` | JIRA-013 |
-| `jira_get_project` | JIRA-014 |
-| `jira_get_user` | JIRA-015 |
+| `jira_add_comment` | JIRA-013, JIRA-016, JIRA-017 |
+| `jira_get_project` | JIRA-014, JIRA-019 |
+| `jira_get_user` | JIRA-015, JIRA-020 |
+| `jira_get_issue` | JIRA-001, JIRA-002, JIRA-003, JIRA-018 |
+| `jira_transition` | JIRA-011, JIRA-012, JIRA-021 |
 | `confluence_get_page` | CONF-001, CONF-002, CONF-003 |
 | `confluence_list_spaces` | CONF-004, CONF-008 |
 | `confluence_get_space` | CONF-005 |
-| `confluence_search` | CONF-006, CONF-007, CONF-008 |
-| `confluence_create_page` | CONF-009, CONF-010 |
+| `confluence_search` | CONF-006, CONF-007, CONF-008, CONF-015 |
+| `confluence_create_page` | CONF-009, CONF-010, CONF-017 |
+| `confluence_list_spaces` | CONF-004, CONF-008, CONF-016 |
 | `confluence_update_page` | CONF-011, CONF-012, CONF-013, CONF-014 |
 
 ## 7. Повторы, конкурентность и сохранность
