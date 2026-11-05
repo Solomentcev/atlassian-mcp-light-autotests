@@ -742,7 +742,7 @@ AQA получает адрес Bridge и параметры тестового 
 - превышение лимита сессий и размера control/data сообщений;
 - параллельные соединения с проверкой отсутствия смешения ID, PID, ответов и логов;
 - повторный запуск с новым AQA_RUN_ID, восстановление после частично записанного реестра;
-- timeout после отправки create/comment/update: отсутствие автоматического повтора и проверка UNKNOWN_OUTCOME;
+- timeout после отправки `jira_create_issue`, `jira_add_comment`, `jira_transition`, `confluence_create_page` и `confluence_update_page`: отсутствие автоматического повтора и проверка UNKNOWN_OUTCOME;
 - секретоподобные значения в MCP-ответах и исключениях: маскирование в Allure, Bridge logs и Jenkins console.
 
 ## 20. Принятые архитектурные решения
