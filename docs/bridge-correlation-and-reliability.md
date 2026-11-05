@@ -158,8 +158,8 @@ Control channel — отдельный TCP listener и отдельный про
 | `CONTROL_MAX_MESSAGE_BYTES` | 16 384 | Максимальный размер одной control JSONL-записи |
 | `CONTROL_MAX_CONNECTIONS` | 8 | Максимум одновременно открытых control connections |
 | `CONTROL_RATE_LIMIT_PER_MINUTE` | 60 | Лимит команд на один source IP |
-| `CONTROL_CONNECT_TIMEOUT_MS` | 2 000 | Таймаут AQA подключения к control listener |
-| `CONTROL_RESPONSE_TIMEOUT_MS` | 2 000 | Таймаут ответа на одну control-команду |
+| `CONTROL_CONNECT_TIMEOUT_MS` | 1 000 | Таймаут AQA подключения к control listener |
+| `CONTROL_RESPONSE_TIMEOUT_MS` | 1 000 | Таймаут ответа на одну control-команду |
 | `DATA_CONNECT_TIMEOUT_MS` | 2 000 | Таймаут AQA подключения к data listener |
 | `PROCESS_START_TIMEOUT_MS` | 10 000 | Верхняя граница создания OS-процесса; не означает готовность MCP-протокола |
 | `PROCESS_STOP_TIMEOUT_MS` | 5 000 | Ожидание штатного завершения до force kill |
