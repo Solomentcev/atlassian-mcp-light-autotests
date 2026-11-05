@@ -368,7 +368,7 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | MCP_BRIDGE_CONTROL_PORT | Внутренний TCP-порт control channel |
 | MCP_BRIDGE_DATA_HOST | Имя сервиса Bridge для MCP data channel |
 | MCP_BRIDGE_DATA_PORT | Внутренний TCP-порт MCP data channel |
-| REGISTRATION_TTL_MS | TTL регистрации endpoint |
+| AQA_REGISTRATION_TTL_MS | Запрашиваемый AQA срок регистрации; default 10 000 мс, допустимо 1 000–30 000 мс |
 | CONTROL_CONNECT_TIMEOUT_MS | Таймаут подключения к control channel |
 | CONTROL_RESPONSE_TIMEOUT_MS | Таймаут ответа control channel |
 | DATA_CONNECT_TIMEOUT_MS | Таймаут подключения к data channel |
@@ -381,16 +381,19 @@ McpSessionManager учитывает активные сессии. JUnit extens
 
 ### Параметры Bridge
 
-| Переменная | Назначение |
-|---|---|
-| REGISTRATION_TTL_MS | Допустимый срок жизни регистрации endpoint |
-| MAX_ACTIVE_SESSIONS | Максимальное число активных дочерних MCP-процессов |
-| MAX_PENDING_REGISTRATIONS | Максимальное число ожидающих data connection регистраций |
-| CONTROL_MAX_MESSAGE_BYTES | Максимальный размер control request/response |
-| CONTROL_RATE_LIMIT_PER_MINUTE | Ограничение частоты control-команд |
-| PROCESS_START_TIMEOUT_MS | Таймаут запуска дочернего процесса |
-| PROCESS_STOP_TIMEOUT_MS | Таймаут штатного завершения до принудительного завершения |
-| IDLE_SESSION_TIMEOUT_MS | Таймаут бездействия MCP-сессии |
+| Переменная | Начальное значение | Назначение |
+|---|---:|---|
+| REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации, 1 000–30 000 мс |
+| MAX_ACTIVE_SESSIONS | 2 | Максимальное число активных дочерних MCP-процессов |
+| MAX_PENDING_REGISTRATIONS | 4 | Максимум ожидающих data connection регистраций |
+| CONTROL_MAX_MESSAGE_BYTES | 16 384 | Максимальный размер control request/response |
+| CONTROL_MAX_CONNECTIONS | 8 | Максимум одновременно открытых control connections |
+| CONTROL_RATE_LIMIT_PER_MINUTE | 60 | Лимит команд на один source IP |
+| PROCESS_START_TIMEOUT_MS | 10 000 | Таймаут запуска дочернего процесса |
+| PROCESS_STOP_TIMEOUT_MS | 5 000 | Таймаут штатного завершения до принудительного завершения |
+| IDLE_SESSION_TIMEOUT_MS | 60 000 | Таймаут бездействия MCP-сессии |
+
+Начальные значения рассчитаны на AQA_PARALLELISM=2. Их изменение требует согласованного изменения конфигурации и повторного прогона reliability-тестов.
 
 ### Параметры основного MCP-сервера
 
