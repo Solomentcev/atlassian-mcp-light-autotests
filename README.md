@@ -34,7 +34,7 @@
 4. AQA Client привязывает локальный TCP socket к адресу/порту, регистрирует endpoint и clientSessionId через control channel.
 5. AQA Client подключает тот же socket к data port; Bridge атомарно связывает endpoint с регистрацией, создаёт дочерний процесс и фиксирует connectionId/PID.
 6. MCP Client проверяет JSON-RPC/MCP, инструменты и интеграцию с Jira/Confluence.
-7. Jenkins публикует JUnit XML и Allure Report, сохраняет диагностические логи Bridge и реестр созданных Atlassian-объектов, затем удаляет временные контейнеры и Docker-ресурсы.
+7. Jenkins публикует JUnit XML и Allure Report, сохраняет Bridge diagnostics, MCP Server container stdout/stderr и реестр созданных Atlassian-объектов, затем удаляет временные контейнеры и Docker-ресурсы.
 
 ## Важно
 
