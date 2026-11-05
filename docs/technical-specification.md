@@ -575,12 +575,15 @@ Performance/load testing не входит в первую версию. Про�
 - Выполняет сборку Maven.
 - Записывает исполняемый JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`.
 - Завершает работу после успешной передачи артефакта.
+- Для process/reliability-наборов отдельной командой собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в именованный volume `mcp-fixtures` по пути `/fixtures/bridge-test-fixture.jar`.
+- `mcp-fixtures` создаётся и подключается только в тестовом профиле; обычный smoke/integration прогон использует только `mcp-artifact`.
 - После сборки не остаётся постоянно работающим.
 
 ### MCP Server container
 
 - Использует Java 17 runtime.
 - Подключает volume `mcp-artifact` только для чтения и запускает JAR по пути `/artifacts/atlassian-mcp-light.jar`.
+- В process/reliability test profile дополнительно подключает `mcp-fixtures` только для чтения; fixture не монтируется в обычных прогонах.
 - Содержит STDIO Bridge.
 - Запускает Bridge как управляющий процесс.
 - Bridge запускает дочерние процессы MCP-сервера по одному на клиентское соединение.
@@ -604,8 +607,9 @@ Jenkins является единственным CI-оркестратором 
 Этапы Pipeline:
 
 1. **Checkout** — получение исходников AQA и выбранной ревизии основного проекта.
-2. **Build MCP** — сборка основного проекта в Build container.
-3. **Build images** — подготовка MCP Server и AQA образов.
+2. **Build MCP** — сборка основного проекта в Build container и запись JAR в `mcp-artifact`.
+3. **Build fixture** — при выборе process/reliability набора сборка `test-fixture/pom.xml` и запись fixture JAR в `mcp-fixtures`.
+4. **Build images** — подготовка MCP Server и AQA образов.
 4. **Start MCP Server** — запуск контейнера Bridge и проверка его готовности.
 5. **Run AQA** — запуск тестов в AQA container с выбранным набором и уровнем параллельности.
 6. **Publish reports** — публикация JUnit XML и Allure Report.
