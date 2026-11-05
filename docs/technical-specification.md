@@ -408,6 +408,7 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | BRIDGE_DATA_PORT | 8090 | Data listener, не публикуется на host |
 | BRIDGE_CONTROL_BIND_ADDRESS | 0.0.0.0 | Bind control listener внутри контейнера |
 | BRIDGE_CONTROL_PORT | 8091 | Control listener, не публикуется на host |
+| BRIDGE_CHILD_JAVA | `java` | Исполняемый файл Java дочернего процесса; передаётся без shell |
 | MCP_SERVER_JAR_PATH | `/artifacts/atlassian-mcp-light.jar` | Путь к исполняемому JAR дочернего MCP-процесса; в изолированных process-тестах заменяется на fixture/invalid JAR |
 | REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации в состоянии REGISTERED, 1 000–30 000 мс |
 | MAX_ACTIVE_SESSIONS | 2 | Максимальное число активных дочерних MCP-процессов |
