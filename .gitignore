@@ -1,0 +1,60 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# Maven
+target/
+.flattened-pom.xml
+dependency-reduced-pom.xml
+
+# Test results and reports
+allure-results/
+allure-report/
+surefire-reports/
+failsafe-reports/
+test-output/
+reports/
+screenshots/
+downloads/
+
+# Logs
+*.log
+logs/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Local application configuration
+application-local.properties
+application-local.yml
+application-local.yaml
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+
+# Operating systems
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+\$RECYCLE.BIN/
