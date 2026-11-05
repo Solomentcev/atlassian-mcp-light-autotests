@@ -2,15 +2,18 @@
 
 ## Статус и источник
 
-Контракт сверён с исходным кодом основного репозитория `Solomentcev/atlassian-mcp-light`, ветка `master`.
+Контракт сверён с исходным кодом основного репозитория `Solomentcev/atlassian-mcp-light`, ветка `master`, commit `4b010d0c1d7e2b53e26d1f5fb15a0151825889fd` (3 ноября 2026).
 
 Проверенные файлы:
 - `atlassian-mcp-app/src/main/java/ru/solomentsev/app/AtlassianMcpServer.java`
 - `atlassian-core/src/main/java/ru/solomentsev/core/protocol/McpProtocol.java`
 - `atlassian-core/src/main/java/ru/solomentsev/core/protocol/ToolSchema.java`
 - `atlassian-jira/src/main/java/ru/solomentsev/jira/tools/JiraToolProvider.java`
+- `atlassian-jira/src/main/java/ru/solomentsev/jira/service/JiraService.java`
 - `atlassian-confluence/src/main/java/ru/solomentsev/confluence/tools/ConfluenceToolProvider.java`
+- `atlassian-confluence/src/main/java/ru/solomentsev/confluence/service/ConfluenceService.java`
 - `atlassian-core/src/main/java/ru/solomentsev/core/config/ConfigLoader.java`
+- `atlassian-core/src/main/java/ru/solomentsev/core/config/AppConfig.java`
 
 Это описание реализации на момент проверки, а не обещание соответствия любой будущей версии MCP. При обновлении основного проекта контракт необходимо сверять повторно. В AQA-прогоне следует фиксировать commit SHA основного проекта.
 
