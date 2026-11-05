@@ -39,7 +39,7 @@ Data stream остаётся полностью прозрачным: никак
 
 ## 3. Контракт control channel
 
-Control channel — отдельный TCP listener и отдельный протокол JSON Lines. Один TCP connection обслуживает ровно один request и один response, после ответа Bridge закрывает control connection; pipelining не используется. Максимальный размер request/response — 16 KiB. Некорректный JSON, превышение размера или времени обработки приводят к безопасному закрытию control connection.
+Control channel — отдельный TCP listener и отдельный протокол UTF-8 JSON Lines. Один TCP connection обслуживает ровно один newline-terminated request и один newline-terminated response; Bridge выполняет flush и закрывает control connection. Pipelining не используется. Максимальный размер request и response — 16 KiB без завершающего newline. Некорректный JSON, отсутствие newline до лимита, превышение размера или времени обработки приводят к безопасному закрытию control connection.
 
 ### Формат запроса
 
@@ -56,10 +56,10 @@ Control channel — отдельный TCP listener и отдельный про
 |---|---|---|
 | `REGISTER_SESSION` | `runId`, `testId`, `clientSessionId`, `dataLocalAddress`, `dataSourcePort`, `registrationTtlMs` | Зарегистрировать заранее привязанный data endpoint |
 | `GET_SESSION_STATUS` | `clientSessionId`, `sessionToken` | Получить состояние и connectionId/PID, если уже назначены |
-| `GET_SESSION_DIAGNOSTICS` | `clientSessionId`, `sessionToken` | Получить события только указанной сессии |
+| `GET_SESSION_DIAGNOSTICS` | `clientSessionId`, `sessionToken`; необязательно `afterSequence`, `limit` | Получить события указанной сессии начиная после sequence; `limit` 1–16, default 16 |
 | `CANCEL_SESSION` | `clientSessionId`, `sessionToken` | Отменить только регистрацию в состоянии REGISTERED до data binding |
 
-Успешный ответ `REGISTER_SESSION` содержит `requestId`, `ok: true` и `result.registrationId`, `result.sessionToken`, `result.expiresAt`. `registrationId` — созданный Bridge UUID; `sessionToken` — случайное значение не менее 256 бит. Успешный `GET_SESSION_STATUS` возвращает `clientSessionId`, `state`, `connectionId` и `pid`, если они уже назначены. `GET_SESSION_DIAGNOSTICS` возвращает только события указанной сессии. `CANCEL_SESSION` успешен только для состояния REGISTERED; после BOUND команда возвращает `SESSION_ALREADY_BOUND` и не завершает активную сессию. Активная сессия закрывается только закрытием data connection, idle timeout или остановкой Bridge. Ошибочный ответ содержит `requestId`, `ok: false`, `error.code` и безопасное `error.message`.
+Успешный ответ `REGISTER_SESSION` содержит `requestId`, `ok: true` и `result.registrationId`, `result.sessionToken`, `result.expiresAt`. `registrationId` — созданный Bridge UUID; `sessionToken` — случайное значение не менее 256 бит. Успешный `GET_SESSION_STATUS` возвращает `clientSessionId`, `state`, `connectionId` и `pid`, если они уже назначены. `GET_SESSION_DIAGNOSTICS` возвращает только события указанной сессии. Ответ содержит `events`, `hasMore` и `nextSequence`; по умолчанию возвращается не более 16 событий после `afterSequence` (default 0). Каждый диагностический `reason` ограничен 512 символами. Клиент запрашивает следующую порцию с `afterSequence=nextSequence`, если `hasMore=true`; один response никогда не превышает 16 KiB. `CANCEL_SESSION` успешен только для состояния REGISTERED; после BOUND команда возвращает `SESSION_ALREADY_BOUND` и не завершает активную сессию. Активная сессия закрывается только закрытием data connection, idle timeout или остановкой Bridge. Ошибочный ответ содержит `requestId`, `ok: false`, `error.code` и безопасное `error.message`.
 
 Пример регистрации:
 
@@ -94,7 +94,7 @@ Control channel — отдельный TCP listener и отдельный про
 - Разрешены только перечисленные команды; shell, произвольный запуск процессов, чтение environment и файловые операции отсутствуют.
 - Проверяются peer IP, совпадение data IP, UUID, длина/тип полей, допустимый диапазон TTL, уникальность endpoint и одноразовость регистрации.
 - `sessionToken` генерируется криптографически стойким генератором, не менее 256 бит, не логируется и не включается в Allure. Он защищает status/diagnostics/cancel команды, но не заменяет проверку endpoint.
-- Ограничиваются размер сообщения, число control connections, число незавершённых регистраций, частота запросов и время обработки.
+- Ограничиваются размер сообщения, число control connections, число незавершённых регистраций, частота запросов и время обработки. `GET_SESSION_DIAGNOSTICS` выдаёт события страницами не более 16 записей, чтобы ответ укладывался в лимит control message.
 - Control channel не принимает и не возвращает Jira/Confluence credentials или другие секреты.
 - При недоступности control channel MCP data protocol не меняется; lifecycle-тест завершается ошибкой корреляции.
 - Ошибки не должны раскрывать environment, секреты, локальные пути или stack trace клиенту.
@@ -127,7 +127,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 `sequence` назначается Bridge атомарно в момент добавления события в общий append-only журнал. Для события отклонённого незарегистрированного соединения, у которого нет `clientSessionId`, используется отдельная последовательность по `connectionAttemptId`; поле `sequence` монотонно только внутри соответствующего потока идентификатора.
 
-Для каждой регистрации допускается ровно одно терминальное событие из `PROCESS_START_FAILED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_CLOSED` или `SESSION_STOP_FAILED`. `PROCESS_EXITED` и `PROCESS_KILLED` являются событиями процесса и не заменяют терминальное событие сессии. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId. sessionToken не записывается.
+Для каждой регистрации допускается ровно одно терминальное событие из `PROCESS_START_FAILED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_CLOSED` или `SESSION_STOP_FAILED`. `PROCESS_EXITED` и `PROCESS_KILLED` являются событиями процесса и не заменяют терминальное событие сессии. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает события только по точному `runId`/`testId`/`clientSessionId`; `connectionId` добавляется как дополнительный фильтр после binding. Для незарегистрированных connection attempts без test context события не прикрепляются к Allure-тесту. sessionToken не записывается.
 
 ## 6. Параллельность
 
