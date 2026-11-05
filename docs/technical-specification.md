@@ -391,9 +391,9 @@ McpSessionManager учитывает активные сессии. JUnit extens
 | MCP_BRIDGE_DATA_HOST | DNS alias Bridge в Docker network; default `mcp-server` |
 | MCP_BRIDGE_DATA_PORT | Внутренний TCP-порт MCP data channel; default `8090` |
 | AQA_REGISTRATION_TTL_MS | Запрашиваемый AQA срок регистрации; default 10 000 мс, допустимо 1 000–30 000 мс |
-| CONTROL_CONNECT_TIMEOUT_MS | Таймаут подключения к control channel |
-| CONTROL_RESPONSE_TIMEOUT_MS | Таймаут ответа control channel |
-| DATA_CONNECT_TIMEOUT_MS | Таймаут подключения к data channel |
+| CONTROL_CONNECT_TIMEOUT_MS | 1 000 мс | Таймаут подключения к control channel |
+| CONTROL_RESPONSE_TIMEOUT_MS | 1 000 мс | Таймаут ответа control channel |
+| DATA_CONNECT_TIMEOUT_MS | 2 000 мс | Таймаут подключения к data channel |
 | MCP_RESPONSE_TIMEOUT_SECONDS | Таймаут ожидания MCP-ответа |
 | MCP_SESSION_CLOSE_TIMEOUT_SECONDS | Таймаут закрытия MCP-сессии |
 | AQA_PARALLELISM | Число параллельных тестовых классов |
