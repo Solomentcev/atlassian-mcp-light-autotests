@@ -189,10 +189,13 @@ Stateless-запросы не требуют initialize и не переводя
 
 ## 11. Надёжность тестового клиента
 
-MCP Client должен:
-- регистрировать заранее привязанный socket endpoint через control channel до data connect;
-- подключаться к `MCP_BRIDGE_DATA_HOST:MCP_BRIDGE_DATA_PORT` с ограниченным таймаутом;
-- использовать `MCP_BRIDGE_CONTROL_HOST:MCP_BRIDGE_CONTROL_PORT` для регистрации, статуса и диагностики;
+`McpSessionManager` совместно с `BridgeControlClient` должны:
+- создавать socket и привязывать его к локальному IP/port до подключения;
+- регистрировать endpoint через `MCP_BRIDGE_CONTROL_HOST:MCP_BRIDGE_CONTROL_PORT`;
+- подключать к `MCP_BRIDGE_DATA_HOST:MCP_BRIDGE_DATA_PORT` тот же socket, который был зарегистрирован;
+- получать status/diagnostics и отменять неиспользованную регистрацию через control channel.
+
+`McpClient` должен:
 - передавать MCP/JSON-RPC сообщения по TCP как UTF-8 JSON Lines без собственного дополнительного framing;
 - читать ответы из TCP-потока и сопоставлять их с `request id`;
 - не ожидать ответ на notification;
