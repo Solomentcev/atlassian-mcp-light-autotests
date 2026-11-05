@@ -147,6 +147,7 @@ Control channel — отдельный TCP listener и отдельный про
 | `BRIDGE_DATA_PORT` | 8 090 | TCP data port, не публикуется на host |
 | `BRIDGE_CONTROL_BIND_ADDRESS` | `0.0.0.0` | Bind address control listener внутри контейнера |
 | `BRIDGE_CONTROL_PORT` | 8 091 | TCP control port, не публикуется на host |
+| `BRIDGE_CHILD_JAVA` | `java` | Исполняемый файл Java для дочернего процесса; передаётся отдельным аргументом, без shell |
 | `MCP_SERVER_JAR_PATH` | `/artifacts/atlassian-mcp-light.jar` | Путь к дочернему JAR; для изолированных process-тестов заменяется fixture JAR |
 | `REGISTRATION_TTL_MS` | 10 000 | Допустимый диапазон 1 000–30 000 |
 | `MAX_ACTIVE_SESSIONS` | 2 | Верхняя граница параллельных дочерних процессов |
@@ -157,7 +158,7 @@ Control channel — отдельный TCP listener и отдельный про
 | `CONTROL_CONNECT_TIMEOUT_MS` | 2 000 | Таймаут AQA подключения к control listener |
 | `CONTROL_RESPONSE_TIMEOUT_MS` | 2 000 | Таймаут ответа на одну control-команду |
 | `DATA_CONNECT_TIMEOUT_MS` | 2 000 | Таймаут AQA подключения к data listener |
-| `PROCESS_START_TIMEOUT_MS` | 10 000 | Таймаут запуска дочернего процесса |
+| `PROCESS_START_TIMEOUT_MS` | 10 000 | Верхняя граница создания OS-процесса; не означает готовность MCP-протокола |
 | `PROCESS_STOP_TIMEOUT_MS` | 5 000 | Ожидание штатного завершения до force kill |
 | `IDLE_SESSION_TIMEOUT_MS` | 60 000 | Таймаут бездействия MCP-сессии |
 
