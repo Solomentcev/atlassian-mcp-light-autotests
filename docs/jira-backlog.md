@@ -159,6 +159,8 @@
 - Task: отдельный control channel с JSONL-контрактом REGISTER_SESSION/GET_SESSION_STATUS/GET_SESSION_DIAGNOSTICS/CANCEL_SESSION.
 - Task: заранее привязанный AQA socket endpoint и сопоставление remote IP:port без NAT/proxy.
 - Task: атомарное резервирование IP:port endpoint, проверка фактического source port, TTL, одноразовость, sessionToken и конечные состояния регистрации.
+- Task: идемпотентный повтор REGISTER_SESSION после потери ответа по requestId/clientSessionId без продления TTL.
+- Task: отклонение конфликтующего повторного clientSessionId с другим requestId или endpoint.
 - Task: валидация размера сообщений, allowlist команд, rate limit, числа незавершённых регистраций и недоступности порта с host.
 - Task: проверка sessionToken для status/diagnostics/cancel и освобождение endpoint по CANCEL_SESSION.
 - Task: проверка доверенной сетевой границы: в выделенной Docker network находятся только AQA и MCP Server; процессы внутри AQA container являются доверенными.
