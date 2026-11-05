@@ -141,6 +141,7 @@
 | PROC-027 | Data connection без регистрации | P1 | Negative | Data port доступен; регистрация для endpoint отсутствует | 1. Подключиться к data port с незарегистрированного socket. | Bridge закрывает соединение до запуска дочернего процесса, фиксирует `SESSION_REJECTED`; корреляция не подбирается по времени или порядку подключений. |
 | PROC-028 | Проверка sessionToken | P1 | Negative | Сессия зарегистрирована; известен clientSessionId; используется неверный sessionToken | 1. Вызвать `GET_SESSION_STATUS` с неверным token. 2. Повторить запрос с правильным token. | Bridge возвращает `UNAUTHORIZED` и не раскрывает состояние/diagnostics; с правильным token статус доступен. |
 | PROC-029 | Отмена неиспользованной регистрации | P1 | Process | Сессия находится в состоянии REGISTERED; data connection ещё не открыто | 1. Вызвать `CANCEL_SESSION`. 2. Попытаться использовать прежний endpoint. 3. Зарегистрировать новый endpoint. | Регистрация получает состояние CANCELLED; прежний endpoint освобождён, data connection по нему отклоняется; новая регистрация выполняется успешно; дочерний процесс не запускался.
+| PROC-030 | Несовпадение зарегистрированного и фактического source port | P1 | Negative | Зарегистрирован endpoint с source port, отличающимся от порта фактически привязанного socket | 1. Зарегистрировать один source port. 2. Подключить к data port socket с другим source port. | Bridge отклоняет data connection до запуска дочернего процесса и фиксирует `SESSION_REJECTED`; сопоставление по одному IP запрещено.
 
 ## 5. Test Data Management
 
