@@ -205,7 +205,7 @@
 | `confluence_get_page` | CONF-001, CONF-002, CONF-003, CONF-018 |
 | `confluence_get_space` | CONF-005 |
 | `confluence_search` | CONF-006, CONF-007, CONF-008, CONF-015, CONF-021 |
-| `confluence_create_page` | CONF-009, CONF-010, CONF-017 |
+| `confluence_create_page` | CONF-009, CONF-010, CONF-017, CONF-020 |
 | `confluence_list_spaces` | CONF-004, CONF-008, CONF-016, CONF-022 |
 | `confluence_update_page` | CONF-011, CONF-012, CONF-013, CONF-014, CONF-019 |
 
