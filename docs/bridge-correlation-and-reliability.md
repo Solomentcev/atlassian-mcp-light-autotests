@@ -85,7 +85,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 Допустимые состояния: `REGISTERED` → `BOUND` → `STARTING` → `RUNNING` → `STOPPING` → `CLOSED`. Отдельные конечные состояния: `REJECTED`, `START_FAILED`, `STOP_FAILED`, `EXPIRED`, `CANCELLED`.
 
-Переходы состояния и резервирование endpoint должны быть атомарными. `REGISTER_SESSION` идемпотентен по requestId/clientSessionId: при повторе абсолютно того же запроса после потери ответа и до TTL Bridge возвращает исходные registrationId/sessionToken/expiresAt, не создавая новую регистрацию и не продлевая TTL. Тот же clientSessionId с другим requestId или другим endpoint/payload возвращает SESSION_CONFLICT. После TTL требуется новый clientSessionId и новый socket. `CANCEL_SESSION` идемпотентен для уже отменённой регистрации. GET_SESSION_STATUS и GET_SESSION_DIAGNOSTICS не меняют состояние. Повторная команда не должна повторно создавать процесс или переиспользовать регистрацию. Запрос статуса является read-only и не меняет состояние.
+Переходы состояния и резервирование endpoint должны быть атомарными. `REGISTER_SESSION` идемпотентен только при полном совпадении `requestId`, `clientSessionId`, control peer IP и всех полей исходного payload. При точном повторе до истечения TTL Bridge возвращает исходные `registrationId`/`sessionToken`/`expiresAt`, не создавая новую регистрацию и не продлевая TTL. Повтор с тем же `requestId`, но изменённым payload или peer IP, а также тот же `clientSessionId` с другим `requestId`, возвращает `SESSION_CONFLICT`. После TTL повтор старой команды не создаёт новую регистрацию и возвращает `REGISTRATION_EXPIRED`; для новой попытки нужны новый `clientSessionId`, новый `requestId` и новый socket. После TTL требуется новый clientSessionId и новый socket. `CANCEL_SESSION` идемпотентен: повтор с теми же `clientSessionId`/`sessionToken` для состояния `CANCELLED` возвращает успешный ответ без повторного действия. Запись об отмене сохраняется как tombstone до исходного `expiresAt`, чтобы исключить повторное использование регистрации. GET_SESSION_STATUS и GET_SESSION_DIAGNOSTICS не меняют состояние. Повторная команда не должна повторно создавать процесс или переиспользовать регистрацию. Запрос статуса является read-only и не меняет состояние.
 
 ### Защитные ограничения
 
@@ -115,9 +115,6 @@ Control channel — отдельный TCP listener и отдельный про
 ## 5. Формат диагностических событий
 
 Формат — JSON Lines, одна JSON-запись на строку. Обязательные поля каждой записи: `timestamp` (UTC ISO-8601), `sequence` (монотонный целый номер в пределах `clientSessionId`, начиная с 1) и `event`. Поля контекста добавляются по мере появления:
-- `timestamp` — UTC ISO-8601;
-- `sequence` — монотонный номер события;
-- `event` — тип события;
 - `runId`, `testId`, `clientSessionId`, `registrationId` — после успешной регистрации;
 - `controlPeerAddress`, `dataLocalAddress`, `dataSourcePort` — при регистрации;
 - `connectionId`, `remoteAddress`, `remotePort` — после binding data connection;
@@ -127,6 +124,8 @@ Control channel — отдельный TCP listener и отдельный про
 Для отклонённого незарегистрированного data connection runId/testId/clientSessionId могут отсутствовать; такая запись содержит фактический remote endpoint и причину отказа. Секреты и sessionToken никогда не записываются.
 
 Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_STOP_FAILED`.
+
+`sequence` назначается Bridge атомарно в момент добавления события в общий append-only журнал. Для события отклонённого незарегистрированного соединения, у которого нет `clientSessionId`, используется отдельная последовательность по `connectionAttemptId`.
 
 Для каждой регистрации допускается ровно одно терминальное событие из `PROCESS_START_FAILED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_CLOSED` или `SESSION_STOP_FAILED`. `PROCESS_EXITED` и `PROCESS_KILLED` являются событиями процесса и не заменяют терминальное событие сессии. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId. sessionToken не записывается.
 
