@@ -384,22 +384,22 @@ McpSessionManager учитывает активные сессии. JUnit extens
 
 ### Параметры AQA
 
-| Переменная | Назначение |
-|---|---|
-| MCP_BRIDGE_CONTROL_HOST | DNS alias Bridge в Docker network; default `mcp-server` |
-| MCP_BRIDGE_CONTROL_PORT | Внутренний TCP-порт control channel; default `8091` |
-| MCP_BRIDGE_DATA_HOST | DNS alias Bridge в Docker network; default `mcp-server` |
-| MCP_BRIDGE_DATA_PORT | Внутренний TCP-порт MCP data channel; default `8090` |
-| AQA_REGISTRATION_TTL_MS | Запрашиваемый AQA срок регистрации; default 10 000 мс, допустимо 1 000–30 000 мс |
-| CONTROL_CONNECT_TIMEOUT_MS | 1 000 мс | Таймаут подключения к control channel |
-| CONTROL_RESPONSE_TIMEOUT_MS | 1 000 мс | Таймаут ответа control channel |
-| DATA_CONNECT_TIMEOUT_MS | 2 000 мс | Таймаут подключения к data channel |
-| MCP_RESPONSE_TIMEOUT_SECONDS | 60 секунд | Таймаут ожидания MCP-ответа |
-| MCP_SESSION_CLOSE_TIMEOUT_SECONDS | 10 секунд | Таймаут закрытия MCP-сессии |
-| AQA_PARALLELISM | Число параллельных тестовых классов |
-| JIRA_TEST_PROJECT_KEY | Выделенный Jira project |
-| CONFLUENCE_TEST_SPACE_KEY | Выделенный Confluence space |
-| AQA_RUN_ID | Уникальный идентификатор прогона |
+| Переменная | Значение по умолчанию | Назначение |
+|---|---:|---|
+| MCP_BRIDGE_CONTROL_HOST | `mcp-server` | DNS alias Bridge в выделенной Docker network |
+| MCP_BRIDGE_CONTROL_PORT | `8091` | Внутренний TCP-порт control channel |
+| MCP_BRIDGE_DATA_HOST | `mcp-server` | DNS alias Bridge в выделенной Docker network |
+| MCP_BRIDGE_DATA_PORT | `8090` | Внутренний TCP-порт MCP data channel |
+| AQA_REGISTRATION_TTL_MS | `10000` | Запрашиваемый срок регистрации, 1 000–30 000 мс; Bridge применяет собственный верхний предел |
+| CONTROL_CONNECT_TIMEOUT_MS | `1000` | Таймаут подключения к control channel, мс |
+| CONTROL_RESPONSE_TIMEOUT_MS | `1000` | Таймаут ответа control channel, мс |
+| DATA_CONNECT_TIMEOUT_MS | `2000` | Таймаут подключения к data channel, мс |
+| MCP_RESPONSE_TIMEOUT_SECONDS | `60` | Таймаут ожидания MCP-ответа, секунд |
+| MCP_SESSION_CLOSE_TIMEOUT_SECONDS | `10` | Таймаут закрытия MCP-сессии, секунд |
+| AQA_PARALLELISM | `2` | Число параллельных тестовых классов; не выше MAX_ACTIVE_SESSIONS |
+| JIRA_TEST_PROJECT_KEY | — | Ключ выделенного Jira project; обязателен для Jira integration |
+| CONFLUENCE_TEST_SPACE_KEY | — | Ключ выделенного Confluence space; обязателен для Confluence integration |
+| AQA_RUN_ID | Генерируется Jenkins | Уникальный идентификатор прогона |
 
 ### Параметры Bridge
 
