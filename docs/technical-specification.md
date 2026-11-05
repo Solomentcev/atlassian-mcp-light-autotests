@@ -369,10 +369,10 @@ McpSessionManager учитывает активные сессии. JUnit extens
 
 | Переменная | Назначение |
 |---|---|
-| MCP_BRIDGE_CONTROL_HOST | Имя сервиса Bridge для control channel |
-| MCP_BRIDGE_CONTROL_PORT | Внутренний TCP-порт control channel |
-| MCP_BRIDGE_DATA_HOST | Имя сервиса Bridge для MCP data channel |
-| MCP_BRIDGE_DATA_PORT | Внутренний TCP-порт MCP data channel |
+| MCP_BRIDGE_CONTROL_HOST | DNS alias Bridge в Docker network; default `mcp-server` |
+| MCP_BRIDGE_CONTROL_PORT | Внутренний TCP-порт control channel; default `8091` |
+| MCP_BRIDGE_DATA_HOST | DNS alias Bridge в Docker network; default `mcp-server` |
+| MCP_BRIDGE_DATA_PORT | Внутренний TCP-порт MCP data channel; default `8090` |
 | AQA_REGISTRATION_TTL_MS | Запрашиваемый AQA срок регистрации; default 10 000 мс, допустимо 1 000–30 000 мс |
 | CONTROL_CONNECT_TIMEOUT_MS | Таймаут подключения к control channel |
 | CONTROL_RESPONSE_TIMEOUT_MS | Таймаут ответа control channel |
