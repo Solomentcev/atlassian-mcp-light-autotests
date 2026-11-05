@@ -179,6 +179,7 @@ Jenkins архивирует event log и диагностику при любо
 ## 10. Обязательные негативные проверки
 
 - Истёкшая, повторно использованная и неизвестная регистрация.
+- Повтор REGISTER_SESSION после потери ответа с тем же requestId и конфликтный повтор clientSessionId с другим requestId/endpoint.
 - Несовпадение IP control клиента с заявленным data IP и несовпадение заявленного source port с фактическим remote port.
 - Неизвестная команда, malformed JSON, превышение размера сообщения, лимита одновременных control connections и rate limit control channel.
 - Конфликт двух регистраций на один endpoint и гонка нескольких data connections.
