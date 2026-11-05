@@ -110,7 +110,7 @@ Bridge не разбирает JSON-RPC и не изменяет содержи�
 - ошибки запуска и завершения процесса фиксируются в структурированных диагностических логах;
 - AQA регистрирует заранее привязанный socket endpoint до data connect; Bridge атомарно потребляет одноразовую регистрацию и связывает её с connectionId;
 - Bridge предоставляет только allowlisted control-команды; shell, произвольный запуск процессов и доступ к environment отсутствуют; полный контракт определён в bridge-correlation-and-reliability.md;
-- для каждого соединения Bridge создаёт correlation ID; записи содержат событие, runId, testId, clientSessionId, connectionId, remote endpoint, PID дочернего процесса, причину завершения и exit code (если процесс завершился);
+- диагностические события Bridge имеют обязательные timestamp/sequence/event; runId/testId/clientSessionId/registrationId добавляются после регистрации, connectionId и remote endpoint — после binding, PID — после запуска процесса, reason/exitCode — когда применимо. Для незарегистрированных data attempts используется connectionAttemptId и фактический remote endpoint; sessionToken и секреты не записываются. Полный JSONL-контракт и пагинация diagnostics определены в bridge-correlation-and-reliability.md;
 - диагностические записи направляются только в stderr/файл журнала Bridge и не попадают в TCP-поток MCP;
 - Jenkins сохраняет журнал Bridge как артефакт прогона и обеспечивает корреляцию с тестовыми сессиями;
 - секреты не выводятся в логи;
