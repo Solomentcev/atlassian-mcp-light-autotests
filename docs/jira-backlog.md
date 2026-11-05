@@ -159,7 +159,7 @@
 - Task: завершение процесса при аварийном отключении клиента.
 - Task: обработка ошибки запуска JAR.
 - Task: соблюдение лимита активных сессий и таймаутов.
-- Task: структурированные JSONL диагностические события Bridge с timestamp, runId, testId, clientSessionId, connectionId, endpoint, PID, причиной и результатом завершения.
+- Task: структурированные JSONL диагностические события Bridge с timestamp/sequence/event; runId/testId/clientSessionId/registrationId после регистрации, connectionId/remote endpoint после binding, PID после старта, reason/exitCode при наличии; rejected connection attempts без регистрации содержат connectionAttemptId.
 - Task: отдельный control channel с JSONL-контрактом REGISTER_SESSION/GET_SESSION_STATUS/GET_SESSION_DIAGNOSTICS/CANCEL_SESSION.
 - Task: заранее привязанный AQA socket endpoint и сопоставление remote IP:port без NAT/proxy.
 - Task: атомарное резервирование IP:port endpoint, проверка фактического source port, TTL, одноразовость, sessionToken и конечные состояния регистрации.
