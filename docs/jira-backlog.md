@@ -163,10 +163,14 @@
 - Task: отклонение конфликтующего повторного clientSessionId с другим requestId или endpoint.
 - Task: валидация размера сообщений, allowlist команд, rate limit, числа незавершённых регистраций и недоступности порта с host.
 - Task: проверка sessionToken для status/diagnostics/cancel и освобождение endpoint по CANCEL_SESSION.
+- Task: проверка отсутствия canary secrets в Jenkins logs, Bridge diagnostics и Allure attachments.
 - Task: проверка доверенной сетевой границы: в выделенной Docker network находятся только AQA и MCP Server; процессы внутри AQA container являются доверенными.
 - Task: проверка детерминированной корреляции событий с тестовыми сессиями, включая параллельные сессии.
 - Task: отклонение отсутствующей/неоднозначной корреляции и сохранение логов в Jenkins.
 - Task: обработка ошибок запуска/остановки, TCP reset, лимита сессий и graceful shutdown.
+- Task: отдельный `bridge-test-fixture.jar` с режимами ECHO, IGNORE_STDIN_EOF и PARTIAL_RESPONSE; fixture stderr markers должны коррелироваться с connectionId.
+- Task: проверка отказа запуска при существующем некорректном JAR через `MCP_SERVER_JAR_PATH`.
+- Task: отправка SIGTERM Bridge со стороны Jenkins/Compose orchestrator, а не AQA container.
 
 ### Feature 4.3 — Transparent STDIO Proxy
 **Story:** Проверка прозрачной передачи STDIO через Bridge.
@@ -210,6 +214,7 @@
 - Task: архивирование реестров и логов в Jenkins post/always при доступных agent/workspace/Docker daemon.
 - Task: документирование и проверка host-level очистки orphan-контейнеров при потере Jenkins agent/host.
 - Task: проверка безопасного удаления только ресурсов с метками AQA_RUN_ID и истёкшим TTL; немаркированные ресурсы не затрагиваются.
+- Task: маркировка всех Docker containers/networks/volumes тремя labels: `managed-by`, `aqa-run-id`, `expires-at` (UTC Unix epoch seconds); janitor запускается ежечасно, TTL 24 часа, Pipeline timeout не более 12 часов.
 
 ## EPIC 6 — Test Data Management
 
@@ -217,6 +222,7 @@
 
 ### Feature 6.1 — Jira Test Data
 **Story:** Подготовка и управление тестовыми данными Jira.
+- Task: проверка готовности тестового Jira/Confluence окружения до запуска integration-набора.
 - Task: выделенный тестовый проект.
 - Task: создание тестовых задач.
 - Task: уникальная маркировка тестовых объектов.
