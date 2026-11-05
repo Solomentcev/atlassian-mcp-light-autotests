@@ -252,6 +252,8 @@ Bridge пишет JSONL-события с обязательными `timestamp`
 
 ## 13. Jenkins pipeline
 
+Каждый Jenkins run получает уникальный `AQA_RUN_ID`; `COMPOSE_PROJECT_NAME=aml-${AQA_RUN_ID}` формируется в lowercase и ограничивается 63 символами. Все containers/networks/volumes имеют run-specific Compose project и labels, поэтому параллельные Pipeline не используют общие ресурсы.
+
 Последовательность:
 1. Checkout AQA-репозитория и выбранной ревизии основного проекта.
 2. Сборка JAR основного проекта в Build container и запись в именованный volume `mcp-artifact`.
