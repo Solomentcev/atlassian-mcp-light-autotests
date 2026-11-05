@@ -85,7 +85,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 Допустимые состояния: `REGISTERED` → `BOUND` → `STARTING` → `RUNNING` → `STOPPING` → `CLOSED`. Отдельные конечные состояния: `REJECTED`, `START_FAILED`, `STOP_FAILED`, `EXPIRED`, `CANCELLED`.
 
-Переходы состояния и резервирование endpoint должны быть атомарными. Повторная команда не должна повторно создавать процесс или переиспользовать регистрацию. Запрос статуса является read-only и не меняет состояние.
+Переходы состояния и резервирование endpoint должны быть атомарными. `REGISTER_SESSION` идемпотентен по requestId/clientSessionId: при повторе абсолютно того же запроса после потери ответа и до TTL Bridge возвращает исходные registrationId/sessionToken/expiresAt, не создавая новую регистрацию и не продлевая TTL. Тот же clientSessionId с другим requestId или другим endpoint/payload возвращает SESSION_CONFLICT. После TTL требуется новый clientSessionId и новый socket. `CANCEL_SESSION` идемпотентен для уже отменённой регистрации. GET_SESSION_STATUS и GET_SESSION_DIAGNOSTICS не меняют состояние. Повторная команда не должна повторно создавать процесс или переиспользовать регистрацию. Запрос статуса является read-only и не меняет состояние.
 
 ### Защитные ограничения
 
