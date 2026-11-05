@@ -53,6 +53,10 @@
 - Task: неизвестный метод.
 - Task: отсутствующие обязательные параметры.
 - Task: некорректные типы параметров.
+- Task: пустые и пробельные строки, null, неизвестные аргументы и значения за границами integer.
+- Task: пустые STDIO-строки, trailing JSON tokens, корневое JSON-значение не object и запрос метода без id.
+- Task: сохранение string/integer request id в response.
+- Task: tools/call до READY возвращает -32001 и не вызывает инструмент.
 
 ## EPIC 2 — Jira Integration Testing
 
@@ -163,6 +167,8 @@
 - Task: отклонение конфликтующего повторного clientSessionId с другим requestId или endpoint.
 - Task: валидация размера сообщений, allowlist команд, rate limit, числа незавершённых регистраций и недоступности порта с host.
 - Task: проверка sessionToken для status/diagnostics/cancel и освобождение endpoint по CANCEL_SESSION.
+- Task: отказ CANCEL_SESSION для уже связанной сессии без остановки активного MCP-процесса.
+- Task: пагинация GET_SESSION_DIAGNOSTICS по afterSequence/nextAfterSequence без пропусков и дублей.
 - Task: проверка отсутствия canary secrets в Jenkins logs, Bridge diagnostics и Allure attachments.
 - Task: проверка доверенной сетевой границы: в выделенной Docker network находятся только AQA и MCP Server; процессы внутри AQA container являются доверенными.
 - Task: проверка детерминированной корреляции событий с тестовыми сессиями, включая параллельные сессии.
