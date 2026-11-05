@@ -619,7 +619,7 @@ Jenkins является единственным CI-оркестратором 
 5. **Start MCP Server** — запуск контейнера Bridge и проверка его готовности.
 6. **Run AQA** — запуск тестов в AQA container с выбранным набором и уровнем параллельности.
 7. **Publish reports** — публикация JUnit XML и Allure Report.
-8. **Collect diagnostics** — сохранение журналов Bridge, реестра объектов и журнала UNKNOWN_OUTCOME.
+8. **Collect diagnostics** — сохранение структурированных Bridge diagnostics, MCP Server container stdout/stderr, реестра объектов и журнала UNKNOWN_OUTCOME.
 9. **Cleanup** — сначала архивирование артефактов, затем остановка AQA и Bridge и удаление контейнеров, сети и временных томов. Cleanup выполняется в post/always; ошибка одного шага не пропускает остальные. Atlassian-объекты этим этапом не удаляются.
 
 ### Политика запуска
