@@ -83,7 +83,22 @@ Control channel — отдельный TCP listener и отдельный про
 
 ### Состояния регистрации и сессии
 
-Допустимые состояния: `REGISTERED` → `BOUND` → `STARTING` → `RUNNING` → `STOPPING` → `CLOSED`. Отдельные конечные состояния: `REJECTED`, `START_FAILED`, `STOP_FAILED`, `EXPIRED`, `CANCELLED`.
+Допустимые состояния: `REGISTERED`, `BOUND`, `STARTING`, `RUNNING`, `STOPPING` и конечные `CLOSED`, `REJECTED`, `START_FAILED`, `STOP_FAILED`, `EXPIRED`, `CANCELLED`. Допустимые переходы:
+
+| Исходное состояние | Условие | Новое состояние |
+|---|---|---|
+| `REGISTERED` | Endpoint совпал, активный слот доступен | `BOUND` |
+| `REGISTERED` | Истёк registration TTL | `EXPIRED` |
+| `REGISTERED` | Успешный `CANCEL_SESSION` | `CANCELLED` |
+| `REGISTERED` | Endpoint совпал, но достигнут `MAX_ACTIVE_SESSIONS` | `REJECTED` |
+| `BOUND` | Начат запуск child process | `STARTING` |
+| `STARTING` | `ProcessBuilder.start()` завершился успешно | `RUNNING` |
+| `STARTING` | IOException или startup deadline | `START_FAILED` |
+| `RUNNING` | EOF/reset клиента, idle timeout, завершение процесса или shutdown Bridge | `STOPPING` |
+| `STOPPING` | Процесс завершён штатно или force kill успешен | `CLOSED` |
+| `STOPPING` | Не удалось завершить процесс после force kill | `STOP_FAILED` |
+
+Незарегистрированный data connection или connection с несовпадающим endpoint получает событие `SESSION_REJECTED` с `connectionAttemptId`, но не меняет состояние другой регистрации; она остаётся `REGISTERED` до корректного binding, CANCEL или TTL expiry.
 
 Переходы состояния и резервирование endpoint должны быть атомарными. `REGISTER_SESSION` считается точным повтором только при полном совпадении `requestId`, `clientSessionId`, control peer IP и всех полей исходного payload. Пока регистрация находится в `REGISTERED` и TTL не истёк, Bridge возвращает исходные `registrationId`/`sessionToken`/`expiresAt`, не создавая новую регистрацию и не продлевая TTL. Для BOUND/STARTING/RUNNING/STOPPING/CLOSED/START_FAILED/STOP_FAILED возвращается `SESSION_ALREADY_BOUND`; для CANCELLED/REJECTED — `SESSION_CONFLICT`; для EXPIRED — `REGISTRATION_EXPIRED`. Изменённый payload/peer IP с тем же requestId или другой requestId для занятого clientSessionId возвращает `SESSION_CONFLICT`; занятый другим clientSessionId endpoint возвращает `ENDPOINT_CONFLICT`. Поэтому при таймауте/потере ответа AQA может выполнить ровно один recovery retry на новом control TCP connection с теми же `requestId`, `clientSessionId`, endpoint и байт-в-байт тем же payload. Новый requestId для recovery запрещён. Если ответ повторной попытки также потерян, AQA не открывает data connection и ждёт истечения TTL; новая регистрация создаётся только с новым clientSessionId, новым requestId и новым socket. После TTL повтор старой команды не создаёт новую регистрацию и возвращает `REGISTRATION_EXPIRED`. `CANCEL_SESSION` идемпотентен: повтор с теми же `clientSessionId`/`sessionToken` для состояния `CANCELLED` возвращает успешный ответ без повторного действия. Запись об отмене и terminal diagnostics сохраняются в течение `SESSION_RECORD_RETENTION_MS`, чтобы исключить повторное использование регистрации и позволить получить status/diagnostics. GET_SESSION_STATUS и GET_SESSION_DIAGNOSTICS не меняют состояние. Повторная команда не должна повторно создавать процесс или переиспользовать регистрацию. Запрос статуса является read-only и не меняет состояние.
 
