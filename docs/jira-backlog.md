@@ -121,6 +121,7 @@
 ### Feature 3.2 — Confluence Space Management
 **Story:** Получение информации о пространствах Confluence.
 - Task: получение существующего пространства.
+- Task: fallback на JIRA_URL/wiki при отсутствии CONFLUENCE_URL.
 - Task: получение списка пространств.
 - Task: обработка пустого списка.
 - Task: проверка default limit=25 для confluence_list_spaces.
