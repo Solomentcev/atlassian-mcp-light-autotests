@@ -58,13 +58,14 @@ AQA проверяет MCP-сервер как самостоятельное п
 1. Jenkins получает исходный код AQA-проекта и выбранную ревизию основного проекта.
 2. Build container собирает основной проект и создаёт JAR.
 3. Build container записывает JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`; MCP Server container подключает этот volume только для чтения. Передача через Jenkins workspace не используется.
-4. MCP Server container запускает STDIO Bridge с отдельными control и data listeners.
-5. AQA container подключается к выделенной внутренней Docker network.
-6. Перед каждой MCP-сессией AQA привязывает локальный TCP socket к IP:port и регистрирует endpoint вместе с AQA_RUN_ID/testId/clientSessionId через control channel.
-7. AQA подключает тот же socket к data port; Bridge атомарно связывает endpoint с регистрацией, назначает connectionId и запускает дочерний MCP-процесс.
-8. AQA выполняет тесты через MCP Client; status/diagnostics запрашиваются отдельно через control channel.
-9. Jenkins публикует JUnit XML и Allure Report, архивирует реестр и диагностику.
-10. Jenkins останавливает контейнеры и удаляет временные ресурсы.
+4. Для process/reliability-набора Build container дополнительно собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в `mcp-fixtures`; volume подключается только в тестовом профиле.
+5. MCP Server container запускает STDIO Bridge с отдельными control и data listeners.
+6. AQA container подключается к выделенной внутренней Docker network.
+7. Перед каждой MCP-сессией AQA привязывает локальный TCP socket к IP:port и регистрирует endpoint вместе с AQA_RUN_ID/testId/clientSessionId через control channel.
+8. AQA подключает тот же socket к data port; Bridge атомарно связывает endpoint с регистрацией, назначает connectionId и запускает дочерний MCP-процесс.
+9. AQA выполняет тесты через MCP Client; status/diagnostics запрашиваются отдельно через control channel.
+10. Jenkins публикует JUnit XML и Allure Report, архивирует реестр и диагностику.
+11. Jenkins останавливает контейнеры и удаляет временные ресурсы.
 
 Control/data ports не публикуются на host. К выделенной user-defined Docker network подключены только AQA и MCP Server. Между ними не допускаются NAT/proxy, меняющие source IP:port; Bridge должен видеть endpoint исходного AQA socket. Процессы внутри AQA-контейнера считаются доверенными в модели угроз первой версии.
 
