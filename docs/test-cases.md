@@ -209,7 +209,7 @@
 | `jira_get_issue` | JIRA-001, JIRA-002, JIRA-003, JIRA-018 |
 | `jira_transition` | JIRA-011, JIRA-012, JIRA-021 |
 | `confluence_get_page` | CONF-001, CONF-002, CONF-003, CONF-018 |
-| `confluence_get_space` | CONF-005 |
+| `confluence_get_space` | CONF-005, CONF-023 |
 | `confluence_search` | CONF-006, CONF-007, CONF-008, CONF-015, CONF-021 |
 | `confluence_create_page` | CONF-009, CONF-010, CONF-017, CONF-020 |
 | `confluence_list_spaces` | CONF-004, CONF-008, CONF-016, CONF-022 |
