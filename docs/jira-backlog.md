@@ -169,6 +169,7 @@
 - Task: отклонение отсутствующей/неоднозначной корреляции и сохранение логов в Jenkins.
 - Task: обработка ошибок запуска/остановки, TCP reset, лимита сессий и graceful shutdown.
 - Task: отдельный `bridge-test-fixture.jar` с режимами ECHO, IGNORE_STDIN_EOF и PARTIAL_RESPONSE; fixture stderr markers должны коррелироваться с connectionId.
+- Task: test-only fault injection `BRIDGE_TEST_DROP_RESPONSE_AFTER_BYTES` для детерминированной потери ответа после отправки write-запроса без разбора JSON-RPC.
 - Task: проверка отказа запуска при существующем некорректном JAR через `MCP_SERVER_JAR_PATH`.
 - Task: отправка SIGTERM Bridge со стороны Jenkins/Compose orchestrator, а не AQA container.
 
