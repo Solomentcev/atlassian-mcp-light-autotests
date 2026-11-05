@@ -81,6 +81,8 @@ Control channel — отдельный TCP listener и отдельный про
 
 Обязательные коды ошибок: `INVALID_REQUEST`, `UNKNOWN_COMMAND`, `UNAUTHORIZED`, `INVALID_ENDPOINT`, `ENDPOINT_CONFLICT`, `SESSION_CONFLICT`, `REGISTRATION_EXPIRED`, `SESSION_ALREADY_BOUND`, `REGISTRATION_LIMIT_REACHED`, `SESSION_LIMIT_REACHED`, `RATE_LIMITED`, `MESSAGE_TOO_LARGE`, `INTERNAL_ERROR`.
 
+Ошибки валидного control request возвращаются JSON-ответом с `ok:false`: `INVALID_REQUEST`, `UNKNOWN_COMMAND`, `UNAUTHORIZED`, `INVALID_ENDPOINT`, `ENDPOINT_CONFLICT`, `SESSION_CONFLICT`, `REGISTRATION_EXPIRED`, `SESSION_ALREADY_BOUND`, `REGISTRATION_LIMIT_REACHED`, `RATE_LIMITED`, `MESSAGE_TOO_LARGE`, `INTERNAL_ERROR`. `SESSION_LIMIT_REACHED` является причиной terminal state `REJECTED` и возвращается через `GET_SESSION_STATUS`/diagnostics, а не как ошибка регистрации. При превышении `CONTROL_MAX_CONNECTIONS` Bridge закрывает новое соединение без обработки; при malformed JSON, отсутствии newline до лимита или control timeout соединение закрывается без ответа. Для oversized line возвращается короткий `MESSAGE_TOO_LARGE`, если ответ можно отправить в пределах лимита.
+
 ### Состояния регистрации и сессии
 
 Допустимые состояния: `REGISTERED`, `BOUND`, `STARTING`, `RUNNING`, `STOPPING` и конечные `CLOSED`, `REJECTED`, `START_FAILED`, `STOP_FAILED`, `EXPIRED`, `CANCELLED`. Допустимые переходы:
