@@ -123,7 +123,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 Для отклонённого незарегистрированного data connection runId/testId/clientSessionId могут отсутствовать; такая запись содержит уникальный `connectionAttemptId`, фактический remote endpoint и причину отказа. Секреты и sessionToken никогда не записываются.
 
-Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_STOP_FAILED`.
+Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_STOP_FAILED`, `FIXTURE_PARTIAL_RESPONSE_WRITTEN` (только в test profile).
 
 `sequence` назначается Bridge атомарно в момент добавления события в общий append-only журнал. Для события отклонённого незарегистрированного соединения, у которого нет `clientSessionId`, используется отдельная последовательность по `connectionAttemptId`; поле `sequence` монотонно только внутри соответствующего потока идентификатора.
 
