@@ -164,6 +164,8 @@ Control channel — отдельный TCP listener и отдельный про
 
 AQA `AQA_PARALLELISM` по умолчанию равен 2 и не может превышать `MAX_ACTIVE_SESSIONS`. Значения конфигурации валидируются на старте; production-подобные значения могут быть изменены только явной конфигурацией и повторным прогоном reliability-набора. При закрытии data connection Bridge закрывает stdin процесса, ожидает штатного завершения в пределах `PROCESS_STOP_TIMEOUT_MS`, затем принудительно завершает процесс. При остановке Bridge сначала прекращается приём новых control/data connections, затем завершаются активные процессы. Потоки, сокеты и регистрации освобождаются при всех путях завершения.
 
+`PROCESS_START_TIMEOUT_MS` ограничивает время от принятия data connection до успешного создания OS-процесса. `PROCESS_STARTED` означает только успешный возврат `ProcessBuilder.start()` и не подтверждает готовность MCP-протокола; MCP readiness проверяется первым `initialize`/`server/discover` запросом и отдельным AQA response timeout. `PROCESS_START_FAILED` записывается, если создание процесса завершилось IOException или истёк startup deadline. Если Java executable запустился, но JAR некорректен и дочерний процесс завершился, Bridge записывает `PROCESS_STARTED`, затем `PROCESS_EXITED` с ненулевым exit code и терминальное `SESSION_CLOSED`.
+
 ## 8. Политика повторов и неопределённый результат
 
 Автоматические повторы допустимы только для read-only вызовов, если доказано, что запрос не был отправлен. Запрещён общий retry для `jira_create_issue`, `jira_add_comment`, `jira_transition`, `confluence_create_page` и `confluence_update_page`.
