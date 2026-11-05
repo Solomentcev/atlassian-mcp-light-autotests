@@ -131,7 +131,7 @@ Bridge не должен содержать бизнес-логику Jira/Confl
 
 Для детерминированных process/reliability-сценариев используется отдельный минимальный `bridge-test-fixture.jar`, который реализует только STDIO-поведение и не обращается к Jira/Confluence. Он собирается как отдельный тестовый артефакт и монтируется в MCP Server container только в тестовых конфигурациях, read-only.
 
-Bridge получает путь к дочернему JAR через `MCP_SERVER_JAR_PATH`. В обычном прогоне значение указывает на `/artifacts/atlassian-mcp-light.jar`; в fixture-сценариях — на `/fixtures/bridge-test-fixture.jar`. Bridge не принимает произвольные параметры командной строки или environment от AQA: разрешены только `BRIDGE_TEST_FIXTURE_MODE=ECHO|IGNORE_STDIN_EOF|PARTIAL_RESPONSE` и `BRIDGE_TEST_FIXTURE_HOLD_MS` в тестовом профиле.
+Bridge получает путь к дочернему JAR через `MCP_SERVER_JAR_PATH`. В обычном прогоне значение указывает на `/artifacts/atlassian-mcp-light.jar`; в fixture-сценариях — на `/fixtures/bridge-test-fixture.jar`. Bridge не принимает произвольные параметры командной строки или environment от AQA: разрешён только `BRIDGE_TEST_FIXTURE_MODE=ECHO|IGNORE_STDIN_EOF|PARTIAL_RESPONSE` в тестовом профиле.
 
 - `ECHO` — возвращает детерминированные JSONL-ответы на входные строки;
 - `IGNORE_STDIN_EOF` — продолжает работать после EOF stdin, чтобы проверить force kill после `PROCESS_STOP_TIMEOUT_MS`;
@@ -575,9 +575,9 @@ Performance/load testing не входит в первую версию. Про�
 - Выполняет сборку Maven.
 - Записывает исполняемый JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`.
 - Завершает работу после успешной передачи артефакта.
-- Для process/reliability-наборов отдельной командой собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в именованный volume `mcp-fixtures` по пути `/fixtures/bridge-test-fixture.jar`.
+- Для process/reliability-наборов отдельным шагом собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в именованный volume `mcp-fixtures` по пути `/fixtures/bridge-test-fixture.jar`.
 - `mcp-fixtures` создаётся и подключается только в тестовом профиле; обычный smoke/integration прогон использует только `mcp-artifact`.
-- После сборки не остаётся постоянно работающим.
+- Build container не остаётся постоянно работающим после завершения сборки обоих артефактов.
 
 ### MCP Server container
 
@@ -610,11 +610,11 @@ Jenkins является единственным CI-оркестратором 
 2. **Build MCP** — сборка основного проекта в Build container и запись JAR в `mcp-artifact`.
 3. **Build fixture** — при выборе process/reliability набора сборка `test-fixture/pom.xml` и запись fixture JAR в `mcp-fixtures`.
 4. **Build images** — подготовка MCP Server и AQA образов.
-4. **Start MCP Server** — запуск контейнера Bridge и проверка его готовности.
-5. **Run AQA** — запуск тестов в AQA container с выбранным набором и уровнем параллельности.
-6. **Publish reports** — публикация JUnit XML и Allure Report.
-7. **Collect diagnostics** — сохранение журналов Bridge, реестра объектов и журнала UNKNOWN_OUTCOME.
-8. **Cleanup** — сначала архивирование артефактов, затем остановка AQA и Bridge и удаление контейнеров, сети и временных томов. Cleanup выполняется в post/always; ошибка одного шага не пропускает остальные. Atlassian-объекты этим этапом не удаляются.
+5. **Start MCP Server** — запуск контейнера Bridge и проверка его готовности.
+6. **Run AQA** — запуск тестов в AQA container с выбранным набором и уровнем параллельности.
+7. **Publish reports** — публикация JUnit XML и Allure Report.
+8. **Collect diagnostics** — сохранение журналов Bridge, реестра объектов и журнала UNKNOWN_OUTCOME.
+9. **Cleanup** — сначала архивирование артефактов, затем остановка AQA и Bridge и удаление контейнеров, сети и временных томов. Cleanup выполняется в post/always; ошибка одного шага не пропускает остальные. Atlassian-объекты этим этапом не удаляются.
 
 ### Политика запуска
 
