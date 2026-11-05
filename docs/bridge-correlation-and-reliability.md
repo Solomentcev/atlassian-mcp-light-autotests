@@ -125,7 +125,7 @@ Control channel — отдельный TCP listener и отдельный про
 
 Минимальные события: `SESSION_REGISTERED`, `SESSION_BOUND`, `PROCESS_START_REQUESTED`, `PROCESS_STARTED`, `PROCESS_START_FAILED`, `CLIENT_DISCONNECTED`, `PROCESS_EXITED`, `PROCESS_KILLED`, `SESSION_CLOSED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`.
 
-Для одной сессии допускается ровно одно терминальное событие. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId. sessionToken не записывается.
+Для каждой регистрации допускается ровно одно терминальное событие из `PROCESS_START_FAILED`, `SESSION_REJECTED`, `SESSION_EXPIRED`, `SESSION_CANCELLED`, `SESSION_CLOSED` или `SESSION_STOP_FAILED`. `PROCESS_EXITED` и `PROCESS_KILLED` являются событиями процесса и не заменяют терминальное событие сессии. События имеют монотонный порядковый номер в пределах сессии. Диагностические сообщения Bridge не попадают в stdout дочернего процесса и MCP data stream. Jenkins архивирует полный журнал; Allure получает только события с точными runId, testId, clientSessionId и connectionId. sessionToken не записывается.
 
 ## 6. Параллельность
 
