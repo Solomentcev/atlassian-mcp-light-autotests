@@ -2,15 +2,19 @@
 
 ## Статус и источник
 
-Контракт сверён с исходным кодом основного репозитория `Solomentcev/atlassian-mcp-light`, ветка `master`.
+Контракт сверён с исходным кодом основного репозитория `Solomentcev/atlassian-mcp-light`, ветка `master`, commit `4b010d0c1d7e2b53e26d1f5fb15a0151825889fd` (3 ноября 2026).
 
 Проверенные файлы:
 - `atlassian-mcp-app/src/main/java/ru/solomentsev/app/AtlassianMcpServer.java`
 - `atlassian-core/src/main/java/ru/solomentsev/core/protocol/McpProtocol.java`
 - `atlassian-core/src/main/java/ru/solomentsev/core/protocol/ToolSchema.java`
 - `atlassian-jira/src/main/java/ru/solomentsev/jira/tools/JiraToolProvider.java`
+- `atlassian-jira/src/main/java/ru/solomentsev/jira/service/JiraService.java`
 - `atlassian-confluence/src/main/java/ru/solomentsev/confluence/tools/ConfluenceToolProvider.java`
+- `atlassian-confluence/src/main/java/ru/solomentsev/confluence/service/ConfluenceService.java`
 - `atlassian-core/src/main/java/ru/solomentsev/core/config/ConfigLoader.java`
+- `atlassian-core/src/main/java/ru/solomentsev/core/config/AppConfig.java`
+- `atlassian-core/src/main/resources/logback.xml`
 
 Это описание реализации на момент проверки, а не обещание соответствия любой будущей версии MCP. При обновлении основного проекта контракт необходимо сверять повторно. В AQA-прогоне следует фиксировать commit SHA основного проекта.
 
@@ -155,9 +159,11 @@ Stateless-запросы не переводят классический lifecy
 
 ### 6.1. Ограничение выдачи и пагинация
 
-В текущих схемах `jira_search`, `confluence_search` и `confluence_list_spaces` есть только параметр `limit`. В контракте не объявлены `offset`, `cursor`, `startAt`, `nextPageToken` или иной механизм запроса следующей страницы.
+В схемах `jira_search`, `confluence_search` и `confluence_list_spaces` опубликован только параметр `limit`. MCP-клиент не может передать `offset`, `cursor`, `startAt`, `nextPageToken` или запросить конкретную страницу.
 
-Следовательно, AQA может проверять допустимый диапазон и значение `limit` по умолчанию, а также то, что число возвращённых элементов не превышает заданный лимит. Нельзя заявлять о поддержке перехода на следующую страницу или полном обходе результатов только на основании наличия `limit`. Тесты пагинации можно добавить после изменения MCP-контракта и публикации соответствующих параметров/маркеров продолжения.
+Внутренняя реализация сервисов сама обходит страницы Atlassian API, пока не наберёт `limit` результатов или API не вернёт пустую страницу/отсутствие следующего токена: Jira использует `nextPageToken`, Confluence — `_links.next` и локально формируемый `start`. Это внутренняя деталь сервера, а не публичный MCP-параметр.
+
+AQA проверяет диапазон и default `limit`, а также то, что возвращаемое число элементов не превышает лимит. Отдельное управление страницами со стороны MCP-клиента контрактом не предусмотрено; тесты не должны ожидать или передавать токены продолжения.
 
 ## 7. tools/call и формат ошибок
 
@@ -199,6 +205,8 @@ Confluence URL необязателен: при отсутствии испол�
 - `MCP_MAX_RESPONSE_BYTES`: положительное целое, максимум 104 857 600, default 2 097 152.
 
 Приоритет источников конфигурации: JVM properties → environment → `.env` → `application.properties`. Имена JVM properties: `jira.url`, `jira.email`, `jira.token`, `confluence.url`, `mcp.max-text-length`, `mcp.max-response-bytes`. Для файлов поддерживаются пути через `ATLASSIAN_ENV_FILE` / `ATLASSIAN_PROPERTIES_FILE` или JVM properties `atlassian.env.file` / `atlassian.properties.file`.
+
+`ATLASSIAN_LOG_LEVEL` — отдельная настройка Logback: `DEBUG`, `INFO`, `WARN` или `ERROR`, default `INFO`. Логи приложения направляются только в stderr; stdout остаётся зарезервирован под JSON-RPC.
 
 Ошибки обязательной конфигурации приводят к завершению процесса с exit code 1 до запуска STDIO-цикла. URL Jira и явно заданный URL Confluence должны быть абсолютными HTTPS URL без user-info, query и fragment.
 

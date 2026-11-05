@@ -49,7 +49,7 @@ AQA проверяет MCP-сервер как самостоятельное п
 | Компонент | Назначение |
 |---|---|
 | Build container | Получает исходный код основного проекта и собирает исполняемый JAR |
-| MCP Server container | Запускает STDIO Bridge и дочерние процессы MCP-сервера |
+| MCP Server container | Запускает STDIO Bridge как PID 1 и дочерние процессы MCP-сервера |
 | AQA container | Запускает Maven, JUnit 5, MCP Client и формирует результаты тестирования |
 | Jenkins | Управляет этапами сборки, запуском контейнеров, тестированием, публикацией отчётов и очисткой |
 
@@ -57,15 +57,17 @@ AQA проверяет MCP-сервер как самостоятельное п
 
 1. Jenkins получает исходный код AQA-проекта и выбранную ревизию основного проекта.
 2. Build container собирает основной проект и создаёт JAR.
-3. JAR передаётся в MCP Server container через временный Docker volume или общий каталог Jenkins workspace.
-4. MCP Server container запускает STDIO Bridge.
-5. AQA container подключается к Bridge по внутренней Docker network.
-6. Bridge запускает отдельный процесс MCP-сервера для каждого принятого клиентского соединения и проксирует потоки.
-7. AQA выполняет тесты через MCP Client.
-8. Jenkins публикует JUnit XML и Allure Report.
-9. Jenkins останавливает контейнеры и удаляет временные ресурсы.
+3. Build container записывает JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`; MCP Server container подключает этот volume только для чтения. Передача через Jenkins workspace не используется.
+4. Для process/reliability-набора Build container дополнительно собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в `mcp-fixtures`; volume подключается только в тестовом профиле.
+5. MCP Server container запускает STDIO Bridge с отдельными control и data listeners. Bridge является PID 1 контейнера (exec-form entrypoint, без shell wrapper), чтобы получать SIGTERM напрямую; Docker Compose `stop_grace_period` устанавливается в 15 секунд, что превышает `PROCESS_STOP_TIMEOUT_MS` и время закрытия listeners. Atlassian credentials хранятся только в Jenkins Credentials и передаются в MCP Server container; AQA container их не получает.
+6. AQA container подключается к выделенной внутренней Docker network.
+7. Перед каждой MCP-сессией AQA привязывает локальный TCP socket к IP:port и регистрирует endpoint вместе с AQA_RUN_ID/testId/clientSessionId через control channel.
+8. AQA подключает тот же socket к data port; Bridge атомарно связывает endpoint с регистрацией, назначает connectionId и запускает дочерний MCP-процесс.
+9. AQA выполняет тесты через MCP Client; status/diagnostics запрашиваются отдельно через control channel.
+10. Jenkins публикует JUnit XML и Allure Report, архивирует реестр и диагностику.
+11. Jenkins останавливает контейнеры и удаляет временные ресурсы.
 
-Docker network изолирована от внешней сети. Порт Bridge не публикуется на хост и доступен только AQA-контейнеру внутри этой сети.
+Control/data ports не публикуются на host. К выделенной user-defined Docker network подключены только AQA и MCP Server. Между ними не допускаются NAT/proxy, меняющие source IP:port; Bridge должен видеть endpoint исходного AQA socket. Процессы внутри AQA-контейнера считаются доверенными в модели угроз первой версии.
 
 ## 4. STDIO Bridge
 
@@ -95,17 +97,20 @@ Bridge не разбирает JSON-RPC и не изменяет содержи�
 
 ### 4.3. Требования к Bridge
 
-Детерминированная корреляция AQA-теста с Bridge connection ID и PID, включая отдельный control channel, регистрацию заранее привязанного socket endpoint, формат JSONL-событий и защитные ограничения, подробно определена в [спецификации корреляции и надёжности Bridge](bridge-correlation-and-reliability.md). Эта спецификация является обязательным дополнением к текущему разделу.
+Детерминированная корреляция AQA-теста с Bridge connection ID и PID, включая JSONL-контракт control channel, состояния регистрации, сетевые предпосылки, модель доверия, обработку гонок и формат диагностики, определена в [спецификации корреляции и надёжности Bridge](bridge-correlation-and-reliability.md). Эта спецификация является обязательным нормативным дополнением к текущему разделу.
 
-- отдельный процесс Bridge запускается при старте MCP Server container;
-- Bridge принимает соединения только во внутренней Docker network;
+- отдельный процесс Bridge запускается при старте MCP Server container и поднимает отдельные control/data listeners;
+- оба listener доступны только в выделенной Docker network, которая содержит только AQA и MCP Server; порты не публикуются на host;
+- TCP-соединения не должны проходить через NAT/proxy, меняющие source IP:port;
 - каждое соединение получает отдельный процесс MCP-сервера;
 - stdout и stderr дочернего процесса не смешиваются;
 - ограничивается максимальное количество активных сессий;
 - задаются таймаут запуска, завершения и бездействия;
 - при аварийном отключении клиента дочерний процесс завершается;
 - ошибки запуска и завершения процесса фиксируются в структурированных диагностических логах;
-- для каждого соединения Bridge создаёт correlation ID; записи содержат событие, connection ID, PID дочернего процесса, причину завершения и exit code (если процесс завершился);
+- AQA регистрирует заранее привязанный socket endpoint до data connect; Bridge атомарно потребляет одноразовую регистрацию и связывает её с connectionId;
+- Bridge предоставляет только allowlisted control-команды; control channel не позволяет читать environment/файлы или запускать произвольные процессы. Сам Bridge получает startup-конфигурацию из MCP Server container и передаёт дочернему MCP-процессу только allowlist Atlassian-конфигурации; подробный список определён в bridge-correlation-and-reliability.md;
+- диагностические события Bridge имеют обязательные timestamp/sequence/event; runId/testId/clientSessionId/registrationId добавляются после регистрации, connectionId и remote endpoint — после binding, PID — после запуска процесса, reason/exitCode — когда применимо. Для незарегистрированных data attempts используется connectionAttemptId и фактический remote endpoint; sessionToken и секреты не записываются. Полный JSONL-контракт и пагинация diagnostics определены в bridge-correlation-and-reliability.md;
 - диагностические записи направляются только в stderr/файл журнала Bridge и не попадают в TCP-поток MCP;
 - Jenkins сохраняет журнал Bridge как артефакт прогона и обеспечивает корреляцию с тестовыми сессиями;
 - секреты не выводятся в логи;
@@ -117,11 +122,24 @@ Bridge реализуется как небольшой самостоятель
 
 Bridge отвечает за TCP-соединение, создание дочернего процесса, передачу stdin/stdout/stderr и диагностические события жизненного цикла.
 
-MCP Client в AQA отвечает за TCP-соединение со стороны клиента, JSON-RPC, MCP handshake, идентификаторы запросов, таймауты ожидания ответа и проверку структуры сообщений. Он не управляет PID и потоками дочернего процесса напрямую.
+`BridgeControlClient` в AQA отвечает за JSONL-команды control channel, регистрацию socket endpoint, status/diagnostics и отмену незапущенной регистрации. `McpSessionManager` координирует регистрацию и подключение того же socket к data port. `McpClient` отвечает только за MCP/JSON-RPC, handshake, request ID, таймауты ответов и проверку структуры сообщений. Ни один AQA-компонент не управляет PID или потоками дочернего процесса напрямую.
 
 Проверки поведения MCP выполняются по TCP/JSON-RPC. Подтверждение создания и завершения дочерних процессов выполняется по отдельному диагностическому журналу Bridge, который собирается Jenkins; диагностический канал не является частью MCP-протокола.
 
 Bridge не должен содержать бизнес-логику Jira/Confluence и не должен знать назначение MCP-инструментов.
+
+### 4.5. Тестовый STDIO fixture
+
+Для детерминированных process/reliability-сценариев используется отдельный минимальный `bridge-test-fixture.jar`, который реализует только STDIO-поведение и не обращается к Jira/Confluence. Он собирается как отдельный тестовый артефакт и монтируется в MCP Server container только в тестовых конфигурациях, read-only.
+
+Bridge получает путь к дочернему JAR через `MCP_SERVER_JAR_PATH`. В обычном прогоне значение указывает на `/artifacts/atlassian-mcp-light.jar`; в fixture-сценариях — на `/fixtures/bridge-test-fixture.jar`. Bridge не принимает произвольные параметры командной строки или environment от AQA: в test profile разрешены только `BRIDGE_TEST_FIXTURE_MODE=ECHO|IGNORE_STDIN_EOF|PARTIAL_RESPONSE`, `BRIDGE_TEST_DROP_RESPONSE_AFTER_BYTES` для обрыва data-ответа после N байт и `BRIDGE_TEST_DROP_CONTROL_RESPONSE_ONCE` для потери первого успешного ответа REGISTER_SESSION. Эти параметры задаются Jenkins-конфигурацией MCP Server, не control-командами AQA; в обычном профиле они отсутствуют.
+
+- `ECHO` — возвращает детерминированные JSONL-ответы на входные строки;
+- `IGNORE_STDIN_EOF` — продолжает работать после EOF stdin, чтобы проверить force kill после `PROCESS_STOP_TIMEOUT_MS`;
+- `PARTIAL_RESPONSE` — отправляет неполный JSON без завершающего newline, flush-ит stdout, пишет `FIXTURE_PARTIAL_RESPONSE_WRITTEN` в stderr и остаётся активным до закрытия соединения/завершения Bridge.
+
+Bridge добавляет fixture stderr-маркеры в структурированную диагностику с точными `clientSessionId`/`connectionId`, не пересылая их в MCP data stream. Fixture не используется в контрактных и Jira/Confluence integration-тестах. В production-профиле fixture mode запрещён.
+
 
 ## 5. Архитектура AQA-проекта
 
@@ -139,7 +157,10 @@ Bridge не должен содержать бизнес-логику Jira/Confl
     │   │       │   ├── JsonRpcRequest.java
     │   │       │   ├── JsonRpcResponse.java
     │   │       │   └── McpMessage.java
-    │   │       ├── config/
+    │   │       ├── control/
+    │       │       │   ├── BridgeControlClient.java
+    │       │       │   └── SessionRegistration.java
+    │       │       ├── config/
     │   │       │   └── TestConfig.java
     │   │       ├── data/
     │   │       │   ├── TestRunContext.java
@@ -169,6 +190,9 @@ Bridge не должен содержать бизнес-логику Jira/Confl
     │   │   └── bridge/
     │   └── tests/
     │       └── Dockerfile
+    ├── test-fixture/
+    │   ├── src/main/java/ru/solomentsev/mcp/fixture/
+    │   └── pom.xml
     ├── docs/
     ├── pom.xml
     ├── Jenkinsfile
@@ -182,7 +206,9 @@ Bridge не должен содержать бизнес-логику Jira/Confl
 |---|---|
 | McpClient | Отправка MCP/JSON-RPC запросов и проверка ответов |
 | McpSession | Одно TCP-соединение с Bridge и одна изолированная MCP-сессия |
-| McpSessionManager | Создание, учёт и закрытие сессий |
+| McpSessionManager | Координация регистрации endpoint, создания data-сессий, учёта и закрытия сессий |
+| BridgeControlClient | JSONL control-команды регистрации, статуса, диагностики и отмены |
+| SessionRegistration | Контекст регистрации: runId, testId, clientSessionId, endpoint, registrationId и sessionToken |
 | protocol | Модели JSON-RPC и MCP-сообщений |
 | TestConfig | Загрузка и валидация настроек AQA |
 | TestRunContext | Идентификатор прогона и контекст тестовых данных |
@@ -358,17 +384,47 @@ McpSessionManager учитывает активные сессии. JUnit extens
 
 ### Параметры AQA
 
-| Переменная | Назначение |
-|---|---|
-| MCP_BRIDGE_HOST | Имя сервиса Bridge в Docker network |
-| MCP_BRIDGE_PORT | Внутренний TCP-порт Bridge |
-| MCP_CONNECT_TIMEOUT_SECONDS | Таймаут подключения |
-| MCP_RESPONSE_TIMEOUT_SECONDS | Таймаут ожидания ответа |
-| MCP_SESSION_CLOSE_TIMEOUT_SECONDS | Таймаут закрытия сессии |
-| AQA_PARALLELISM | Число параллельных тестовых классов |
-| JIRA_TEST_PROJECT_KEY | Выделенный Jira project |
-| CONFLUENCE_TEST_SPACE_KEY | Выделенный Confluence space |
-| AQA_RUN_ID | Уникальный идентификатор прогона |
+| Переменная | Значение по умолчанию | Назначение |
+|---|---:|---|
+| MCP_BRIDGE_CONTROL_HOST | `mcp-server` | DNS alias Bridge в выделенной Docker network |
+| MCP_BRIDGE_CONTROL_PORT | `8091` | Внутренний TCP-порт control channel |
+| MCP_BRIDGE_DATA_HOST | `mcp-server` | DNS alias Bridge в выделенной Docker network |
+| MCP_BRIDGE_DATA_PORT | `8090` | Внутренний TCP-порт MCP data channel |
+| AQA_REGISTRATION_TTL_MS | `10000` | Запрашиваемый срок регистрации, 1 000–30 000 мс; Bridge применяет собственный верхний предел |
+| CONTROL_CONNECT_TIMEOUT_MS | `1000` | Таймаут подключения к control channel, мс |
+| CONTROL_RESPONSE_TIMEOUT_MS | `1000` | Таймаут ответа control channel, мс |
+| DATA_CONNECT_TIMEOUT_MS | `2000` | Таймаут подключения к data channel, мс |
+| MCP_RESPONSE_TIMEOUT_SECONDS | `60` | Таймаут ожидания MCP-ответа, секунд |
+| MCP_SESSION_CLOSE_TIMEOUT_SECONDS | `10` | Таймаут закрытия MCP-сессии, секунд |
+| AQA_PARALLELISM | `2` | Число параллельных тестовых классов; не выше MAX_ACTIVE_SESSIONS |
+| JIRA_TEST_PROJECT_KEY | — | Ключ выделенного Jira project; обязателен для Jira integration |
+| CONFLUENCE_TEST_SPACE_KEY | — | Ключ выделенного Confluence space; обязателен для Confluence integration |
+| JIRA_TEST_USER_IDENTIFIER | — | Идентификатор пользователя для jira_get_user |
+| JIRA_PRIVATE_FIELDS_USER_IDENTIFIER | — | Необязательный пользователь с ограниченными email/displayName для JIRA-022 |
+| AQA_RUN_ID | Генерируется Jenkins | Уникальный идентификатор прогона |
+
+### Параметры Bridge
+
+| Переменная | Начальное значение | Назначение |
+|---|---:|---|
+| BRIDGE_DATA_BIND_ADDRESS | 0.0.0.0 | Bind data listener внутри контейнера |
+| BRIDGE_DATA_PORT | 8090 | Data listener, не публикуется на host |
+| BRIDGE_CONTROL_BIND_ADDRESS | 0.0.0.0 | Bind control listener внутри контейнера |
+| BRIDGE_CONTROL_PORT | 8091 | Control listener, не публикуется на host |
+| BRIDGE_CHILD_JAVA | `java` | Исполняемый файл Java дочернего процесса; передаётся без shell |
+| MCP_SERVER_JAR_PATH | `/artifacts/atlassian-mcp-light.jar` | Путь к исполняемому JAR дочернего MCP-процесса; в изолированных process-тестах заменяется на fixture/invalid JAR |
+| REGISTRATION_TTL_MS | 10 000 | Максимальный TTL регистрации в состоянии REGISTERED, 1 000–30 000 мс |
+| SESSION_RECORD_RETENTION_MS | 3 600 000 | Хранение status/diagnostics и tombstone после terminal event; 60 000–86 400 000 мс |
+| MAX_ACTIVE_SESSIONS | 2 | Максимальное число активных дочерних MCP-процессов |
+| MAX_PENDING_REGISTRATIONS | 4 | Максимум ожидающих data connection регистраций |
+| CONTROL_MAX_MESSAGE_BYTES | 16 384 | Максимальный размер control request/response |
+| CONTROL_MAX_CONNECTIONS | 8 | Максимум одновременно открытых control connections |
+| CONTROL_RATE_LIMIT_PER_MINUTE | 60 | Лимит команд на один source IP |
+| PROCESS_START_TIMEOUT_MS | 10 000 | Таймаут запуска дочернего процесса |
+| PROCESS_STOP_TIMEOUT_MS | 5 000 | Таймаут штатного завершения до принудительного завершения |
+| IDLE_SESSION_TIMEOUT_MS | 90 000 | Таймаут бездействия MCP-сессии; больше максимального MCP response timeout |
+
+Начальные значения рассчитаны на AQA_PARALLELISM=2. Их изменение требует согласованного изменения конфигурации и повторного прогона reliability-тестов.
 
 ### Параметры основного MCP-сервера
 
@@ -403,11 +459,15 @@ AQA не получает токен Atlassian, если ему не требу�
 
 Для интеграционных тестов выделяются:
 
-- отдельный Jira project;
-- отдельный Confluence space;
-- отдельная тестовая учётная запись с минимально необходимыми правами.
+- отдельный Jira project и Confluence space, предназначенные только для автотестов;
+- основная Atlassian-учётная запись с Browse Projects, Create Issues, Transition Issues и Add Comments в Jira, а также View/Create/Edit в тестовом Confluence space;
+- отдельные permission profiles для негативных сценариев без Browse Projects, без Add Comments и без доступа к Confluence spaces;
+- Jira project без дополнительных обязательных custom fields: публичный MCP-инструмент создания принимает только project_key, summary, description и optional issue_type; тип Bug должен быть доступен по умолчанию;
+- Jira workflow с доступным переходом, однозначно определяемым по передаваемому фрагменту имени, и заранее определёнными исходными статусами.
 
-Тесты не должны изменять пользовательские объекты вне выделенного тестового пространства.
+Permission profiles запускаются последовательно в отдельных конфигурациях MCP Server container/Bridge; Jenkins передаёт соответствующие credentials только MCP Server container. AQA Client не получает и не передаёт Atlassian credentials через MCP или control channel. Негативный сценарий считается environment-blocked, если требуемую комбинацию прав невозможно изолировать в tenant.
+
+Тесты не должны изменять пользовательские объекты вне выделенных project/space.
 
 ### 10.2. Уникальность данных
 
@@ -461,10 +521,13 @@ Performance/load testing не входит в первую версию. Про�
 
 ### 11.1. Корреляция и параллельность на стороне AQA
 
-- Перед созданием MCP-сессии JUnit extension создаёт clientSessionId и регистрирует его через Bridge control channel.
-- TCP socket привязывается к локальному адресу/порту до регистрации; после регистрации тот же socket используется для data connection. Это обеспечивает однозначное сопоставление по remote IP:port без добавления байтов в MCP-поток.
+- Перед созданием MCP-сессии JUnit extension вызывает `McpSessionManager`, который создаёт clientSessionId, привязывает TCP socket к локальному адресу/порту и через `BridgeControlClient` регистрирует endpoint.
+- После успешной регистрации тот же экземпляр socket подключается к data port. В MCP-поток не добавляются registration token или служебное framing.
+- Предполагается выделенная user-defined Docker network только между AQA и MCP Server без NAT/proxy, меняющих source IP:port. Процессы внутри AQA container считаются доверенными; endpoint correlation не защищает от скомпрометированного процесса внутри этого контейнера.
+- Точный формат команд, ошибок, token, состояний, TTL и обработки гонок определяется bridge-correlation-and-reliability.md.
 - Один тестовый класс получает одну MCP-сессию; методы внутри класса выполняются последовательно. Параллелятся классы, каждый класс имеет отдельный socket, clientSessionId, connectionId и дочерний процесс.
 - AQA_PARALLELISM не может превышать MAX_ACTIVE_SESSIONS; значение проверяется до запуска набора. При превышении Pipeline завершается ошибкой конфигурации.
+- AQA использует отдельные `MCP_BRIDGE_CONTROL_HOST/PORT` и `MCP_BRIDGE_DATA_HOST/PORT`; control-команды выполняются с отдельными connect/response timeout.
 - AQA_RUN_ID создаётся один раз на прогон; testId берётся из стабильного ID тест-кейса. Для параметризованных повторов добавляется стабильный индекс invocation.
 - Параллельное выполнение методов одного класса и совместное использование MCP-сессии конкурентными тестами запрещены.
 
@@ -472,15 +535,13 @@ Performance/load testing не входит в первую версию. Про�
 
 Автоматический retry разрешён только для безопасных read-only операций и только при ошибке, однозначно возникшей до отправки запроса. Для запросов, которые могли быть отправлены, но ответ на которые потерян, повтор запрещён до сверки результата.
 
-Запрещён автоматический retry для jira_create_issue, jira_add_comment, jira_transition, confluence_create_page и confluence_update_page. При таймауте/обрыве после отправки write-запроса результат помечается UNKNOWN: сначала выполняется read/search по уникальному маркеру или ID и проверяется фактическое состояние. Повтор создания допускается только если доказано отсутствие объекта; повтор комментария, перехода и обновления требует отдельной проверки и не выполняется общим retry interceptor.
+Запрещён автоматический retry для `jira_create_issue`, `jira_add_comment`, `jira_transition`, `confluence_create_page` и `confluence_update_page`. До отправки каждой write-операции AQA синхронно сохраняет `WRITE_INTENT`; при потере ответа после отправки фиксируется `UNKNOWN_OUTCOME`. Созданные Jira issues и Confluence pages сверяются по уникальному маркеру/ID; `confluence_update_page` сверяется чтением текущего содержимого и версии. Для `jira_transition` чтение текущего статуса может подтвердить только совпадение с целевым статусом на момент проверки, но не доказывает историю перехода; если статус уже изменился дальше или результат неоднозначен, требуется ручная сверка. Ни переход, ни обновление автоматически не повторяются. `jira_add_comment` не имеет MCP-инструмента чтения комментариев: потерянный ответ требует ручной сверки без повтора. Повтор создания допустим только после доказательства отсутствия объекта.
 
 Для Confluence update используется версия страницы как optimistic-lock guard. При конфликте версии тест перечитывает страницу, фиксирует конфликт и завершает сценарий; автоматическое перезаписывание свежей версии запрещено.
 
 ### 11.3. Надёжное сохранение тестовых данных
 
-Реестр объектов ведётся в формате JSON Lines: одна запись на успешно созданный объект, обязательные поля runId, testId, objectType, objectId, objectKey (если есть), marker, createdAt. Запись выполняется сразу после получения подтверждённого ID, с сериализацией конкурентных записей и flush/force на диск. Реестр одного запуска не перезаписывает реестры других запусков.
-
-Если write-запрос завершился с неопределённым результатом, отдельная запись UNKNOWN_OUTCOME сохраняет инструмент, маркер, testId и причину; она не считается подтверждённым созданным объектом. Jenkins архивирует реестр и журнал неопределённых результатов даже при падении тестов. Не выводить payload с секретами в реестр.
+Реестр ведётся как append-only JSONL event log. До отправки write-операции AQA синхронно сохраняет `WRITE_INTENT` с operationId, runId, testId, toolName, типом/ключом целевого объекта и marker; полный payload и секреты не сохраняются. После успешного MCP-ответа записывается `WRITE_CONFIRMED`. objectId/objectKey добавляются, если инструмент возвращает идентификатор. Для `jira_add_comment` ID комментария не возвращается: фиксируются `objectType=JIRA_COMMENT`, parentObjectKey и marker без objectId. Для `jira_transition` фиксируются ключ задачи и целевой статус; это журнал операции, а не создание нового объекта. Только созданные Jira issues и Confluence pages пополняют реестр объектов для очистки. `WRITE_REJECTED` допустим только при однозначном доказательстве отсутствия побочного эффекта; в остальных неопределённых случаях используется `UNKNOWN_OUTCOME`. Полный `WRITE_INTENT` без терминального события при восстановлении переводится в `UNKNOWN_OUTCOME`, поскольку запрос мог быть отправлен. Записи сериализуются под общей блокировкой и дописываются как newline-terminated JSONL; `flush/force` должен завершиться до отправки соответствующего write-запроса. Поэтому незавершённая последняя строка означает, что запрос ещё не отправлялся: такая строка изолируется как повреждённый хвост и не считается intent. Реестр не является транзакцией с Atlassian API и не исключает неопределённость. Реестры разных прогонов не перезаписываются. Jenkins архивирует журнал даже при падении тестов, если агент и workspace доступны; секретные payloads в журнал не попадают.
 
 ## 12. Allure и диагностика
 
@@ -499,7 +560,7 @@ Performance/load testing не входит в первую версию. Про�
 - сведения о сессии;
 - диагностические записи Bridge по точной цепочке runId + testId + clientSessionId + connectionId; отсутствие обязательной корреляции для Process-теста считается ошибкой;
 - состояние TCP-соединения;
-- PID и exit code дочернего процесса из журнала Bridge, если доступны;
+- PID из журнала Bridge, если процесс был создан; exit code — после завершения процесса. Отсутствие значения допустимо только для стадии, на которой оно ещё не могло появиться;
 - ID созданных Jira/Confluence объектов;
 - состояние и путь к сохранённому реестру созданных объектов;
 - сведения об окружении без секретов.
@@ -524,17 +585,22 @@ Performance/load testing не входит в первую версию. Про�
 - Использует JDK 17 и Maven Wrapper основного проекта.
 - Получает исходный код выбранной ревизии основного проекта.
 - Выполняет сборку Maven.
-- Передаёт исполняемый JAR в общий временный volume или каталог Jenkins workspace.
-- После сборки не остаётся постоянно работающим.
+- Записывает исполняемый JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`.
+- Завершает работу после успешной передачи артефакта.
+- Для process/reliability-наборов отдельным шагом собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в именованный volume `mcp-fixtures` по пути `/fixtures/bridge-test-fixture.jar`.
+- `mcp-fixtures` создаётся и подключается только в тестовом профиле; обычный smoke/integration прогон использует только `mcp-artifact`.
+- Build container не остаётся постоянно работающим после завершения сборки обоих артефактов.
 
 ### MCP Server container
 
 - Использует Java 17 runtime.
-- Содержит JAR основного приложения и STDIO Bridge.
+- Подключает volume `mcp-artifact` только для чтения и запускает JAR по пути `/artifacts/atlassian-mcp-light.jar`.
+- В process/reliability test profile дополнительно подключает `mcp-fixtures` только для чтения; fixture не монтируется в обычных прогонах.
+- Содержит STDIO Bridge.
 - Запускает Bridge как управляющий процесс.
 - Bridge запускает дочерние процессы MCP-сервера по одному на клиентское соединение.
 - Получает конфигурацию Jira/Confluence через ENV.
-- Не публикует порт Bridge на хост.
+- Не публикует control и data ports Bridge на хост.
 
 ### AQA container
 
@@ -544,7 +610,7 @@ Performance/load testing не входит в первую версию. Про�
 - Запускает выбранные JUnit-наборы.
 - Сохраняет surefire-reports, Allure results, реестр созданных Atlassian-объектов и диагностические материалы в каталог, доступный Jenkins.
 
-Контейнеры должны иметь ограниченные ресурсы и корректные health checks. Jenkins удаляет временные контейнеры, network и volume после завершения Pipeline, в том числе при ошибке тестов.
+Контейнеры должны иметь ограниченные ресурсы и корректные health checks. Jenkins выполняет cleanup контейнеров, network и volume в `post/always`, если Jenkins agent и Docker daemon остаются доступны. Потеря/авария агента или Docker host не позволяет гарантировать cleanup из того же Pipeline; для таких отказов требуется внешняя host-level процедура очистки orphan-ресурсов. Для этого все временные Docker-ресурсы, включая контейнеры, сеть и volumes, маркируются `managed-by=atlassian-mcp-light-autotests`, `aqa-run-id` и `expires-at` (UTC Unix epoch seconds). Максимальная длительность Jenkins Pipeline — 12 часов; TTL orphan-ресурсов — 24 часа; host-level janitor запускается не реже одного раза в час и удаляет только ресурсы со всеми тремя метками и истёкшим `expires-at`. `expires-at` устанавливается при создании ресурса как UTC Unix epoch seconds и не продлевается; Pipeline ограничен 12 часами, поэтому активный прогон не достигает TTL. Для каждого прогона `COMPOSE_PROJECT_NAME` формируется как `aml-${AQA_RUN_ID}` (lowercase, допустимые символы Docker Compose, длина не более 63); контейнеры, сети и volumes разных прогонов не разделяются. Немаркированные ресурсы, ресурсы другого проекта и ресурсы до истечения TTL не затрагиваются.
 
 ## 14. Jenkins Pipeline
 
@@ -553,13 +619,14 @@ Jenkins является единственным CI-оркестратором 
 Этапы Pipeline:
 
 1. **Checkout** — получение исходников AQA и выбранной ревизии основного проекта.
-2. **Build MCP** — сборка основного проекта в Build container.
-3. **Build images** — подготовка MCP Server и AQA образов.
-4. **Start MCP Server** — запуск контейнера Bridge и проверка его готовности.
-5. **Run AQA** — запуск тестов в AQA container с выбранным набором и уровнем параллельности.
-6. **Publish reports** — публикация JUnit XML и Allure Report.
-7. **Collect diagnostics** — сохранение журналов Bridge, реестра объектов и журнала UNKNOWN_OUTCOME.
-8. **Cleanup** — сначала архивирование артефактов, затем остановка AQA и Bridge и удаление контейнеров, сети и временных томов. Cleanup выполняется в post/always; ошибка одного шага не пропускает остальные. Atlassian-объекты этим этапом не удаляются.
+2. **Build MCP** — сборка основного проекта в Build container и запись JAR в `mcp-artifact`.
+3. **Build fixture** — при выборе process/reliability набора сборка `test-fixture/pom.xml` и запись fixture JAR в `mcp-fixtures`.
+4. **Build images** — подготовка MCP Server и AQA образов.
+5. **Start MCP Server** — запуск контейнера Bridge и проверка его готовности.
+6. **Run AQA** — запуск тестов в AQA container с выбранным набором и уровнем параллельности.
+7. **Publish reports** — публикация JUnit XML и Allure Report.
+8. **Collect diagnostics** — сохранение структурированных Bridge diagnostics, MCP Server container stdout/stderr, реестра объектов и журнала UNKNOWN_OUTCOME.
+9. **Cleanup** — сначала архивирование артефактов, затем остановка AQA и Bridge и удаление контейнеров, сети и временных томов. Cleanup выполняется в post/always; ошибка одного шага не пропускает остальные. Atlassian-объекты этим этапом не удаляются.
 
 ### Политика запуска
 
@@ -570,7 +637,7 @@ Jenkins является единственным CI-оркестратором 
 
 Конкретные триггеры и правила перехода между этапами задаются в Jenkinsfile. Параметры запуска должны включать тестовый набор, ревизию основного проекта и уровень параллельности.
 
-Для интеграционных прогонов Jenkins передаёт секреты через Credentials. Секреты не должны попадать в консольный вывод.
+Для интеграционных прогонов Jenkins передаёт секреты через Credentials только MCP Server container. Для негативных проверок прав используются отдельные sequential permission profiles: Jenkins останавливает текущий MCP Server/Bridge, запускает его с Credentials соответствующей тестовой учётной записи, выполняет только относящиеся к профилю тесты, архивирует артефакты и затем останавливает профиль. Профили не запускаются параллельно; AQA container не получает Atlassian credentials и не передаёт их через MCP/control channel. Секреты не должны попадать в консольный вывод.
 
 При падении тестов Pipeline всё равно публикует доступные отчёты и выполняет cleanup.
 
@@ -681,10 +748,10 @@ AQA получает адрес Bridge и параметры тестового 
 - [ ] Проверяются все 13 MCP-инструментов.
 - [ ] JSON-RPC errors и MCP tool errors различаются.
 - [ ] Все ожидания ограничены таймаутами.
-- [ ] Автоматические повторы write-операций отключены; неопределённые исходы сверяются по маркеру/ID до любого повтора.
+- [ ] Автоматические повторы write-операций отключены; неопределённые исходы сверяются только доступными MCP-инструментами, а при отсутствии read-back (Jira comment/history) остаются на ручной сверке без повтора.
 - [ ] Реестр создаваемых объектов записывается инкрементально и сохраняется при падении тестового процесса.
 - [ ] Параллельные тестовые классы имеют независимые сессии; методы класса не выполняются одновременно.
-- [ ] Jenkins архивирует результаты и диагностику в post/always до остановки Bridge и гарантированно выполняет cleanup.
+- [ ] Jenkins архивирует результаты и диагностику в post/always до остановки Bridge и выполняет cleanup, пока агент/workspace/Docker daemon доступны; потеря агента/host покрывается отдельной host-level процедурой.
 - [ ] Работают позитивные и негативные тесты.
 - [ ] Интеграционные тесты используют выделенные Jira project и Confluence space.
 - [ ] Тестовые данные уникальны; реестр всех созданных объектов сохраняется для последующей административной очистки.
@@ -704,22 +771,26 @@ AQA получает адрес Bridge и параметры тестового 
 3. Классический handshake и stateless-режим являются обязательными отдельными наборами. Контракт stateless-режима подтверждён в McpProtocol.java: версия 2026-07-28, discovery и per-request metadata.
 4. Реальные лимиты параллельных соединений и таймауты необходимо подобрать по результатам прогонов.
 5. Схемы всех 13 инструментов необходимо сверять с фактическим результатом tools/list, а не только с локальными копиями ожиданий.
-6. Jenkins Pipeline должен сохранять отчёты и выполнять cleanup даже при ошибке на любом этапе.
+6. Jenkins Pipeline должен сохранять отчёты и выполнять cleanup при ошибке любого этапа, пока агент/workspace/Docker daemon доступны; потеря агента/host требует отдельного host-level cleanup.
 
 ## 19. Контрольные сценарии отказа и безопасности
 
 Обязательные негативные проверки реализации:
 
 - истёкшая, повторно использованная, неизвестная или конфликтующая регистрация сессии;
-- несовпадение IP control-channel клиента с заявленным IP data socket;
+- точный recovery retry REGISTER_SESSION после потери ответа, конфликтующий повтор и replay;
+- несовпадение IP control-channel клиента с заявленным IP data socket и несовпадение заявленного source port с фактическим remote port;
+- неверный sessionToken для status/diagnostics/cancel; одинаковый UNAUTHORIZED для неизвестного clientSessionId и неверного token; идемпотентный CANCEL_SESSION для CANCELLED и отказ отмены после BOUND;
+- пагинация GET_SESSION_DIAGNOSTICS, монотонность sequence и сохранение terminal diagnostics в течение retention;
+- неизвестные control-команды, malformed/oversized JSONL, rate limit, лимит control connections и отсутствие host port publishing;
 - control channel недоступен, data channel доступен; lifecycle-тест не должен ложно пройти без корреляции;
 - Bridge недоступен, порт закрыт, TCP reset до/во время/после отправки сообщения;
-- ошибка запуска JAR, завершение дочернего процесса до ответа, зависание запуска и завершения;
+- ошибка создания дочернего процесса, завершение процесса до MCP-ответа, отсутствие обязательной конфигурации и недопустимый Jira URL до начала STDIO-цикла, зависание при штатном завершении с последующим force kill;
 - AQA-клиент аварийно завершился, Bridge остановлен при активных сессиях;
-- превышение лимита сессий и размера control/data сообщений;
+- превышение MAX_PENDING_REGISTRATIONS, MAX_ACTIVE_SESSIONS, CONTROL_MAX_CONNECTIONS и размера control/data сообщений;
 - параллельные соединения с проверкой отсутствия смешения ID, PID, ответов и логов;
 - повторный запуск с новым AQA_RUN_ID, восстановление после частично записанного реестра;
-- timeout после отправки create/comment/update: отсутствие автоматического повтора и проверка UNKNOWN_OUTCOME;
+- timeout после отправки `jira_create_issue`, `jira_add_comment`, `jira_transition`, `confluence_create_page` и `confluence_update_page`: отсутствие автоматического повтора и проверка UNKNOWN_OUTCOME;
 - секретоподобные значения в MCP-ответах и исключениях: маскирование в Allure, Bridge logs и Jenkins console.
 
 ## 20. Принятые архитектурные решения
