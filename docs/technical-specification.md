@@ -59,7 +59,7 @@ AQA проверяет MCP-сервер как самостоятельное п
 2. Build container собирает основной проект и создаёт JAR.
 3. Build container записывает JAR в именованный Docker volume `mcp-artifact` по пути `/artifacts/atlassian-mcp-light.jar`; MCP Server container подключает этот volume только для чтения. Передача через Jenkins workspace не используется.
 4. Для process/reliability-набора Build container дополнительно собирает `test-fixture/pom.xml` из AQA-репозитория и записывает `bridge-test-fixture.jar` в `mcp-fixtures`; volume подключается только в тестовом профиле.
-5. MCP Server container запускает STDIO Bridge с отдельными control и data listeners. Bridge является PID 1 контейнера (exec-form entrypoint, без shell wrapper), чтобы получать SIGTERM напрямую; Docker Compose `stop_grace_period` устанавливается в 15 секунд, что превышает `PROCESS_STOP_TIMEOUT_MS` и время закрытия listeners.
+5. MCP Server container запускает STDIO Bridge с отдельными control и data listeners. Bridge является PID 1 контейнера (exec-form entrypoint, без shell wrapper), чтобы получать SIGTERM напрямую; Docker Compose `stop_grace_period` устанавливается в 15 секунд, что превышает `PROCESS_STOP_TIMEOUT_MS` и время закрытия listeners. Atlassian credentials хранятся только в Jenkins Credentials и передаются в MCP Server container; AQA container их не получает.
 6. AQA container подключается к выделенной внутренней Docker network.
 7. Перед каждой MCP-сессией AQA привязывает локальный TCP socket к IP:port и регистрирует endpoint вместе с AQA_RUN_ID/testId/clientSessionId через control channel.
 8. AQA подключает тот же socket к data port; Bridge атомарно связывает endpoint с регистрацией, назначает connectionId и запускает дочерний MCP-процесс.
@@ -109,7 +109,7 @@ Bridge не разбирает JSON-RPC и не изменяет содержи�
 - при аварийном отключении клиента дочерний процесс завершается;
 - ошибки запуска и завершения процесса фиксируются в структурированных диагностических логах;
 - AQA регистрирует заранее привязанный socket endpoint до data connect; Bridge атомарно потребляет одноразовую регистрацию и связывает её с connectionId;
-- Bridge предоставляет только allowlisted control-команды; shell, произвольный запуск процессов и доступ к environment отсутствуют; полный контракт определён в bridge-correlation-and-reliability.md;
+- Bridge предоставляет только allowlisted control-команды; control channel не позволяет читать environment/файлы или запускать произвольные процессы. Сам Bridge получает startup-конфигурацию из MCP Server container и передаёт дочернему MCP-процессу только allowlist Atlassian-конфигурации; подробный список определён в bridge-correlation-and-reliability.md;
 - диагностические события Bridge имеют обязательные timestamp/sequence/event; runId/testId/clientSessionId/registrationId добавляются после регистрации, connectionId и remote endpoint — после binding, PID — после запуска процесса, reason/exitCode — когда применимо. Для незарегистрированных data attempts используется connectionAttemptId и фактический remote endpoint; sessionToken и секреты не записываются. Полный JSONL-контракт и пагинация diagnostics определены в bridge-correlation-and-reliability.md;
 - диагностические записи направляются только в stderr/файл журнала Bridge и не попадают в TCP-поток MCP;
 - Jenkins сохраняет журнал Bridge как артефакт прогона и обеспечивает корреляцию с тестовыми сессиями;
