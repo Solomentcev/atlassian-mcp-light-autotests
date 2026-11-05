@@ -491,7 +491,7 @@ Performance/load testing не входит в первую версию. Про�
 
 ### 11.1. Корреляция и параллельность на стороне AQA
 
-- Перед созданием MCP-сессии JUnit extension создаёт clientSessionId, привязывает TCP socket к локальному адресу/порту и регистрирует endpoint через Bridge control channel.
+- Перед созданием MCP-сессии JUnit extension вызывает `McpSessionManager`, который создаёт clientSessionId, привязывает TCP socket к локальному адресу/порту и через `BridgeControlClient` регистрирует endpoint.
 - После успешной регистрации тот же экземпляр socket подключается к data port. В MCP-поток не добавляются registration token или служебное framing.
 - Предполагается выделенная user-defined Docker network только между AQA и MCP Server без NAT/proxy, меняющих source IP:port. Процессы внутри AQA container считаются доверенными; endpoint correlation не защищает от скомпрометированного процесса внутри этого контейнера.
 - Точный формат команд, ошибок, token, состояний, TTL и обработки гонок определяется bridge-correlation-and-reliability.md.
@@ -565,7 +565,7 @@ Performance/load testing не входит в первую версию. Про�
 - Запускает Bridge как управляющий процесс.
 - Bridge запускает дочерние процессы MCP-сервера по одному на клиентское соединение.
 - Получает конфигурацию Jira/Confluence через ENV.
-- Не публикует порт Bridge на хост.
+- Не публикует control и data ports Bridge на хост.
 
 ### AQA container
 
