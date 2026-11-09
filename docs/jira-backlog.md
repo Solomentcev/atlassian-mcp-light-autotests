@@ -1,269 +1,148 @@
 # Jira-бэклог тестирования
 
-Иерархия предназначена для организации тестирования Atlassian MCP Light, а не для планирования разработки самого AQA-фреймворка.
+Иерархия предназначена для организации тестирования Atlassian MCP Light и разработки AQA-фреймворка.
 
 Уровни:
-- Epic — крупная область тестирования.
+- Epic — крупная область работ.
 - Feature — функциональная часть Epic.
-- Story — проверяемая пользовательская/системная возможность.
-- Task — конкретная проверка или группа близких проверок.
+- Story — проверяемая возможность.
+- Task — конкретная проверка или техническая задача.
 
-## EPIC 1 — MCP Protocol Testing
+## EPIC 1 — AQA Process Management
 
-Протокольные сценарии выполняются через MCP Client поверх TCP Bridge. Bridge не интерпретирует MCP/JSON-RPC сообщения.
+### Feature 1.1 — Server launch
+**Story:** Запуск тестового экземпляра Atlassian MCP Light.
 
-### Feature 1.1 — Initialization
-**Story:** Проверка инициализации MCP-сессии.
-- Task: успешный `initialize`.
-- Task: проверка согласования поддерживаемых версий.
-- Task: проверка fallback на `2025-11-25` для неизвестной непустой classic protocolVersion.
-- Task: проверка информации о сервере.
-- Task: отправка `notifications/initialized`.
-- Task: повторный `initialize` после READY отклоняется с `-32600` без повреждения текущей сессии.
-- Task: `tools/list` в состоянии INITIALIZATION_PENDING возвращает `-32001`.
+- Task: получать исходный код основного проекта из отдельного Git checkout.
+- Task: фиксировать commit SHA тестируемого сервера.
+- Task: собирать основной проект из исходников через Maven Wrapper.
+- Task: реализовать запуск JAR через ProcessBuilder.
+- Task: реализовать Docker launcher через Docker CLI и docker run -i.
+- Task: использовать единый интерфейс launcher для обоих режимов.
+- Task: проверять MCP readiness отдельно от факта создания OS-процесса.
+- Task: передавать конфигурацию тестируемому серверу через environment.
 
-### Feature 1.2 — Tools Discovery
-**Story:** Получение и проверка списка MCP-инструментов.
-- Task: вызов `tools/list`.
-- Task: наличие всех 13 инструментов.
-- Task: проверка названий и описаний.
-- Task: проверка JSON Schema параметров и annotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint).
+### Feature 1.2 — STDIO transport
+**Story:** Обмен MCP/JSON-RPC сообщениями через стандартные потоки процесса.
 
-### Feature 1.3 — Tool Execution
-**Story:** Вызов MCP-инструментов.
-- Task: успешный `tools/call`.
-- Task: передача аргументов.
-- Task: проверка структуры результата.
-- Task: обработка ошибки инструмента.
+- Task: реализовать UTF-8 JSONL writer с newline и flush.
+- Task: реализовать чтение JSONL response из STDOUT.
+- Task: сопоставлять ответы с request id.
+- Task: поддержать notifications без ожидания response.
+- Task: обрабатывать EOF, process exit и response timeout.
+- Task: читать STDERR независимо от MCP-потока.
+- Task: ограничивать объём диагностического буфера и сохранять лог процесса.
 
-### Feature 1.4 — Stateless MCP Mode
-**Story:** Проверка stateless MCP-взаимодействия без классической инициализации.
-- Task: вызов `server/discover` с версией `2026-07-28`.
-- Task: проверка supportedVersions, capabilities, ttlMs, cacheScope и serverInfo metadata.
-- Task: stateless `tools/list` без initialize.
-- Task: stateless `tools/call` без initialize.
-- Task: проверка обязательных ключей `_meta`.
-- Task: обработка неподдерживаемой protocolVersion (`-32022`).
-- Task: проверка, что stateless-запросы не меняют классическое состояние lifecycle.
+### Feature 1.3 — Process lifecycle
+**Story:** Надёжное завершение тестового процесса/контейнера.
 
-### Feature 1.5 — JSON-RPC Validation
-**Story:** Обработка некорректных JSON-RPC сообщений.
-- Task: некорректный JSON.
-- Task: некорректная структура запроса.
-- Task: неизвестный метод.
-- Task: отсутствующие обязательные параметры.
-- Task: некорректные типы параметров.
-- Task: пустые и пробельные строки, null, неизвестные аргументы и значения за границами integer.
-- Task: пустые STDIO-строки, trailing JSON tokens, корневое JSON-значение не object и запрос метода без id.
-- Task: сохранение string/integer request id в response.
-- Task: tools/call до READY возвращает -32001 и не вызывает инструмент.
-- Task: ping до READY возвращает пустой result и не меняет classic lifecycle.
-- Task: проверка обязательных полей initialize и типа capabilities.
+- Task: реализовать JUnit lifecycle extension для запуска и остановки.
+- Task: выполнять graceful shutdown после тестов.
+- Task: выполнять force termination после shutdown timeout.
+- Task: выполнять cleanup при assertion failure, exception и timeout.
+- Task: реализовать Docker cleanup по уникальному container ID/name.
+- Task: проверять, что завершение Docker CLI не оставляет контейнер.
+- Task: не затрагивать Docker resources других прогонов.
 
-## EPIC 2 — Jira Integration Testing
+### Feature 1.4 — Parallel execution
+**Story:** Изоляция независимых тестовых сессий.
 
-### Feature 2.1 — Jira Issue Retrieval
-**Story:** Получение задачи Jira.
-- Task: получение существующей задачи.
-- Task: получение задачи с необязательными полями.
-- Task: обработка несуществующей задачи.
-- Task: обработка отказа в доступе.
-- Task: запуск негативного кейса с отдельным permission profile без Browse Projects.
+- Task: один процесс на одну MCP-сессию.
+- Task: исключить конкурентное чтение одного STDOUT несколькими тестами.
+- Task: методы, разделяющие одну сессию, выполнять последовательно.
+- Task: параллелить только независимые процессы и тестовые данные.
+- Task: изолировать process handles, streams, logs и Docker resources.
 
-### Feature 2.2 — Jira Issue Search
-**Story:** Поиск задач Jira.
-- Task: поиск по корректному JQL.
-- Task: поиск без результатов.
-- Task: ограничение количества результатов.
-- Task: проверка значения `limit` по умолчанию и допустимого диапазона; MCP-клиент не передаёт offset/cursor, внутренняя пагинация Jira выполняется сервисом через `nextPageToken`.
-- Task: обработка некорректного JQL.
+## EPIC 2 — MCP Protocol Testing
 
-### Feature 2.3 — Jira Issue Creation
-**Story:** Создание задачи Jira.
-- Task: создание с обязательными полями.
-- Task: создание с дополнительными полями.
-- Task: проверка значения issue_type по умолчанию (Bug), если параметр не передан.
-- Task: проверка отсутствующих обязательных параметров.
-- Task: обработка некорректных значений.
-- Task: preflight проекта: отсутствие дополнительных обязательных custom fields; доступность типа Bug по умолчанию.
+### Feature 2.1 — Classic lifecycle
+- Task: initialize и согласование версии.
+- Task: notifications/initialized и переход в READY.
+- Task: повторный initialize.
+- Task: запросы до READY.
+- Task: serverInfo и capabilities.
 
-### Feature 2.4 — Jira Issue Transition
-**Story:** Изменение статуса задачи Jira.
-- Task: успешный переход.
-- Task: выбор перехода по частичному совпадению названия.
-- Task: обработка недоступного статуса.
-- Task: фиксация доступного workflow-перехода с однозначным фрагментом имени и исходным статусом.
-- Task: обработка отсутствующего перехода.
+### Feature 2.2 — Stateless lifecycle
+- Task: server/discover.
+- Task: stateless tools/list и tools/call.
+- Task: проверка обязательных metadata.
+- Task: обработка неподдерживаемой protocolVersion.
+- Task: проверка независимости stateless и classic lifecycle.
 
-### Feature 2.5 — Jira Issue Comments
-**Story:** Добавление комментария к задаче.
-- Task: успешное добавление комментария по MCP-ответу `jira_add_comment`.
-- Task: проверка пустого комментария; независимое чтение комментария через MCP не входит в проверку, поскольку соответствующего инструмента нет.
-- Task: обработка ошибки доступа.
-- Task: запуск негативного кейса в отдельном permission profile без Add Comments.
+### Feature 2.3 — Tools contract
+- Task: проверка 13 имён инструментов.
+- Task: проверка descriptions, JSON Schema и annotations.
+- Task: успешный вызов read/write инструментов.
+- Task: ошибки аргументов и неизвестный инструмент.
+- Task: сравнение с mcp-contract.md.
 
-### Feature 2.6 — Jira Project Retrieval
-**Story:** Получение проекта Jira.
-- Task: получение существующего проекта.
-- Task: обработка несуществующего проекта.
+### Feature 2.4 — JSON-RPC validation
+- Task: malformed JSON и invalid request.
+- Task: неизвестный метод и неверные параметры.
+- Task: идентификаторы request/response.
+- Task: notification без response.
+- Task: пустые строки, trailing tokens и неверный JSON root.
+- Task: проверка продолжения работы после негативного запроса.
 
-### Feature 2.7 — Jira User Retrieval
-**Story:** Получение пользователя Jira.
-- Task: получение пользователя по идентификатору.
-- Task: обработка отсутствующих полей пользователя.
-- Task: обработка несуществующего пользователя.
+## EPIC 3 — Jira Integration Testing
 
-## EPIC 3 — Confluence Integration Testing
+- Feature 3.1 — Issue retrieval and search: получение задачи, JQL search, пустая выдача, invalid JQL, права.
+- Feature 3.2 — Issue creation: обязательные/необязательные поля, defaults, validation и реестр.
+- Feature 3.3 — Issue transition: доступный переход, недоступный переход, неоднозначный исход.
+- Feature 3.4 — Comments: добавление комментария, пустое значение, permission denied.
+- Feature 3.5 — Projects and users: чтение проекта и пользователя, отсутствующие объекты и права.
 
-### Feature 3.1 — Confluence Page Retrieval
-**Story:** Получение страницы Confluence.
-- Task: получение существующей страницы.
-- Task: проверка заголовка и содержимого.
-- Task: обработка несуществующей страницы.
-- Task: проверка ограничения длины содержимого.
+Все проверки выполняются через MCP Client. Прямые Jira REST вызовы из AQA не используются.
 
-### Feature 3.2 — Confluence Space Management
-**Story:** Получение информации о пространствах Confluence.
-- Task: получение существующего пространства.
-- Task: fallback на JIRA_URL/wiki при отсутствии CONFLUENCE_URL.
-- Task: получение списка пространств.
-- Task: обработка пустого списка.
-- Task: отдельный permission profile без доступа к Confluence spaces для проверки пустого списка.
-- Task: проверка default limit=25 для confluence_list_spaces.
-- Task: проверка ограничения количества элементов параметром `limit`; внутренняя пагинация Confluence выполняется сервисом через `_links.next` и локальный `start`, отдельный токен MCP-клиенту не предоставляется.
+## EPIC 4 — Confluence Integration Testing
 
-### Feature 3.3 — Confluence Content Search
-**Story:** Поиск страниц Confluence.
-- Task: поиск по корректному CQL.
-- Task: поиск без результатов.
-- Task: проверка ограничения количества результатов параметром `limit`; внутренняя пагинация Confluence выполняется сервисом через `_links.next` и локальный `start`, отдельный токен MCP-клиенту не предоставляется.
-- Task: обработка некорректного CQL.
-- Task: проверка default limit=5 для confluence_search.
+- Feature 4.1 — Pages: получение, создание, обновление, версии и ошибки.
+- Feature 4.2 — Spaces: список и получение пространства, пустая выдача, права.
+- Feature 4.3 — Search: CQL, пустая выдача, invalid CQL, limit.
+- Feature 4.4 — Content validation: заголовок, содержимое, ограничения длины, родительская страница.
 
-### Feature 3.4 — Confluence Page Creation
-**Story:** Создание страницы Confluence.
-- Task: создание с обязательными полями.
-- Task: создание с родительской страницей.
-- Task: проверка отсутствующих обязательных параметров.
-- Task: обработка некорректных значений.
+Все проверки выполняются через MCP Client. Прямые Confluence REST вызовы из AQA не используются.
 
-### Feature 3.5 — Confluence Page Update
-**Story:** Обновление страницы Confluence.
-- Task: обновление содержимого.
-- Task: обновление заголовка.
-- Task: обновление заголовка и содержимого.
-- Task: проверка увеличения версии.
-- Task: обновление страницы без передачи version с автоматическим чтением текущей версии.
-- Task: автоматическое определение текущей версии, если version не передан.
-- Task: обработка некорректной версии.
+## EPIC 5 — Jenkins CI
 
-## EPIC 4 — STDIO Bridge and Session Lifecycle Testing
+### Feature 5.1 — Pipeline
+- Task: checkout AQA repository.
+- Task: checkout основного проекта на выбранной ревизии.
+- Task: сохранить commit SHA тестируемого сервера.
+- Task: собирать сервер из исходников.
+- Task: выбирать локальный JAR или Docker режим.
+- Task: запускать Maven tests с выбранными tags.
+- Task: публиковать JUnit XML и Allure Report.
+- Task: архивировать STDERR/stdout diagnostics и test data registry.
+- Task: выполнять cleanup в post/always.
 
-### Feature 4.1 — Bridge Availability
-**Story:** Проверка доступности TCP Bridge во внутренней Docker network.
-- Task: успешное TCP-подключение к Bridge.
-- Task: контролируемая ошибка при недоступности Bridge.
-- Task: проверка, что порт Bridge не опубликован на хост.
+### Feature 5.2 — Agent requirements
+- Task: JDK 17 и Maven для локального режима.
+- Task: Docker CLI и доступ к Docker Engine для Docker режима.
+- Task: не требовать отдельный AQA container.
+- Task: обеспечить workspace и доступ к собранному артефакту на агенте.
 
-### Feature 4.2 — Child Process Lifecycle
-**Story:** Проверка управления дочерними MCP-процессами.
-- Task: создание отдельного процесса на каждое TCP-соединение.
-- Task: завершение процесса при штатном закрытии соединения.
-- Task: завершение процесса при аварийном отключении клиента.
-- Task: обработка ошибки запуска JAR.
-- Task: соблюдение лимита активных сессий и таймаутов.
-- Task: структурированные JSONL диагностические события Bridge с timestamp/sequence/event; runId/testId/clientSessionId/registrationId после регистрации, connectionId/remote endpoint после binding, PID после старта, reason/exitCode при наличии; rejected connection attempts без регистрации содержат connectionAttemptId.
-- Task: отдельный control channel с JSONL-контрактом REGISTER_SESSION/GET_SESSION_STATUS/GET_SESSION_DIAGNOSTICS/CANCEL_SESSION.
-- Task: заранее привязанный AQA socket endpoint и сопоставление remote IP:port без NAT/proxy.
-- Task: атомарное резервирование IP:port endpoint, проверка фактического source port, TTL, одноразовость, sessionToken и конечные состояния регистрации.
-- Task: идемпотентный повтор REGISTER_SESSION после потери ответа по requestId/clientSessionId без продления TTL.
-- Task: отклонение конфликтующего повторного clientSessionId с другим requestId или endpoint.
-- Task: валидация размера сообщений, allowlist команд, rate limit, числа незавершённых регистраций и недоступности порта с host.
-- Task: проверка sessionToken для status/diagnostics/cancel и освобождение endpoint по CANCEL_SESSION.
-- Task: отказ CANCEL_SESSION для уже связанной сессии без остановки активного MCP-процесса.
-- Task: повтор CANCEL_SESSION для CANCELLED возвращает успешный идемпотентный ответ без повторного terminal event.
-- Task: неизвестный clientSessionId и известная сессия с неверным sessionToken возвращают неразличимый UNAUTHORIZED.
-- Task: пагинация GET_SESSION_DIAGNOSTICS по afterSequence/nextAfterSequence без пропусков и дублей.
-- Task: проверка отсутствия canary secrets в Jenkins logs, Bridge diagnostics и Allure attachments.
-- Task: проверка доверенной сетевой границы: в выделенной Docker network находятся только AQA и MCP Server; процессы внутри AQA container являются доверенными.
-- Task: проверка детерминированной корреляции событий с тестовыми сессиями, включая параллельные сессии.
-- Task: отклонение отсутствующей/неоднозначной корреляции и сохранение логов в Jenkins.
-- Task: обработка ошибок запуска/остановки, TCP reset, лимита сессий и graceful shutdown.
-- Task: отдельный `bridge-test-fixture.jar` с режимами ECHO, IGNORE_STDIN_EOF и PARTIAL_RESPONSE; fixture stderr markers должны коррелироваться с connectionId.
-- Task: test-only fault injection `BRIDGE_TEST_DROP_RESPONSE_AFTER_BYTES` для детерминированной потери ответа после отправки write-запроса без разбора JSON-RPC.
-- Task: test-only `BRIDGE_TEST_DROP_CONTROL_RESPONSE_ONCE` после успешной регистрации для проверки exact replay `REGISTER_SESSION`.
-- Task: проверка отказа запуска при существующем некорректном JAR через `MCP_SERVER_JAR_PATH`.
-- Task: проверка завершения MCP-приложения до STDIO-цикла при отсутствии обязательного JIRA_TOKEN и при недопустимом Jira URL.
-- Task: отправка SIGTERM Bridge со стороны Jenkins/Compose orchestrator, а не AQA container.
+## EPIC 6 — Reliability and Safe Test Data
 
-### Feature 4.3 — Transparent STDIO Proxy
-**Story:** Проверка прозрачной передачи STDIO через Bridge.
-- Task: передача TCP → stdin дочернего процесса.
-- Task: передача stdout дочернего процесса → TCP.
-- Task: отдельная маршрутизация stderr в логи контейнера.
-- Task: сохранение UTF-8 и исходного framing.
-- Task: отсутствие диагностических сообщений в MCP-потоке.
-- Task: передача нескольких последовательных сообщений в рамках одной сессии.
+### Feature 6.1 — Write safety
+- Task: append-only registry для WRITE_INTENT/WRITE_CONFIRMED/WRITE_REJECTED/UNKNOWN_OUTCOME.
+- Task: сохранять intent до отправки write-запроса.
+- Task: запретить автоматические retry для write-инструментов.
+- Task: сверять неопределённый результат до повторного создания.
+- Task: передавать неоднозначные комментарии/переходы на ручную сверку.
 
-### Feature 4.4 — Session Isolation
-**Story:** Проверка изоляции параллельных MCP-сессий.
-- Task: создание двух независимых соединений.
-- Task: отсутствие смешения запросов и ответов.
-- Task: независимое закрытие сессий.
-- Task: проверка отсутствия зависших дочерних процессов.
-
-## EPIC 5 — Reliability and Safe Execution
-
-### Feature 5.1 — Retry and Idempotency
-**Story:** Предотвращение дублирующих и небезопасных операций.
-- Task: разрешить ограниченные retry только для read-only операций при ошибке до отправки.
-- Task: запретить общий retry для Jira/Confluence write-инструментов.
-- Task: фиксировать UNKNOWN_OUTCOME при потере ответа после отправки write-запроса.
-- Task: сверять результат по уникальному маркеру/ID до разрешения повторного create.
-- Task: проверять конфликт версии Confluence update без автоматической перезаписи.
-
-### Feature 5.2 — Parallel Isolation
-**Story:** Изоляция параллельных тестов.
-- Task: одна отдельная MCP-сессия на тестовый класс.
-- Task: последовательное выполнение методов внутри класса.
-- Task: ограничение JUnit workers значением MAX_ACTIVE_SESSIONS Bridge.
-- Task: проверка отсутствия смешения тестовых данных, ответов и diagnostics.
-
-### Feature 5.3 — Durable Test Data Registry
-**Story:** Сохранение реестра тестовых данных при любом исходе.
-- Task: append-only JSONL event log с WRITE_INTENT до отправки write-запроса.
-- Task: WRITE_CONFIRMED/WRITE_REJECTED и восстановление незавершённого intent как UNKNOWN_OUTCOME.
-- Task: конкурентная сериализация JSONL, flush/force полного intent до отправки запроса и recovery повреждённого незавершённого хвоста; полный intent без outcome переводится в UNKNOWN_OUTCOME.
-- Task: отдельная сверка неопределённых результатов write-операций; запрет retry для jira_transition обязателен. Чтение текущего статуса не подтверждает историю перехода; неоднозначный исход передаётся на ручную сверку.
-- Task: архивирование реестров и логов в Jenkins post/always при доступных agent/workspace/Docker daemon.
-- Task: документирование и проверка host-level очистки orphan-контейнеров при потере Jenkins agent/host.
-- Task: проверка безопасного удаления только ресурсов с метками AQA_RUN_ID и истёкшим TTL; немаркированные ресурсы не затрагиваются.
-- Task: маркировка всех Docker containers/networks/volumes тремя labels: `managed-by`, `aqa-run-id`, `expires-at` (UTC Unix epoch seconds); janitor запускается ежечасно, TTL 24 часа, Pipeline timeout не более 12 часов.
-- Task: уникальный `COMPOSE_PROJECT_NAME=aml-${AQA_RUN_ID}` для каждого Jenkins run; проверить параллельные Pipeline на одном Docker host и независимый cleanup.
-
-## EPIC 6 — Test Data Management
-
-В фактическом MCP-контракте нет инструментов удаления Jira-задач и Confluence-страниц. Первая версия AQA регистрирует созданные объекты и сохраняет реестр для последующей ручной/административной очистки; удаление не выполняется через MCP и не подменяется прямыми вызовами Atlassian API в тестах.
-
-### Feature 6.1 — Jira Test Data
-**Story:** Подготовка и управление тестовыми данными Jira.
-- Task: проверка готовности тестового Jira/Confluence окружения до запуска integration-набора.
-- Task: выделенный тестовый проект.
-- Task: создание тестовых задач.
-- Task: уникальная маркировка тестовых объектов.
-- Task: регистрация ID и маркеров созданных задач; подготовка реестра для последующей административной очистки. В первой версии MCP-инструмент удаления отсутствует.
-
-### Feature 6.2 — Confluence Test Data
-**Story:** Подготовка и управление тестовыми данными Confluence.
-- Task: выделенное тестовое пространство.
-- Task: создание тестовых страниц.
-- Task: уникальная маркировка тестовых объектов.
-- Task: регистрация ID и маркеров созданных страниц; подготовка реестра для последующей административной очистки. В первой версии MCP-инструмент удаления отсутствует.
+### Feature 6.2 — Secrets and cleanup
+- Task: передавать Jira/Confluence credentials через Jenkins Credentials только тестируемому серверу.
+- Task: исключить секреты из логов и Allure.
+- Task: регистрировать все созданные Jira/Confluence объекты.
+- Task: сохранять реестр как Jenkins artifact.
+- Task: документировать административную очистку, так как MCP delete tools отсутствуют.
+- Task: обеспечить уникальную идентификацию Docker resources каждого AQA run.
 
 ## Принципы декомпозиции
 
-1. Не создавать отдельный Task для каждой комбинации входных значений, если они относятся к одному сценарию и могут быть параметризованы.
-2. Не дублировать внутренние unit-проверки основного проекта без необходимости.
-3. Разделять проверки протокола и проверки реальных Jira/Confluence API.
-4. Для операций создания и изменения предусматривать проверку результата чтением созданного/изменённого объекта.
-5. Негативные сценарии включать в объём Story, но не все автоматически относить к критическому набору.
+1. Не создавать отдельную инфраструктуру, если задачу решает штатный ProcessBuilder/Docker CLI.
+2. Не вводить Bridge, TCP proxy, control channel или отдельный контейнер-посредник.
+3. Не дублировать внутренние unit-тесты основного приложения.
+4. Разделять протокольные проверки и проверки реальных Atlassian API.
+5. Не считать техническую задачу выполненной до реализации и тестового подтверждения.
