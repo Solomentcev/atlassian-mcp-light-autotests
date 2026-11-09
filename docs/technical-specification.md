@@ -53,10 +53,12 @@ Bridge, TCP endpoint, control channel и отдельный контейнер-�
 
 ## 4. Общая схема
 
-Jenkins получает два репозитория:
+Jenkins получает два репозитория в разные каталоги одного workspace (или в отдельные workspace):
 
-1. AQA repository — тестовый код.
-2. Server repository — исходный код тестируемого приложения на выбранной ревизии.
+1. AQA repository — тестовый код, например в корень workspace.
+2. Server repository — исходный код тестируемого приложения на выбранной ревизии, например в подкаталог `server/`.
+
+Checkout основного проекта не должен перезаписывать `.git` и файлы AQA-репозитория. Все пути к JAR, Docker build context и Maven-командам задаются относительно каталога соответствующего checkout.
 
 Pipeline собирает сервер из исходников. Затем AQA запускает тестовый экземпляр в выбранном режиме. Весь обмен MCP выполняется через STDIO запущенного процесса.
 
@@ -88,14 +90,14 @@ MCP Client пишет в STDIN JSONL-сообщения и читает JSONL-о
 
 AQA launcher запускает Docker CLI как дочерний процесс. Концептуальная команда:
 
-    docker run --rm -i --env-file .env image-name
+    docker run --rm --name <unique-container-name> -i --env-file <runtime-env-file> <image-name>
 
 Опции:
 
 - -i оставляет STDIN контейнерного процесса открытым и подключённым к STDIN Docker CLI;
 - -t не используется, поскольку псевдотерминал может изменить поведение потоков и framing;
 - --rm удаляет контейнер после завершения;
-- env-file передаёт конфигурацию тестируемому серверу; в Jenkins секретные значения поступают из Jenkins Credentials, а не из файла репозитория.
+- env-file передаёт конфигурацию тестируемому серверу; в Jenkins временный env-файл создаётся из Jenkins Credentials с ограниченными правами доступа и удаляется после прогона. Файл не хранится в репозитории, не включается в Docker image и не архивируется как build artifact.
 
 STDIN/STDOUT Docker CLI используются так же, как потоки локального Java-процесса. MCP Client не знает, что за Process находится Docker CLI, а не java.
 
