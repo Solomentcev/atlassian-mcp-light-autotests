@@ -199,7 +199,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 1. **Checkout AQA** — получить AQA repository.
 2. **Checkout server** — получить выбранную ветку/ревизию основного проекта; зафиксировать commit SHA.
-3. **Build server** — собрать основной проект из исходников Maven Wrapper. Для локального режима подготовить исполняемый JAR. Для Docker режима собрать image из выбранной ревизии/сборочного контекста.
+3. **Build server** — собрать основной проект из исходников выбранной ревизии. Для локального режима выполнить `./mvnw clean package` из корня server checkout и передать найденный исполняемый JAR launcher. Для Docker режима выполнить `docker build -t atlassian-mcp-light:latest .` из корня server checkout: существующий Dockerfile сам собирает приложение на builder stage и формирует runtime image. Не требуется предварительно собирать JAR отдельным Jenkins stage, если выбран только Docker-режим.
 4. **Test** — выполнить AQA Maven tests с выбранным launcher mode и необходимыми credentials.
 5. **Publish** — опубликовать JUnit XML и Allure Report; сохранить commit SHA, логи процесса и реестр тестовых данных.
 6. **Cleanup** — завершить тестовый процесс/контейнер и удалить только ресурсы текущего AQA run.
