@@ -90,7 +90,7 @@ MCP Client пишет в STDIN JSONL-сообщения и читает JSONL-о
 
 AQA launcher запускает Docker CLI как дочерний процесс. Концептуальная команда:
 
-    docker run --rm --name "aml-${AQA_RUN_ID}" -i --env-file .runtime.env <image-name>
+    docker run --rm --name "aml-${AQA_RUN_ID}" -i --env-file .runtime.env atlassian-mcp-light:latest
 
 Опции:
 
