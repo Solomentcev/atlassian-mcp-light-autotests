@@ -128,6 +128,8 @@
 - Task: append-only registry для WRITE_INTENT/WRITE_CONFIRMED/WRITE_REJECTED/UNKNOWN_OUTCOME.
 - Task: сохранять intent до отправки write-запроса.
 - Task: запретить автоматические retry для write-инструментов.
+- Task: покрыть политику retry тестовым MCP Client adapter, имитирующим потерю уже полученного ответа.
+- Task: разрешать retry read-only запроса только при подтверждённой ошибке до отправки.
 - Task: сверять неопределённый результат до повторного создания.
 - Task: передавать неоднозначные комментарии/переходы на ручную сверку.
 
