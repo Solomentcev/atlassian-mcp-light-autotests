@@ -235,7 +235,7 @@ TestDataManager ведёт append-only JSONL event log. Каждая запис�
 Сохраняются:
 
 - JUnit XML;
-- Allure results/report;
+- Allure results/report с категориями Protocol, Process, Configuration, Jira, Confluence, Negative, Integration и Test Data;
 - commit SHA основного проекта;
 - выбранный launcher mode;
 - stdout/stderr diagnostics тестируемого процесса;
