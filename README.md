@@ -95,7 +95,7 @@ mvn test
 
 В локальном режиме процесс наследует environment Jenkins agent. В Docker-режиме переменные тестируемого приложения передаются через указанный env-файл. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
 
-JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata и валидацию конфигурации. Добавлены Docker launcher и JUnit lifecycle extension.
+JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata и валидацию конфигурации. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
 
 Stateless API клиента:
 - `discoverStateless(...)` — `server/discover`;
