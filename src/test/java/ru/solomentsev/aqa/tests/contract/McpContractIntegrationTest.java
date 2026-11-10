@@ -130,8 +130,8 @@ class McpContractIntegrationTest {
                         .isEqualTo(property.getValue());
                 if ("string".equals(property.getValue())) {
                     assertThat(definition.path("minLength").asInt())
-                            .as("%s.%s: ожидаемый minLength=%d", name, property.getKey(), McpTestData.MIN_LIMIT)
-                            .isEqualTo(McpTestData.MIN_LIMIT);
+                            .as("%s.%s: ожидаемый minLength=%d", name, property.getKey(), McpTestData.MIN_STRING_LENGTH)
+                            .isEqualTo(McpTestData.MIN_STRING_LENGTH);
                 }
                 if ("integer".equals(property.getValue())) {
                     assertThat(definition.path("minimum").asInt())
