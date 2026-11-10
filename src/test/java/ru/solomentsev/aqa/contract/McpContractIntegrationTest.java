@@ -123,6 +123,36 @@ class McpContractIntegrationTest {
     }
 
     @Test
+    void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
+        ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        params.putObject("_meta")
+                .put("io.modelcontextprotocol/protocolVersion", STATELESS_PROTOCOL_VERSION);
+
+        JsonNode response = client.request("server/discover", params, REQUEST_TIMEOUT);
+
+        assertThat(response.path("error").path("code").asInt()).isEqualTo(-32602);
+    }
+
+    @Test
+    void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("limit", 1);
+
+        JsonNode response = callTool(client, "confluence_list_spaces", arguments);
+
+        assertSuccessfulJsonRpc(response);
+        JsonNode result = response.path("result");
+        assertThat(result.path("isError").asBoolean()).isFalse();
+        assertThat(result.path("content").isArray()).isTrue();
+        assertThat(result.path("content").size()).isGreaterThan(0);
+        assertThat(result.path("content").get(0).path("type").asText()).isEqualTo("text");
+        assertThat(result.path("content").get(0).path("text").isTextual()).isTrue();
+        assertThat(result.path("resultType").asText()).isEqualTo("complete");
+        assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
+                .path("name").asText()).isEqualTo("atlassian-lite");
+    }
+
+    @Test
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         ObjectNode metadata = params.putObject("_meta");
@@ -152,6 +182,22 @@ class McpContractIntegrationTest {
         JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
         assertToolError(response);
+    }
+
+    @Test
+    void shouldRejectNullRequiredToolArgument(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.putNull("issue_key");
+
+        assertToolError(callTool(client, "jira_get_issue", arguments));
+    }
+
+    @Test
+    void shouldRejectWrongToolArgumentType(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("issue_key", 42);
+
+        assertToolError(callTool(client, "jira_get_issue", arguments));
     }
 
     @Test
