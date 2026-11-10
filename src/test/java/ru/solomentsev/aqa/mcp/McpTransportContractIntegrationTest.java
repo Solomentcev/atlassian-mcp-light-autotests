@@ -47,6 +47,11 @@ class McpTransportContractIntegrationTest {
 
         client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":{},\"method\":\"ping\"}");
         assertJsonRpcError(client.awaitRawResponse(REQUEST_TIMEOUT), -32600);
+
+        client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":\"custom-id\",\"method\":\"unknown\"}");
+        var stringIdResponse = client.awaitRawResponse(REQUEST_TIMEOUT);
+        assertJsonRpcError(stringIdResponse, -32601);
+        assertThat(stringIdResponse.path("id").asText()).isEqualTo("custom-id");
     }
 
     @Test
@@ -56,6 +61,14 @@ class McpTransportContractIntegrationTest {
         assertJsonRpcError(response, -32601);
     }
 
+    @Test
+    void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {
+        var response = client.request("aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
+
+        assertJsonRpcError(response, -32601);
+        assertThat(response.path("error").path("message").asText())
+                .contains("неизвестный-метод");
+    }
     @Test
     void shouldNotRespondToNotifications(McpClient client) {
         client.notification("notifications/initialized", null);
