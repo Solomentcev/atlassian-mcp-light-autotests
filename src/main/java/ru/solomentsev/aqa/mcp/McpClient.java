@@ -271,6 +271,50 @@ public final class McpClient implements AutoCloseable {
         );
     }
 
+    synchronized void sendRawLine(String line) {
+        ensureUsable();
+        Objects.requireNonNull(line, "line");
+        try {
+            writer.write(line);
+            writer.newLine();
+            writer.flush();
+        } catch (IOException exception) {
+            failed = true;
+            throw new McpClientException("Failed to write raw MCP line to STDIN", exception);
+        }
+    }
+
+    synchronized JsonNode awaitRawResponse(Duration timeout) {
+        ensureUsable();
+        validateTimeout(timeout);
+        ReadEvent event;
+        try {
+            event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            failed = true;
+            throw new McpClientException("Interrupted while waiting for raw MCP response", exception);
+        }
+        if (event == null) {
+            failed = true;
+            throw new McpClientException("Timed out waiting for raw MCP response");
+        }
+        if (event.error() != null) {
+            failed = true;
+            throw new McpClientException("Failed to read MCP STDOUT", event.error());
+        }
+        if (event.eof()) {
+            failed = true;
+            throw new McpClientException("MCP process closed STDOUT before sending a response");
+        }
+        try {
+            return OBJECT_MAPPER.readTree(event.line());
+        } catch (IOException exception) {
+            failed = true;
+            throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
+        }
+    }
+
     private void writeMessage(ObjectNode message) {
         try {
             writer.write(OBJECT_MAPPER.writeValueAsString(message));
