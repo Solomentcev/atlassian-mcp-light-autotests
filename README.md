@@ -102,7 +102,7 @@ Stateless API клиента:
 - `listToolsStateless(...)` — `tools/list`;
 - `requestStateless(...)` — произвольный stateless request с обязательной metadata в `params._meta`.
 
-Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, все 13 инструментов и их JSON Schema, отклонение неподдерживаемой версии, формат ошибки неизвестного инструмента. Они не запускаются обычной командой `mvn test`.
+Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, точные свойства/required/type/ограничения схем 13 инструментов, annotations, ошибки валидации аргументов и различение MCP tool error и JSON-RPC error. `McpStatelessLifecycleIntegrationTest` отдельно проверяет discovery и tools/list на новом процессе без предварительного classic initialize. Интеграционные тесты не запускаются обычной командой `mvn test`.
 
 Для запуска интеграционных проверок требуется собранный JAR или Docker image тестируемого сервера и тестовая конфигурация Jira/Confluence (обязательные `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` передаются серверному процессу):
 
