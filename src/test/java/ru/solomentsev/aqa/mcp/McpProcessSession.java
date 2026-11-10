@@ -1,6 +1,5 @@
 package ru.solomentsev.aqa.mcp;
 
-import io.qameta.allure.Allure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +8,6 @@ import ru.solomentsev.aqa.process.McpServerLauncher;
 import ru.solomentsev.aqa.process.StderrCollector;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -92,8 +90,7 @@ public final class McpProcessSession implements AutoCloseable {
 
         LOG.info("Запуск тестовой MCP-сессии: launcher={}, handshake={}",
                 launcher.getClass().getSimpleName(), initialize);
-        ManagedProcess process = Allure.step("Запустить тестовый MCP-процесс", () ->
-                launcher.launch(environment, workingDirectory));
+        ManagedProcess process = launcher.launch(environment, workingDirectory);
         LOG.info("Тестовый MCP-процесс создан: pid={}", process.pid());
         StderrCollector stderrCollector = new StderrCollector(process.stderr(), DEFAULT_STDERR_LIMIT);
         McpClient client = new McpClient(process.stdout(), process.stdin());
@@ -115,7 +112,7 @@ public final class McpProcessSession implements AutoCloseable {
             LOG.error("Не удалось запустить MCP-сессию: pid={}", process.pid(), exception);
             client.close();
             try {
-                closeProcessWithAllure(process);
+                process.close();
             } catch (IOException cleanupException) {
                 exception.addSuppressed(cleanupException);
             }
@@ -145,20 +142,6 @@ public final class McpProcessSession implements AutoCloseable {
         return stderrCollector.content();
     }
 
-    private static void closeProcessWithAllure(ManagedProcess process) throws IOException {
-        try {
-            Allure.step("Завершить тестовый MCP-процесс", () -> {
-                try {
-                    process.close();
-                } catch (IOException exception) {
-                    throw new UncheckedIOException(exception);
-                }
-            });
-        } catch (UncheckedIOException exception) {
-            throw exception.getCause();
-        }
-    }
-
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("MCP process session is closed");
@@ -180,7 +163,7 @@ public final class McpProcessSession implements AutoCloseable {
 
         IOException closeException = null;
         try {
-            closeProcessWithAllure(process);
+            process.close();
         } catch (IOException exception) {
             closeException = exception;
         }
