@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.tests.support;
 
 import ru.solomentsev.aqa.support.diagnostics.AllureDiagnostics;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -63,9 +64,11 @@ class AllureDiagnosticsTest {
     @DisplayName("Сохранение несекретных диагностических сообщений")
     @Description("Проверяет, что маскирование не изменяет обычные сообщения STDERR.")
     void shouldPreserveNonSensitiveDiagnostics() {
+        Allure.parameter("Тип диагностики", "обычное несекретное сообщение STDERR");
         String source = "MCP server started; request handled successfully";
 
-        assertThat(AllureDiagnostics.maskSecrets(source))
+        String masked = Allure.step("Проверить обработку обычной диагностики", () -> AllureDiagnostics.maskSecrets(source));
+        assertThat(masked)
                 .as("Обычные диагностические сообщения не должны изменяться маскированием")
                 .isEqualTo(source);
     
