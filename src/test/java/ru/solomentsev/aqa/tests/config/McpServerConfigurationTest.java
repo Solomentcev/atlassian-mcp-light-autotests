@@ -1,6 +1,5 @@
 package ru.solomentsev.aqa.tests.config;
 
-import io.qameta.allure.Allure;
 import ru.solomentsev.aqa.config.McpServerConfiguration;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -81,7 +80,8 @@ class McpServerConfigurationTest {
         {            assertThatThrownBy(() -> McpServerConfiguration.from(
                     Map.of("AQA_SERVER_MODE", "local"),
                     new Properties()
-            )).isInstanceOf(IllegalArgumentException.class)
+            )).as("Local mode без AQA_SERVER_JAR должен отклоняться с понятной ошибкой")
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("AQA_SERVER_JAR");
         
         }
@@ -101,7 +101,8 @@ class McpServerConfigurationTest {
                             "AQA_DOCKER_IMAGE", "atlassian-mcp-light:test"
                     ),
                     new Properties()
-            )).isInstanceOf(IllegalArgumentException.class)
+            )).as("Docker mode без обязательного env-файла должен отклоняться")
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("AQA_DOCKER_ENV_FILE");
         
         }
@@ -118,7 +119,8 @@ class McpServerConfigurationTest {
         {            assertThatThrownBy(() -> McpServerConfiguration.from(
                     Map.of("AQA_SERVER_MODE", "remote"),
                     new Properties()
-            )).isInstanceOf(IllegalArgumentException.class)
+            )).as("Неизвестный режим запуска должен отклоняться")
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("AQA_SERVER_MODE");
         
         }

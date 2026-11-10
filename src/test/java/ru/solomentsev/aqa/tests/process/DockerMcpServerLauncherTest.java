@@ -63,7 +63,8 @@ class DockerMcpServerLauncherTest {
                     Path.of(".runtime.env"),
                     "unsafe/run-id",
                     5
-            )).isInstanceOf(IllegalArgumentException.class)
+            )).as("Docker launcher должен отклонять небезопасный runId")
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("runId");
         
         }
@@ -83,7 +84,8 @@ class DockerMcpServerLauncherTest {
                     Path.of(".runtime.env"),
                     "run-123",
                     0
-            )).isInstanceOf(IllegalArgumentException.class)
+            )).as("Docker launcher должен отклонять нулевой stop timeout")
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("stopTimeoutSeconds");
         
         }

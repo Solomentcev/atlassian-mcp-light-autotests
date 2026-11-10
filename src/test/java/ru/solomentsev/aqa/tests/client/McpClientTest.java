@@ -100,6 +100,7 @@ class McpClientTest {
 
             assertThat(notificationReceived.await(3, TimeUnit.SECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
             assertThat(received.get().path("method").asText())
+                    .as("Fake MCP server должен получить notifications/initialized")
                     .isEqualTo("notifications/initialized");
             assertThat(received.get().has("id")).as("MCP notification не должен содержать request id").isFalse();
         } finally {
@@ -228,8 +229,9 @@ class McpClientTest {
             );
 
             assertThat(response.path("result").path("resultType").asText())
+                    .as("Stateless MCP-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
-            assertThat(requestReceived.await(3, TimeUnit.SECONDS)).isTrue();
+            assertThat(requestReceived.await(3, TimeUnit.SECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
             assertThat(received.get().path("params").path("filter").asText()).isEqualTo("all");
             assertThat(received.get().path("params").path("_meta")
                     .path("io.modelcontextprotocol/protocolVersion").asText())
@@ -240,7 +242,7 @@ class McpClientTest {
             assertThat(received.get().path("params").path("_meta")
                     .path("io.modelcontextprotocol/clientInfo").path("name").asText())
                     .isEqualTo("aqa-tests");
-            assertThat(originalParams.has("_meta")).isFalse();
+            assertThat(originalParams.has("_meta")).as("MCP Client не должен изменять исходный params при добавлении metadata").isFalse();
         } finally {
             serverStdin.close();
             serverStdout.close();

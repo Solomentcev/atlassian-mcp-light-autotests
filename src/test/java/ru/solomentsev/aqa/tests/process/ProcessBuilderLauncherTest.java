@@ -58,8 +58,8 @@ class ProcessBuilderLauncherTest {
                         .isTrue();
                 assertThat(stderrCollector.content()).as("STDERR должен содержать сведения о версии Java").contains("version");
             } finally {
-                process.close();
-                stderrCollector.close();
+                Allure.step("Закрыть запущенный процесс", process::close);
+                Allure.step("Закрыть STDERR collector", stderrCollector::close);
             }
         
         }

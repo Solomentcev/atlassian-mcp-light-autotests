@@ -1,9 +1,11 @@
 package ru.solomentsev.aqa.tests.session;
 
+import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.support.fake.FakeMcpServer;
 import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -54,10 +56,10 @@ class McpProcessSessionTest {
                 assertThat(process.isAlive()).as("После запуска MCP-сессии процесс должен быть активен").isTrue();
                 assertThat(session.client()).as("Запущенная MCP-сессия должна предоставить MCP Client").isNotNull();
             } finally {
-                session.close();
+                Allure.step("Закрыть MCP-сессию", session::close);
             }
 
-            assertThat(process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)).isTrue();
+            assertThat(Allure.step("Дождаться завершения MCP-процесса", () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT))).isTrue();
             assertThat(process.exitCode()).as("Fake MCP server должен завершиться с кодом 0").isZero();
         
         }
@@ -81,19 +83,23 @@ class McpProcessSessionTest {
             try {
                 assertThat(process.isAlive()).isTrue();
 
-                var discovery = session.client().discoverStateless(
+                var discovery = discoverStateless(session.client(), 
                         McpTestData.STATELESS_PROTOCOL_VERSION,
                         McpTestData.PROCESS_SHUTDOWN_TIMEOUT
                 );
                 assertThat(discovery.path("result").path("_meta")
                         .path("io.modelcontextprotocol/serverInfo")
-                        .path("name").asText()).isEqualTo("fake-stateless-server");
+                        .path("name").asText())
+                        .as("server/discover должен вернуть metadata fake-stateless-server")
+                        .isEqualTo("fake-stateless-server");
 
-                var tools = session.client().listToolsStateless(
+                var tools = listToolsStateless(session.client(), 
                         McpTestData.STATELESS_PROTOCOL_VERSION,
                         McpTestData.PROCESS_SHUTDOWN_TIMEOUT
                 );
-                assertThat(tools.path("result").path("tools").isArray()).isTrue();
+                assertThat(tools.path("result").path("tools").isArray())
+                        .as("tools/list должен вернуть массив инструментов")
+                        .isTrue();
             } finally {
                 session.close();
             }
@@ -102,6 +108,14 @@ class McpProcessSessionTest {
             assertThat(process.exitCode()).isZero();
         
         }
+    }
+
+    private static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
+        return Allure.step("Вызвать server/discover", () -> client.discoverStateless(version, timeout));
+    }
+
+    private static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
+        return Allure.step("Вызвать stateless tools/list", () -> client.listToolsStateless(version, timeout));
     }
 
     private static McpProcessSession startSession(McpServerLauncher launcher,
