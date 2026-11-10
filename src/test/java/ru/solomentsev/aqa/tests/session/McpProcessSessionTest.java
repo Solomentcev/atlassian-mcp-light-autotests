@@ -38,7 +38,7 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск готовой MCP-сессии и завершение процесса при закрытии")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Запуск готовой MCP-сессии и завершение процесса при закрытии")
+    @DisplayName("Classic MCP session, protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + "; graceful shutdown")
     @Description("Предусловия: Доступен fake MCP server с classic initialize handshake.\nШаги: запустить McpProcessSession; проверить доступность процесса и клиента; закрыть сессию.\nОжидаемый результат: readiness handshake завершён; процесс завершён с exit code 0.")
     @Tag("process")
     void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
@@ -72,7 +72,7 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск stateless-сессии без classic initialize")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Запуск stateless-сессии без classic initialize")
+    @DisplayName("Stateless MCP session, protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; без initialize")
     @Description("Предусловия: Доступен fake stateless MCP server.\nШаги: запустить сессию без handshake; выполнить server/discover и tools/list; закрыть сессию.\nОжидаемый результат: stateless запросы выполняются без classic initialize; процесс завершается с exit code 0.")
     @Tag("process")
     void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
