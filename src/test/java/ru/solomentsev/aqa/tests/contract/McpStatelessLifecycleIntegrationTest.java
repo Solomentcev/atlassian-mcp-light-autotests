@@ -43,7 +43,8 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-017: Запрос до инициализации")
     @Description("Предусловия: STDIO-процесс запущен; initialize не отправлялся.\nШаги: вызвать classic tools/list.\nОжидаемый результат: сервер возвращает ошибку состояния протокола -32001 и не выполняет инструмент.")
     @Tag("case-MCP-017")
-    void shouldRejectClassicToolsListBeforeInitialize() throws Exception {        try (McpProcessSession session =
+    void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
+        try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode response = sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
             assertThat(response.path("error").path("code").asInt())
@@ -60,7 +61,8 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-019: Обнаружение возможностей stateless-режима")
     @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся.\nШаги: вызвать server/discover с корректными stateless metadata.\nОжидаемый результат: сервер возвращает успешный результат обнаружения с supportedVersions, capabilities и serverInfo.")
     @Tag("case-MCP-019")
-    void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {        try (McpProcessSession session =
+    void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
+        try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
                     McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
@@ -86,7 +88,8 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-020: Вызов tools/list в stateless-режиме без initialize")
     @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся.\nШаги: вызвать stateless tools/list с корректными metadata.\nОжидаемый результат: запрос успешно обработан без classic handshake; возвращены 13 инструментов и serverInfo metadata.")
     @Tag("case-MCP-020")
-    void shouldListToolsStatelessWithoutInitialize() throws Exception {        try (McpProcessSession session =
+    void shouldListToolsStatelessWithoutInitialize() throws Exception {
+        try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
                     McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
@@ -110,7 +113,8 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-021: Вызов tools/call в stateless-режиме")
     @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся; доступен безопасный read-инструмент.\nШаги: вызвать confluence_list_spaces через stateless tools/call с limit=1.\nОжидаемый результат: запрос выполняется без initialize и возвращает MCP tool result с resultType=complete.")
     @Tag("case-MCP-021")
-    void shouldCallReadToolStatelessWithoutInitialize() throws Exception {        try (McpProcessSession session =
+    void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
+        try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             ObjectNode params = OBJECT_MAPPER.createObjectNode();
             params.put("name", ConfluenceTestData.LIST_SPACES_TOOL);
@@ -143,7 +147,8 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-036: Обработка ping до и после READY")
     @Description("Предусловия: STDIO-процесс запущен и находится в состоянии NEW.\nШаги: вызвать ping до initialize; выполнить initialize; вызвать ping до notifications/initialized; проверить недоступность tools/list; отправить notifications/initialized и повторить ping.\nОжидаемый результат: ping возвращает пустой result и не меняет состояние lifecycle; tools/list недоступен до notifications/initialized и доступен после перехода в READY.")
     @Tag("case-MCP-036")
-    void shouldHandlePingWithoutChangingLifecycleState() throws Exception {        try (McpProcessSession session =
+    void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
+        try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode pingBeforeInitialize =
                     sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);

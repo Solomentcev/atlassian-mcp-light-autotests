@@ -31,7 +31,8 @@ class DockerMcpServerLauncherTest {
     @DisplayName("Формирование Docker run-команды для STDIO без TTY и опубликованных портов")
     @Description("Предусловия: Заданы Docker executable, run id, env-файл и image.\nШаги: сформировать docker run command.\nОжидаемый результат: команда содержит --rm, --name, label текущего прогона, -i и --env-file; не содержит TTY и публикацию портов.")
     @Tag("process")
-    void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {        List<String> command = Allure.step("Сформировать команду запуска Docker для STDIO", () -> DockerMcpServerLauncher.buildRunCommand(
+    void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {
+        List<String> command = Allure.step("Сформировать команду запуска Docker для STDIO", () -> DockerMcpServerLauncher.buildRunCommand(
                 "docker",
                 "aml-build_123",
                 Path.of(".runtime.env"),
@@ -55,7 +56,8 @@ class DockerMcpServerLauncherTest {
     @DisplayName("Отклонение небезопасного Docker run id")
     @Description("Предусловия: Передан run id с недопустимым символом /.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием runId.")
     @Tag("negative")
-    void shouldRejectUnsafeRunId() {        assertThatThrownBy(() -> new DockerMcpServerLauncher(
+    void shouldRejectUnsafeRunId() {
+        assertThatThrownBy(() -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
                 Path.of(".runtime.env"),
@@ -75,7 +77,8 @@ class DockerMcpServerLauncherTest {
     @DisplayName("Отклонение нулевого timeout остановки контейнера")
     @Description("Предусловия: stop timeout задан равным нулю.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием stopTimeoutSeconds.")
     @Tag("negative")
-    void shouldRejectZeroStopTimeout() {        assertThatThrownBy(() -> new DockerMcpServerLauncher(
+    void shouldRejectZeroStopTimeout() {
+        assertThatThrownBy(() -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
                 Path.of(".runtime.env"),

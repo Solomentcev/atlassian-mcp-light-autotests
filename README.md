@@ -138,7 +138,7 @@ Allure JUnit 5 формирует результаты в `target/allure-results
 - `@Severity` — P0 → BLOCKER, P1 → CRITICAL, P2 → NORMAL.
 - JUnit `@Tag` — фильтры по типу теста и области; связь с каталогом дополнительно отмечается тегом `case-<ID>`.
 - `@DisplayName` и `@Description` показывают название, предусловия, шаги и ожидаемый результат.
-- `Allure.step` фиксирует выполнение сценария, подготовку stateless metadata, отправку JSON-RPC request/notification/raw STDIO line, получение и проверку response, запуск и завершение процесса.
+- `Allure.step` фиксирует только действия: подготовку stateless metadata, отправку JSON-RPC request/notification/raw STDIO line, получение ответа и операции с процессом. Assertions остаются в тестовых методах и снабжаются понятными сообщениями о проверяемом поведении.
 - Для JSON-RPC к Allure прикладываются только безопасные summaries: method/request id, поля верхнего уровня, error code, resultType и количество элементов; params и текстовый content не сохраняются. При падении интеграционного теста дополнительно прикладывается STDERR после маскирования Authorization headers и значений переменных TOKEN/PASSWORD/SECRET. Сырые JSON-RPC payload и содержимое ответов Atlassian не прикладываются.
 
 Для локального просмотра используется Allure Maven Plugin 3.1.0 с явно закреплённым runtime Allure Report 2.39.0 (классический интерфейс Allure 2). Сначала выполни тесты, затем запусти:

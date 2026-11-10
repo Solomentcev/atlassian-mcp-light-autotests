@@ -57,7 +57,8 @@ class McpContractIntegrationTest {
     @Description("Предусловия: STDIO-процесс запущен; доступен stateless tools/list.\nШаги: вызвать `tools/list` с корректными stateless metadata.\nОжидаемый результат: возвращён успешный JSON-RPC result, содержащий массив tools.")
     @Tag("integration")
     @Tag("case-MCP-005")
-    void shouldReturnToolsList(McpClient client) {        JsonNode tools = getStatelessTools(client);
+    void shouldReturnToolsList(McpClient client) {
+        JsonNode tools = getStatelessTools(client);
         assertThat(tools.isArray()).as("Проверка tools.isArray(): ожидалось isTrue").isTrue();
     
     }
@@ -70,7 +71,8 @@ class McpContractIntegrationTest {
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: извлечь имена инструментов и сравнить с ожидаемым перечнем.\nОжидаемый результат: присутствуют все 13 ожидаемых инструментов; имена уникальны; неожиданные инструменты отсутствуют.")
     @Tag("integration")
     @Tag("case-MCP-006")
-    void shouldExposeExpectedToolNames(McpClient client) {        JsonNode tools = getStatelessTools(client);
+    void shouldExposeExpectedToolNames(McpClient client) {
+        JsonNode tools = getStatelessTools(client);
         Set<String> actualNames = new HashSet<>();
         for (JsonNode tool : tools) {
             actualNames.add(tool.path("name").asText());
@@ -88,7 +90,8 @@ class McpContractIntegrationTest {
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить description каждого инструмента.\nОжидаемый результат: каждый инструмент содержит непустое текстовое описание.")
     @Tag("integration")
     @Tag("case-MCP-007")
-    void shouldExposeNonEmptyToolDescriptions(McpClient client) {        JsonNode tools = getStatelessTools(client);
+    void shouldExposeNonEmptyToolDescriptions(McpClient client) {
+        JsonNode tools = getStatelessTools(client);
         for (JsonNode tool : tools) {
             assertThat(tool.path("description").asText())
                     .as("description of %s", tool.path("name").asText())
@@ -107,7 +110,8 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
-    void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {        JsonNode tools = getStatelessTools(client);
+    void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
+        JsonNode tools = getStatelessTools(client);
         for (JsonNode tool : tools) {
             String name = tool.path("name").asText();
             ToolContract expected = EXPECTED_TOOLS.get(name);
@@ -161,7 +165,8 @@ class McpContractIntegrationTest {
     @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить `server/discover` без `_meta`. 2. Отправить stateless `tools/list` с `_meta`, содержащим protocolVersion, но без clientCapabilities. 3. Повторить с clientCapabilities, но без protocolVersion.\nОжидаемый результат: Для каждого запроса получен JSON-RPC error `-32602 Invalid params`; после негативных запросов корректный stateless-запрос обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-023")
-    void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {        JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
+    void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
+        JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
         assertThat(missingMetadata.path("error").path("code").asInt()).as("Проверка missingMetadata.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
@@ -192,7 +197,8 @@ class McpContractIntegrationTest {
     @Tag("integration")
     @Tag("case-MCP-021")
     @Tag("confluence")
-    void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+    void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("limit", McpTestData.DEFAULT_LIMIT);
 
         JsonNode response = callTool(client, "confluence_list_spaces", arguments);
@@ -223,7 +229,8 @@ class McpContractIntegrationTest {
     @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить stateless-запрос с версией, отличной от `2026-07-28`.\nОжидаемый результат: Получен JSON-RPC error `-32022 Unsupported protocol version`; в `error.data.supportedVersions` присутствует `2026-07-28`.")
     @Tag("negative")
     @Tag("case-MCP-022")
-    void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {        ObjectNode params = OBJECT_MAPPER.createObjectNode();
+    void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
+        ObjectNode params = OBJECT_MAPPER.createObjectNode();
         ObjectNode metadata = params.putObject("_meta");
         metadata.put("io.modelcontextprotocol/protocolVersion", "2099-01-01");
         metadata.putObject("io.modelcontextprotocol/clientCapabilities");
@@ -249,7 +256,8 @@ class McpContractIntegrationTest {
     @Description("Предусловия: Инициализация завершена\nШаги: 1. Вызвать `tools/call` с неизвестным именем инструмента.\nОжидаемый результат: Сервер возвращает JSON-RPC response с `result.isError=true` и текстом ошибки в `result.content`; верхнеуровневый JSON-RPC `error` для ошибки dispatch не используется.")
     @Tag("negative")
     @Tag("case-MCP-010")
-    void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {        JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
+    void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
+        JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
 
         assertToolError(response);
     
@@ -265,7 +273,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-011")
     @Tag("jira")
-    void shouldRejectMissingRequiredToolArgument(McpClient client) {        JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
+    void shouldRejectMissingRequiredToolArgument(McpClient client) {
+        JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
         assertToolError(response);
     
@@ -281,7 +290,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {        ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
+    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
+        ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
         nullArgument.putNull("issue_key");
         assertToolError(callTool(client, "jira_get_issue", nullArgument));
 
@@ -308,7 +318,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
-    void shouldRejectWrongToolArgumentType(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+    void shouldRejectWrongToolArgumentType(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", 42);
         assertToolError(callTool(client, "jira_get_issue", arguments));
 
@@ -327,7 +338,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-013")
     @Tag("jira")
-    void shouldRejectUnknownToolArgument(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+    void shouldRejectUnknownToolArgument(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", JiraTestData.ISSUE_KEY);
         arguments.put("unexpected", "value");
         assertToolError(callTool(client, "jira_get_issue", arguments));
@@ -347,7 +359,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectBlankStringToolArgument(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+    void shouldRejectBlankStringToolArgument(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", "   ");
 
         assertToolError(callTool(client, "jira_get_issue", arguments));
@@ -367,7 +380,8 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-028")
     @Tag("jira")
     @Tag("confluence")
-    void shouldRejectLimitOutsidePublishedBounds(McpClient client) {        ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
+    void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
+        ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
         zeroLimit.put("jql", JiraTestData.SEARCH_JQL);
         zeroLimit.put("limit", McpTestData.INVALID_LIMIT_BELOW_MIN);
         assertToolError(callTool(client, "jira_search", zeroLimit));
@@ -379,7 +393,7 @@ class McpContractIntegrationTest {
 
         for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
             String queryField = "confluence_search".equals(toolName) ? "cql" : null;
-            for (int limit : new int[]{0, 101}) {
+            for (int limit : new int[]{McpTestData.INVALID_LIMIT_BELOW_MIN, McpTestData.INVALID_LIMIT_ABOVE_MAX}) {
                 ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
                 if (queryField != null) {
                     arguments.put(queryField, ConfluenceTestData.SEARCH_CQL);
@@ -419,7 +433,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-CONF-019")
     @Tag("confluence")
-    void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+    void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("page_id", ConfluenceTestData.PAGE_ID);
 
         assertToolError(callTool(client, "confluence_update_page", arguments));

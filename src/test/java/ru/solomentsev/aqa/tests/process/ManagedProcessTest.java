@@ -35,7 +35,8 @@ class ManagedProcessTest {
     @DisplayName("Диагностика процесса, не завершившегося после принудительной остановки")
     @Description("Предусловия: Используется имитация процесса, который остаётся жив после destroyForcibly.\nШаги: вызвать close; проверить результат принудительной остановки; затем смоделировать завершение процесса и повторить close.\nОжидаемый результат: первая попытка сообщает IOException о незавершённом процессе; после фактического завершения повторный close проходит успешно.")
     @Tag("process")
-    void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {        NonTerminatingProcess process = new NonTerminatingProcess();
+    void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
+        NonTerminatingProcess process = new NonTerminatingProcess();
         ManagedProcess managedProcess = new ManagedProcess(process);
 
         assertThatThrownBy(() -> Allure.step("Закрыть управляемый процесс", managedProcess::close))

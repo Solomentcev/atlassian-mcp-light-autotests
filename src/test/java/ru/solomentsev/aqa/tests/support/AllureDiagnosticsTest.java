@@ -24,7 +24,8 @@ class AllureDiagnosticsTest {
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("Маскирование Basic и Bearer Authorization headers")
     @Description("Проверяет, что диагностические вложения не раскрывают Basic и Bearer credentials.")
-    void shouldMaskAuthorizationHeaders() {        String source = "Authorization: Basic dXNlcjp0b2tlbg\nAuthorization: Bearer secret-value";
+    void shouldMaskAuthorizationHeaders() {
+        String source = "Authorization: Basic dXNlcjp0b2tlbg\nAuthorization: Bearer secret-value";
 
         String masked = AllureDiagnostics.maskSecrets(source);
 
@@ -41,7 +42,8 @@ class AllureDiagnosticsTest {
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("Маскирование значений TOKEN, PASSWORD и SECRET")
     @Description("Проверяет маскирование секретов в строках диагностики до прикрепления к Allure.")
-    void shouldMaskSensitiveEnvironmentValues() {        String source = "JIRA_TOKEN=token-value\nAQA_PASSWORD=pass-value\nsecret: another-value\n{\"access_token\":\"json-secret\"}";
+    void shouldMaskSensitiveEnvironmentValues() {
+        String source = "JIRA_TOKEN=token-value\nAQA_PASSWORD=pass-value\nsecret: another-value\n{\"access_token\":\"json-secret\"}";
 
         String masked = AllureDiagnostics.maskSecrets(source);
 
@@ -60,7 +62,8 @@ class AllureDiagnosticsTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Сохранение несекретных диагностических сообщений")
     @Description("Проверяет, что маскирование не изменяет обычные сообщения STDERR.")
-    void shouldPreserveNonSensitiveDiagnostics() {        String source = "MCP server started; request handled successfully";
+    void shouldPreserveNonSensitiveDiagnostics() {
+        String source = "MCP server started; request handled successfully";
 
         assertThat(AllureDiagnostics.maskSecrets(source))
                 .as("Обычные диагностические сообщения не должны изменяться маскированием")

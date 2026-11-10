@@ -40,7 +40,8 @@ class McpProcessSessionTest {
     @DisplayName("Запуск готовой MCP-сессии и завершение процесса при закрытии")
     @Description("Предусловия: Доступен fake MCP server с classic initialize handshake.\nШаги: запустить McpProcessSession; проверить доступность процесса и клиента; закрыть сессию.\nОжидаемый результат: readiness handshake завершён; процесс завершён с exit code 0.")
     @Tag("process")
-    void shouldStartReadySessionAndStopProcessOnClose() throws Exception {        McpProcessSession session = startSession(
+    void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
+        McpProcessSession session = startSession(
                 launcherFor(FakeMcpServer.class),
                 Map.of(),
                 null,
@@ -71,7 +72,8 @@ class McpProcessSessionTest {
     @DisplayName("Запуск stateless-сессии без classic initialize")
     @Description("Предусловия: Доступен fake stateless MCP server.\nШаги: запустить сессию без handshake; выполнить server/discover и tools/list; закрыть сессию.\nОжидаемый результат: stateless запросы выполняются без classic initialize; процесс завершается с exit code 0.")
     @Tag("process")
-    void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {        McpProcessSession session = startStatelessSession(
+    void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
+        McpProcessSession session = startStatelessSession(
                 launcherFor(FakeStatelessMcpServer.class),
                 Map.of(),
                 null

@@ -44,7 +44,8 @@ class McpClientTest {
     @DisplayName("Отправка запроса и сопоставление ответа по request id")
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: отправить ping через MCP Client; получить ответ.\nОжидаемый результат: ответ содержит JSON-RPC 2.0, исходный request id и ожидаемый result.")
     @Tag("protocol")
-    void shouldSendRequestAndMatchResponseById() throws Exception {        PipedInputStream clientStdout = new PipedInputStream(8_192);
+    void shouldSendRequestAndMatchResponseById() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -74,7 +75,8 @@ class McpClientTest {
     @DisplayName("Отправка notification без request id")
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация сервера.\nШаги: отправить notifications/initialized; проверить принятое сервером сообщение.\nОжидаемый результат: notification не содержит id и передаётся без ожидания response.")
     @Tag("protocol")
-    void shouldSendNotificationWithoutRequestId() throws Exception {        PipedInputStream clientStdout = new PipedInputStream(8_192);
+    void shouldSendNotificationWithoutRequestId() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -116,7 +118,8 @@ class McpClientTest {
     @DisplayName("Выполнение classic initialize handshake")
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: выполнить initialize через MCP Client; дождаться notifications/initialized.\nОжидаемый результат: версия протокола проверена; notification отправлен без request id.")
     @Tag("protocol")
-    void shouldCompleteClassicInitializeHandshake() throws Exception {        PipedInputStream clientStdout = new PipedInputStream(8_192);
+    void shouldCompleteClassicInitializeHandshake() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -179,7 +182,8 @@ class McpClientTest {
     @DisplayName("Добавление stateless metadata без изменения исходных params")
     @Description("Предусловия: Созданы тестовые STDIO-потоки; подготовлены исходные params и client capabilities.\nШаги: выполнить stateless request; проверить переданные серверу metadata и исходный объект params.\nОжидаемый результат: protocolVersion, clientCapabilities и clientInfo добавлены в копию params; исходный объект не изменён.")
     @Tag("protocol")
-    void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {        PipedInputStream clientStdout = new PipedInputStream(8_192);
+    void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -254,7 +258,8 @@ class McpClientTest {
     @DisplayName("Отклонение params с уже заданным _meta")
     @Description("Предусловия: Переданы params с уже существующим полем _meta.\nШаги: вызвать requestStateless.\nОжидаемый результат: клиент выбрасывает IllegalArgumentException и не отправляет запрос.")
     @Tag("negative")
-    void shouldRejectStatelessParamsContainingMetadata() throws Exception {        PipedInputStream clientStdout = new PipedInputStream(1_024);
+    void shouldRejectStatelessParamsContainingMetadata() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(1_024);
         PipedInputStream serverStdin = new PipedInputStream(1_024);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         var params = OBJECT_MAPPER.createObjectNode();
