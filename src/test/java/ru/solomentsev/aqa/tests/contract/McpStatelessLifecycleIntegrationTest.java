@@ -61,8 +61,8 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
         {            try (McpProcessSession session =
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-                JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
-                        McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+                JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
+                        McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
                 assertThat(response.has("error")).isFalse();
                 assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
                 assertThat(response.path("result").path("supportedVersions").isArray()).isTrue();
@@ -84,8 +84,8 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         {            try (McpProcessSession session =
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-                JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
-                        McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+                JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
+                        McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
                 assertThat(response.has("error")).isFalse();
                 assertThat(response.path("result").path("tools").size()).isEqualTo(13);
                 assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
@@ -106,7 +106,7 @@ class McpStatelessLifecycleIntegrationTest {
                 ObjectNode params = OBJECT_MAPPER.createObjectNode();
                 params.put("name", "confluence_list_spaces");
                 params.putObject("arguments").put("limit", 1);
-                JsonNode response = session.client().requestStateless(
+                JsonNode response = Allure.step("Вызвать read-инструмент в stateless-режиме", () -> session.client().requestStateless(
                         "tools/call",
                         params,
                         McpTestData.STATELESS_PROTOCOL_VERSION,
@@ -132,7 +132,7 @@ class McpStatelessLifecycleIntegrationTest {
         {            try (McpProcessSession session =
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
                 JsonNode pingBeforeInitialize =
-                        session.client().request("ping", null, REQUEST_TIMEOUT);
+                        sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
                 assertEmptyPingResult(pingBeforeInitialize);
 
                 ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
@@ -141,26 +141,26 @@ class McpStatelessLifecycleIntegrationTest {
                 initializeParams.putObject("clientInfo")
                         .put("name", "atlassian-mcp-light-autotests")
                         .put("version", "1.0");
-                JsonNode initialize = session.client().request(
+                JsonNode initialize = sendRequest(session.client(), 
                         "initialize", initializeParams, REQUEST_TIMEOUT);
                 assertThat(initialize.has("error")).isFalse();
 
                 JsonNode pingBeforeReady =
-                        session.client().request("ping", null, REQUEST_TIMEOUT);
+                        sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
                 assertEmptyPingResult(pingBeforeReady);
 
                 JsonNode toolsBeforeReady =
-                        session.client().request("tools/list", null, REQUEST_TIMEOUT);
+                        sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
                 assertThat(toolsBeforeReady.path("error").path("code").asInt()).isEqualTo(-32001);
 
                 Allure.step("Отправить notifications/initialized", () -> session.client().notification("notifications/initialized", null));
 
                 JsonNode pingAfterReady =
-                        session.client().request("ping", null, REQUEST_TIMEOUT);
+                        sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
                 assertEmptyPingResult(pingAfterReady);
 
                 JsonNode toolsAfterReady =
-                        session.client().request("tools/list", null, REQUEST_TIMEOUT);
+                        sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
                 assertThat(toolsAfterReady.has("error")).isFalse();
                 assertThat(toolsAfterReady.path("result").path("tools").isArray()).isTrue();
             }
@@ -169,9 +169,10 @@ class McpStatelessLifecycleIntegrationTest {
 
     private static JsonNode sendRequest(ru.solomentsev.aqa.mcp.McpClient client,
                                         String method,
-                                        JsonNode params) {
+                                        JsonNode params,
+                                        Duration timeout) {
         return Allure.step("Отправить MCP-запрос " + method,
-                () -> client.request(method, params, REQUEST_TIMEOUT));
+                () -> client.request(method, params, timeout));
     }
 
     private static void assertEmptyPingResult(JsonNode response) {
