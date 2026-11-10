@@ -35,21 +35,20 @@ class ManagedProcessTest {
     @DisplayName("Диагностика процесса, не завершившегося после принудительной остановки")
     @Description("Предусловия: Используется имитация процесса, который остаётся жив после destroyForcibly.\nШаги: вызвать close; проверить результат принудительной остановки; затем смоделировать завершение процесса и повторить close.\nОжидаемый результат: первая попытка сообщает IOException о незавершённом процессе; после фактического завершения повторный close проходит успешно.")
     @Tag("process")
-    void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
-        {            NonTerminatingProcess process = new NonTerminatingProcess();
-            ManagedProcess managedProcess = new ManagedProcess(process);
+    void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {        NonTerminatingProcess process = new NonTerminatingProcess();
+        ManagedProcess managedProcess = new ManagedProcess(process);
 
-            assertThatThrownBy(() -> Allure.step("Закрыть управляемый процесс", managedProcess::close))
-                    .as("Если процесс не завершился после destroyForcibly, close должен сообщить об ошибке")
-                    .isInstanceOf(IOException.class)
-                    .hasMessageContaining("did not terminate after destroyForcibly");
-            assertThat(process.destroyForciblyCalled).as("После таймаута ManagedProcess должен вызвать destroyForcibly").isTrue();
+        assertThatThrownBy(() -> Allure.step("Закрыть управляемый процесс", managedProcess::close))
+                .as("Если процесс не завершился после destroyForcibly, close должен сообщить об ошибке")
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("did not terminate after destroyForcibly");
+        assertThat(process.destroyForciblyCalled).as("После таймаута ManagedProcess должен вызвать destroyForcibly").isTrue();
 
-            process.alive = false;
-            managedProcess.close();
-            assertThat(managedProcess.isAlive()).as("После завершения процесса ManagedProcess должен сообщать isAlive=false").isFalse();
-        
-        }
+        process.alive = false;
+        managedProcess.close();
+        assertThat(managedProcess.isAlive()).as("После завершения процесса ManagedProcess должен сообщать isAlive=false").isFalse();
+    
+    
     }
 
     private static final class NonTerminatingProcess extends Process {

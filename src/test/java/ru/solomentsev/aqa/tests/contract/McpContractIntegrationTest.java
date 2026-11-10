@@ -57,10 +57,9 @@ class McpContractIntegrationTest {
     @Description("Предусловия: STDIO-процесс запущен; доступен stateless tools/list.\nШаги: вызвать `tools/list` с корректными stateless metadata.\nОжидаемый результат: возвращён успешный JSON-RPC result, содержащий массив tools.")
     @Tag("integration")
     @Tag("case-MCP-005")
-    void shouldReturnToolsList(McpClient client) {
-        {            JsonNode tools = getStatelessTools(client);
-            assertThat(tools.isArray()).as("Проверка tools.isArray(): ожидалось isTrue").isTrue();
-        }
+    void shouldReturnToolsList(McpClient client) {        JsonNode tools = getStatelessTools(client);
+        assertThat(tools.isArray()).as("Проверка tools.isArray(): ожидалось isTrue").isTrue();
+    
     }
 
     @Test
@@ -71,15 +70,14 @@ class McpContractIntegrationTest {
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: извлечь имена инструментов и сравнить с ожидаемым перечнем.\nОжидаемый результат: присутствуют все 13 ожидаемых инструментов; имена уникальны; неожиданные инструменты отсутствуют.")
     @Tag("integration")
     @Tag("case-MCP-006")
-    void shouldExposeExpectedToolNames(McpClient client) {
-        {            JsonNode tools = getStatelessTools(client);
-            Set<String> actualNames = new HashSet<>();
-            for (JsonNode tool : tools) {
-                actualNames.add(tool.path("name").asText());
-            }
-            assertThat(tools.size()).as("Проверка tools.size(): ожидалось isEqualTo(EXPECTED_TOOLS.size())").isEqualTo(EXPECTED_TOOLS.size());
-            assertThat(actualNames).as("Проверка actualNames: ожидалось containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet())").containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
+    void shouldExposeExpectedToolNames(McpClient client) {        JsonNode tools = getStatelessTools(client);
+        Set<String> actualNames = new HashSet<>();
+        for (JsonNode tool : tools) {
+            actualNames.add(tool.path("name").asText());
         }
+        assertThat(tools.size()).as("Проверка tools.size(): ожидалось isEqualTo(EXPECTED_TOOLS.size())").isEqualTo(EXPECTED_TOOLS.size());
+        assertThat(actualNames).as("Проверка actualNames: ожидалось containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet())").containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
+    
     }
 
     @Test
@@ -90,14 +88,13 @@ class McpContractIntegrationTest {
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить description каждого инструмента.\nОжидаемый результат: каждый инструмент содержит непустое текстовое описание.")
     @Tag("integration")
     @Tag("case-MCP-007")
-    void shouldExposeNonEmptyToolDescriptions(McpClient client) {
-        {            JsonNode tools = getStatelessTools(client);
-            for (JsonNode tool : tools) {
-                assertThat(tool.path("description").asText())
-                        .as("description of %s", tool.path("name").asText())
-                        .isNotBlank();
-            }
+    void shouldExposeNonEmptyToolDescriptions(McpClient client) {        JsonNode tools = getStatelessTools(client);
+        for (JsonNode tool : tools) {
+            assertThat(tool.path("description").asText())
+                    .as("description of %s", tool.path("name").asText())
+                    .isNotBlank();
         }
+    
     }
 
     @Test
@@ -110,51 +107,50 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
-    void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
-        {            JsonNode tools = getStatelessTools(client);
-            for (JsonNode tool : tools) {
-                String name = tool.path("name").asText();
-                ToolContract expected = EXPECTED_TOOLS.get(name);
-                assertThat(expected).as("Unexpected tool: %s", name).isNotNull();
+    void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {        JsonNode tools = getStatelessTools(client);
+        for (JsonNode tool : tools) {
+            String name = tool.path("name").asText();
+            ToolContract expected = EXPECTED_TOOLS.get(name);
+            assertThat(expected).as("Unexpected tool: %s", name).isNotNull();
 
-                JsonNode schema = tool.path("inputSchema");
-                assertThat(schema.path("type").asText()).as("Проверка schema.path('type').asText(): ожидалось isEqualTo('object')").isEqualTo("object");
-                assertThat(schema.path("additionalProperties").asBoolean()).as("Проверка schema.path('additionalProperties').asBoolean(): ожидалось isFalse").isFalse();
-                assertThat(schema.path("properties").isObject()).as("Проверка schema.path('properties').isObject(): ожидалось isTrue").isTrue();
-                assertThat(fieldNames(schema.path("properties"))).as("Проверка fieldNames(schema.path('properties')): ожидалось containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet())")
-                        .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
+            JsonNode schema = tool.path("inputSchema");
+            assertThat(schema.path("type").asText()).as("Проверка schema.path('type').asText(): ожидалось isEqualTo('object')").isEqualTo("object");
+            assertThat(schema.path("additionalProperties").asBoolean()).as("Проверка schema.path('additionalProperties').asBoolean(): ожидалось isFalse").isFalse();
+            assertThat(schema.path("properties").isObject()).as("Проверка schema.path('properties').isObject(): ожидалось isTrue").isTrue();
+            assertThat(fieldNames(schema.path("properties"))).as("Проверка fieldNames(schema.path('properties')): ожидалось containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet())")
+                    .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
 
-                if (expected.required().isEmpty()) {
-                    assertThat(schema.has("required")).as("Проверка schema.has('required'): ожидалось isFalse").isFalse();
-                } else {
-                    assertThat(textValues(schema.path("required"))).as("Проверка textValues(schema.path('required')): ожидалось containsExactlyInAnyOrderElementsOf(expected.required())")
-                            .containsExactlyInAnyOrderElementsOf(expected.required());
-                }
-
-                for (Map.Entry<String, String> property : expected.propertyTypes().entrySet()) {
-                    JsonNode definition = schema.path("properties").path(property.getKey());
-                    assertThat(definition.path("type").asText())
-                            .as("%s.%s type", name, property.getKey())
-                            .isEqualTo(property.getValue());
-                    if ("string".equals(property.getValue())) {
-                        assertThat(definition.path("minLength").asInt())
-                                .as("%s.%s minLength", name, property.getKey())
-                                .isEqualTo(1);
-                    }
-                    if ("integer".equals(property.getValue())) {
-                        assertThat(definition.path("minimum").asInt())
-                                .as("%s.%s minimum", name, property.getKey())
-                                .isEqualTo(1);
-                        if ("limit".equals(property.getKey())) {
-                            assertThat(definition.path("maximum").asInt())
-                                    .as("%s.%s maximum", name, property.getKey())
-                                    .isEqualTo(100);
-                        }
-                    }
-                }
-                assertAnnotations(tool.path("annotations"), expected);
+            if (expected.required().isEmpty()) {
+                assertThat(schema.has("required")).as("Проверка schema.has('required'): ожидалось isFalse").isFalse();
+            } else {
+                assertThat(textValues(schema.path("required"))).as("Проверка textValues(schema.path('required')): ожидалось containsExactlyInAnyOrderElementsOf(expected.required())")
+                        .containsExactlyInAnyOrderElementsOf(expected.required());
             }
+
+            for (Map.Entry<String, String> property : expected.propertyTypes().entrySet()) {
+                JsonNode definition = schema.path("properties").path(property.getKey());
+                assertThat(definition.path("type").asText())
+                        .as("%s.%s type", name, property.getKey())
+                        .isEqualTo(property.getValue());
+                if ("string".equals(property.getValue())) {
+                    assertThat(definition.path("minLength").asInt())
+                            .as("%s.%s minLength", name, property.getKey())
+                            .isEqualTo(1);
+                }
+                if ("integer".equals(property.getValue())) {
+                    assertThat(definition.path("minimum").asInt())
+                            .as("%s.%s minimum", name, property.getKey())
+                            .isEqualTo(1);
+                    if ("limit".equals(property.getKey())) {
+                        assertThat(definition.path("maximum").asInt())
+                                .as("%s.%s maximum", name, property.getKey())
+                                .isEqualTo(100);
+                    }
+                }
+            }
+            assertAnnotations(tool.path("annotations"), expected);
         }
+    
     }
 
     @Test
@@ -165,27 +161,26 @@ class McpContractIntegrationTest {
     @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить `server/discover` без `_meta`. 2. Отправить stateless `tools/list` с `_meta`, содержащим protocolVersion, но без clientCapabilities. 3. Повторить с clientCapabilities, но без protocolVersion.\nОжидаемый результат: Для каждого запроса получен JSON-RPC error `-32602 Invalid params`; после негативных запросов корректный stateless-запрос обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-023")
-    void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
-        {            JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
-            assertThat(missingMetadata.path("error").path("code").asInt()).as("Проверка missingMetadata.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
+    void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {        JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
+        assertThat(missingMetadata.path("error").path("code").asInt()).as("Проверка missingMetadata.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
 
-            ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
-            missingCapabilitiesParams.putObject("_meta")
-                    .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
-            JsonNode missingCapabilities = sendRequest(client, 
-                    "tools/list", missingCapabilitiesParams, REQUEST_TIMEOUT);
-            assertThat(missingCapabilities.path("error").path("code").asInt()).as("Проверка missingCapabilities.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
+        ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
+        missingCapabilitiesParams.putObject("_meta")
+                .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        JsonNode missingCapabilities = sendRequest(client, 
+                "tools/list", missingCapabilitiesParams, REQUEST_TIMEOUT);
+        assertThat(missingCapabilities.path("error").path("code").asInt()).as("Проверка missingCapabilities.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
 
-            ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
-            missingVersionParams.putObject("_meta")
-                    .putObject("io.modelcontextprotocol/clientCapabilities");
-            JsonNode missingVersion = sendRequest(client, 
-                    "tools/list", missingVersionParams, REQUEST_TIMEOUT);
-            assertThat(missingVersion.path("error").path("code").asInt()).as("Проверка missingVersion.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
+        ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
+        missingVersionParams.putObject("_meta")
+                .putObject("io.modelcontextprotocol/clientCapabilities");
+        JsonNode missingVersion = sendRequest(client, 
+                "tools/list", missingVersionParams, REQUEST_TIMEOUT);
+        assertThat(missingVersion.path("error").path("code").asInt()).as("Проверка missingVersion.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
 
-            assertSuccessfulJsonRpc(client.listToolsStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
-        }
+        assertSuccessfulJsonRpc(client.listToolsStateless(
+                McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+    
     }
 
     @Test
@@ -197,28 +192,27 @@ class McpContractIntegrationTest {
     @Tag("integration")
     @Tag("case-MCP-021")
     @Tag("confluence")
-    void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {
-        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("limit", McpTestData.DEFAULT_LIMIT);
+    void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("limit", McpTestData.DEFAULT_LIMIT);
 
-            JsonNode response = callTool(client, "confluence_list_spaces", arguments);
+        JsonNode response = callTool(client, "confluence_list_spaces", arguments);
 
-            assertSuccessfulJsonRpc(response);
-            JsonNode result = response.path("result");
-            assertThat(result.path("isError").asBoolean()).as("Проверка result.path('isError').asBoolean(): ожидалось isFalse").isFalse();
-            assertThat(result.path("content").isArray())
-                .as("Ошибка MCP-инструмента должна содержать массив content")
-                .isTrue();
-            assertThat(result.path("content").size())
-                .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
-                .isGreaterThan(0);
-            assertThat(result.path("content").get(0).path("type").asText()).as("Проверка result.path('content').get(0).path('type').asText(): ожидалось isEqualTo('text')").isEqualTo("text");
-            assertThat(result.path("content").get(0).path("text").isTextual()).as("Проверка result.path('content').get(0).path('text').isTextual(): ожидалось isTrue").isTrue();
-            assertThat(result.path("resultType").asText()).as("Проверка result.path('resultType').asText(): ожидалось isEqualTo('complete')").isEqualTo("complete");
-            assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
-                    .path("name").asText()).as("Проверка result.path('_meta').path('io.modelcontextprotocol/serverInfo') .path('name').asText(): ожидалось isEqualTo('atlassian-lite')").isEqualTo("atlassian-lite");
-        
-        }
+        assertSuccessfulJsonRpc(response);
+        JsonNode result = response.path("result");
+        assertThat(result.path("isError").asBoolean()).as("Проверка result.path('isError').asBoolean(): ожидалось isFalse").isFalse();
+        assertThat(result.path("content").isArray())
+            .as("Ошибка MCP-инструмента должна содержать массив content")
+            .isTrue();
+        assertThat(result.path("content").size())
+            .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
+            .isGreaterThan(0);
+        assertThat(result.path("content").get(0).path("type").asText()).as("Проверка result.path('content').get(0).path('type').asText(): ожидалось isEqualTo('text')").isEqualTo("text");
+        assertThat(result.path("content").get(0).path("text").isTextual()).as("Проверка result.path('content').get(0).path('text').isTextual(): ожидалось isTrue").isTrue();
+        assertThat(result.path("resultType").asText()).as("Проверка result.path('resultType').asText(): ожидалось isEqualTo('complete')").isEqualTo("complete");
+        assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
+                .path("name").asText()).as("Проверка result.path('_meta').path('io.modelcontextprotocol/serverInfo') .path('name').asText(): ожидалось isEqualTo('atlassian-lite')").isEqualTo("atlassian-lite");
+    
+    
     }
 
     @Test
@@ -229,23 +223,22 @@ class McpContractIntegrationTest {
     @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить stateless-запрос с версией, отличной от `2026-07-28`.\nОжидаемый результат: Получен JSON-RPC error `-32022 Unsupported protocol version`; в `error.data.supportedVersions` присутствует `2026-07-28`.")
     @Tag("negative")
     @Tag("case-MCP-022")
-    void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
-        {            ObjectNode params = OBJECT_MAPPER.createObjectNode();
-            ObjectNode metadata = params.putObject("_meta");
-            metadata.put("io.modelcontextprotocol/protocolVersion", "2099-01-01");
-            metadata.putObject("io.modelcontextprotocol/clientCapabilities");
+    void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {        ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        ObjectNode metadata = params.putObject("_meta");
+        metadata.put("io.modelcontextprotocol/protocolVersion", "2099-01-01");
+        metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
-            JsonNode response = sendRequest(client, 
-                    "server/discover",
-                    params,
-                    REQUEST_TIMEOUT
-            );
+        JsonNode response = sendRequest(client, 
+                "server/discover",
+                params,
+                REQUEST_TIMEOUT
+        );
 
-            assertThat(response.path("error").path("code").asInt()).as("Проверка response.path('error').path('code').asInt(): ожидалось isEqualTo(-32022)").isEqualTo(-32022);
-            assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("Проверка textValues(response.path('error').path('data').path('supportedVersions')): ожидалось containsExactly('2026-07-28')")
-                    .containsExactly("2026-07-28");
-        
-        }
+        assertThat(response.path("error").path("code").asInt()).as("Проверка response.path('error').path('code').asInt(): ожидалось isEqualTo(-32022)").isEqualTo(-32022);
+        assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("Проверка textValues(response.path('error').path('data').path('supportedVersions')): ожидалось containsExactly('2026-07-28')")
+                .containsExactly("2026-07-28");
+    
+    
     }
 
     @Test
@@ -256,12 +249,11 @@ class McpContractIntegrationTest {
     @Description("Предусловия: Инициализация завершена\nШаги: 1. Вызвать `tools/call` с неизвестным именем инструмента.\nОжидаемый результат: Сервер возвращает JSON-RPC response с `result.isError=true` и текстом ошибки в `result.content`; верхнеуровневый JSON-RPC `error` для ошибки dispatch не используется.")
     @Tag("negative")
     @Tag("case-MCP-010")
-    void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
-        {            JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
+    void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {        JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
 
-            assertToolError(response);
-        
-        }
+        assertToolError(response);
+    
+    
     }
 
     @Test
@@ -273,12 +265,11 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-011")
     @Tag("jira")
-    void shouldRejectMissingRequiredToolArgument(McpClient client) {
-        {            JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
+    void shouldRejectMissingRequiredToolArgument(McpClient client) {        JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
-            assertToolError(response);
-        
-        }
+        assertToolError(response);
+    
+    
     }
 
     @Test
@@ -290,23 +281,22 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
-        {            ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
-            nullArgument.putNull("issue_key");
-            assertToolError(callTool(client, "jira_get_issue", nullArgument));
+    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {        ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
+        nullArgument.putNull("issue_key");
+        assertToolError(callTool(client, "jira_get_issue", nullArgument));
 
-            ObjectNode emptyArgument = OBJECT_MAPPER.createObjectNode();
-            emptyArgument.put("issue_key", "");
-            assertToolError(callTool(client, "jira_get_issue", emptyArgument));
+        ObjectNode emptyArgument = OBJECT_MAPPER.createObjectNode();
+        emptyArgument.put("issue_key", "");
+        assertToolError(callTool(client, "jira_get_issue", emptyArgument));
 
-            ObjectNode blankArgument = OBJECT_MAPPER.createObjectNode();
-            blankArgument.put("issue_key", "   ");
-            assertToolError(callTool(client, "jira_get_issue", blankArgument));
+        ObjectNode blankArgument = OBJECT_MAPPER.createObjectNode();
+        blankArgument.put("issue_key", "   ");
+        assertToolError(callTool(client, "jira_get_issue", blankArgument));
 
-            ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-            assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        }
+        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
+        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
+        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+    
     }
 
     @Test
@@ -318,15 +308,14 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
-    void shouldRejectWrongToolArgumentType(McpClient client) {
-        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("issue_key", 42);
-            assertToolError(callTool(client, "jira_get_issue", arguments));
+    void shouldRejectWrongToolArgumentType(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("issue_key", 42);
+        assertToolError(callTool(client, "jira_get_issue", arguments));
 
-            ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-            assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        }
+        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
+        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
+        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+    
     }
 
     @Test
@@ -338,16 +327,15 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-013")
     @Tag("jira")
-    void shouldRejectUnknownToolArgument(McpClient client) {
-        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("issue_key", JiraTestData.ISSUE_KEY);
-            arguments.put("unexpected", "value");
-            assertToolError(callTool(client, "jira_get_issue", arguments));
+    void shouldRejectUnknownToolArgument(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("issue_key", JiraTestData.ISSUE_KEY);
+        arguments.put("unexpected", "value");
+        assertToolError(callTool(client, "jira_get_issue", arguments));
 
-            ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-            assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        }
+        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
+        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
+        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+    
     }
 
     @Test
@@ -359,15 +347,14 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectBlankStringToolArgument(McpClient client) {
-        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("issue_key", "   ");
+    void shouldRejectBlankStringToolArgument(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("issue_key", "   ");
 
-            assertToolError(callTool(client, "jira_get_issue", arguments));
-            ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-            assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        }
+        assertToolError(callTool(client, "jira_get_issue", arguments));
+        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
+        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
+        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+    
     }
 
     @Test
@@ -380,48 +367,47 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-028")
     @Tag("jira")
     @Tag("confluence")
-    void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
-        {            ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
-            zeroLimit.put("jql", JiraTestData.SEARCH_JQL);
-            zeroLimit.put("limit", McpTestData.INVALID_LIMIT_BELOW_MIN);
-            assertToolError(callTool(client, "jira_search", zeroLimit));
+    void shouldRejectLimitOutsidePublishedBounds(McpClient client) {        ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
+        zeroLimit.put("jql", JiraTestData.SEARCH_JQL);
+        zeroLimit.put("limit", McpTestData.INVALID_LIMIT_BELOW_MIN);
+        assertToolError(callTool(client, "jira_search", zeroLimit));
 
-            ObjectNode excessiveLimit = OBJECT_MAPPER.createObjectNode();
-            excessiveLimit.put("jql", JiraTestData.SEARCH_JQL);
-            excessiveLimit.put("limit", McpTestData.INVALID_LIMIT_ABOVE_MAX);
-            assertToolError(callTool(client, "jira_search", excessiveLimit));
+        ObjectNode excessiveLimit = OBJECT_MAPPER.createObjectNode();
+        excessiveLimit.put("jql", JiraTestData.SEARCH_JQL);
+        excessiveLimit.put("limit", McpTestData.INVALID_LIMIT_ABOVE_MAX);
+        assertToolError(callTool(client, "jira_search", excessiveLimit));
 
-            for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
-                String queryField = "confluence_search".equals(toolName) ? "cql" : null;
-                for (int limit : new int[]{0, 101}) {
-                    ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-                    if (queryField != null) {
-                        arguments.put(queryField, ConfluenceTestData.SEARCH_CQL);
-                    }
-                    arguments.put("limit", limit);
-                    assertToolError(callTool(client, toolName, arguments));
-                }
-            }
-
-            ObjectNode validJiraLimit = OBJECT_MAPPER.createObjectNode();
-            validJiraLimit.put("jql", JiraTestData.SEARCH_JQL);
-            validJiraLimit.put("limit", McpTestData.DEFAULT_LIMIT);
-            JsonNode jiraResponse = callTool(client, "jira_search", validJiraLimit);
-            assertSuccessfulJsonRpc(jiraResponse);
-            assertThat(jiraResponse.path("result").path("isError").asBoolean()).as("Проверка jiraResponse.path('result').path('isError').asBoolean(): ожидалось isFalse").isFalse();
-
-            for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
+        for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
+            String queryField = "confluence_search".equals(toolName) ? "cql" : null;
+            for (int limit : new int[]{0, 101}) {
                 ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-                if ("confluence_search".equals(toolName)) {
-                    arguments.put("cql", ConfluenceTestData.SEARCH_CQL);
+                if (queryField != null) {
+                    arguments.put(queryField, ConfluenceTestData.SEARCH_CQL);
                 }
-                arguments.put("limit", McpTestData.DEFAULT_LIMIT);
-                JsonNode response = callTool(client, toolName, arguments);
-                assertSuccessfulJsonRpc(response);
-                assertThat(response.path("result").path("isError").asBoolean()).as("Проверка response.path('result').path('isError').asBoolean(): ожидалось isFalse").isFalse();
+                arguments.put("limit", limit);
+                assertToolError(callTool(client, toolName, arguments));
             }
-        
         }
+
+        ObjectNode validJiraLimit = OBJECT_MAPPER.createObjectNode();
+        validJiraLimit.put("jql", JiraTestData.SEARCH_JQL);
+        validJiraLimit.put("limit", McpTestData.DEFAULT_LIMIT);
+        JsonNode jiraResponse = callTool(client, "jira_search", validJiraLimit);
+        assertSuccessfulJsonRpc(jiraResponse);
+        assertThat(jiraResponse.path("result").path("isError").asBoolean()).as("Проверка jiraResponse.path('result').path('isError').asBoolean(): ожидалось isFalse").isFalse();
+
+        for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
+            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+            if ("confluence_search".equals(toolName)) {
+                arguments.put("cql", ConfluenceTestData.SEARCH_CQL);
+            }
+            arguments.put("limit", McpTestData.DEFAULT_LIMIT);
+            JsonNode response = callTool(client, toolName, arguments);
+            assertSuccessfulJsonRpc(response);
+            assertThat(response.path("result").path("isError").asBoolean()).as("Проверка response.path('result').path('isError').asBoolean(): ожидалось isFalse").isFalse();
+        }
+    
+    
     }
 
     @Test
@@ -433,13 +419,12 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-CONF-019")
     @Tag("confluence")
-    void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {
-        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("page_id", ConfluenceTestData.PAGE_ID);
+    void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        arguments.put("page_id", ConfluenceTestData.PAGE_ID);
 
-            assertToolError(callTool(client, "confluence_update_page", arguments));
-        
-        }
+        assertToolError(callTool(client, "confluence_update_page", arguments));
+    
+    
     }
 
     private static JsonNode sendRequest(McpClient client, String method, JsonNode params) {

@@ -45,15 +45,14 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить пустую строку и строку из пробельных символов; затем отправить корректный ping.\nОжидаемый результат: пустые строки игнорируются без ответа и завершения процесса; ping обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-029")
-    void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
-        {            sendRawLine(client, "");
-            sendRawLine(client, "   ");
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-            assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
-        }
+    void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {        sendRawLine(client, "");
+        sendRawLine(client, "   ");
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+        assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
+    
     }
 
     @Test
@@ -64,17 +63,16 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить строку с корректным JSON-объектом и дополнительным JSON-токеном; затем отправить корректный ping.\nОжидаемый результат: первая строка отклоняется с -32700 и id=null; следующая строка обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-030")
-    void shouldRejectTrailingJsonTokens(McpClient client) {
-        {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
-            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-            assertJsonRpcError(error, -32700);
-            assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
+    void shouldRejectTrailingJsonTokens(McpClient client) {        sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
+        var error = awaitRawResponse(client, REQUEST_TIMEOUT);
+        assertJsonRpcError(error, -32700);
+        assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
 
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-        }
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+    
     }
 
     @Test
@@ -85,17 +83,16 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить синтаксически некорректную JSON-строку; затем отправить корректный ping.\nОжидаемый результат: некорректное сообщение возвращает -32700; последующий запрос обрабатывается без зависания процесса.")
     @Tag("negative")
     @Tag("case-MCP-015")
-    void shouldRecoverAfterMalformedJson(McpClient client) {
-        {            sendRawLine(client, "{invalid-json");
-            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-            assertJsonRpcError(error, -32700);
-            assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
+    void shouldRecoverAfterMalformedJson(McpClient client) {        sendRawLine(client, "{invalid-json");
+        var error = awaitRawResponse(client, REQUEST_TIMEOUT);
+        assertJsonRpcError(error, -32700);
+        assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
 
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-        }
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+    
     }
 
     @Test
@@ -106,17 +103,16 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить JSON-массив в качестве корневого значения; затем отправить корректный ping.\nОжидаемый результат: массив отклоняется с -32600 Invalid Request и id=null; процесс продолжает обрабатывать следующие строки.")
     @Tag("negative")
     @Tag("case-MCP-031")
-    void shouldRejectNonObjectJsonRoot(McpClient client) {
-        {            sendRawLine(client, "[]");
-            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-            assertJsonRpcError(error, -32600);
-            assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
+    void shouldRejectNonObjectJsonRoot(McpClient client) {        sendRawLine(client, "[]");
+        var error = awaitRawResponse(client, REQUEST_TIMEOUT);
+        assertJsonRpcError(error, -32600);
+        assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
 
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-        }
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+    
     }
 
     @Test
@@ -127,16 +123,15 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить JSON-объект без обязательного поля method; затем отправить корректный ping.\nОжидаемый результат: некорректная структура отклоняется с -32600 Invalid Request; процесс остаётся работоспособным.")
     @Tag("negative")
     @Tag("case-MCP-016")
-    void shouldRejectRequestWithMissingMethod(McpClient client) {
-        {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":1}");
-            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-            assertJsonRpcError(error, -32600);
+    void shouldRejectRequestWithMissingMethod(McpClient client) {        sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":1}");
+        var error = awaitRawResponse(client, REQUEST_TIMEOUT);
+        assertJsonRpcError(error, -32600);
 
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-        }
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+    
     }
 
     @Test
@@ -147,15 +142,14 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен; classic lifecycle находится в READY.\nШаги: отправить tools/list без поля id; затем отправить корректный tools/list с id.\nОжидаемый результат: первый вызов отклоняется с -32600 Invalid Request; второй получает корректный response.")
     @Tag("negative")
     @Tag("case-MCP-032")
-    void shouldRejectRequestWithoutId(McpClient client) {
-        {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
-            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-            assertJsonRpcError(error, -32600);
+    void shouldRejectRequestWithoutId(McpClient client) {        sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
+        var error = awaitRawResponse(client, REQUEST_TIMEOUT);
+        assertJsonRpcError(error, -32600);
 
-            var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
-            assertThat(tools.has("error")).as("Проверка tools.has('error'): ожидалось isFalse").isFalse();
-            assertThat(tools.path("result").path("tools").isArray()).as("Проверка tools.path('result').path('tools').isArray(): ожидалось isTrue").isTrue();
-        }
+        var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
+        assertThat(tools.has("error")).as("Проверка tools.has('error'): ожидалось isFalse").isFalse();
+        assertThat(tools.path("result").path("tools").isArray()).as("Проверка tools.path('result').path('tools').isArray(): ожидалось isTrue").isTrue();
+    
     }
 
     @Test
@@ -166,17 +160,16 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить запрос с неизвестным методом на кириллице; проверить текст ошибки.\nОжидаемый результат: возвращается -32601; кириллическое имя метода сохранено в сообщении ошибки.")
     @Tag("negative")
     @Tag("case-MCP-014")
-    void shouldReturnMethodNotFoundForUnknownMethod(McpClient client) {
-        {            var response = sendRequest(client, "aqa/unknown-method", null, REQUEST_TIMEOUT);
-            assertJsonRpcError(response, -32601);
+    void shouldReturnMethodNotFoundForUnknownMethod(McpClient client) {        var response = sendRequest(client, "aqa/unknown-method", null, REQUEST_TIMEOUT);
+        assertJsonRpcError(response, -32601);
 
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-            assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
-        
-        }
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+        assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
+    
+    
     }
 
     @Test
@@ -186,15 +179,14 @@ class McpTransportContractIntegrationTest {
     @DisplayName("Сохранение UTF-8 в JSON-RPC сообщениях")
     @Description("Предусловия: Процесс запущен\nШаги: 1. Отправить запрос с неизвестным методом.\nОжидаемый результат: Возвращается JSON-RPC ошибка метода; идентификатор запроса сохранён; процесс продолжает работу.")
     @Tag("contract")
-    void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {
-        {            var response = sendRequest(client, "aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
+    void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {        var response = sendRequest(client, "aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
 
-            assertJsonRpcError(response, -32601);
-            assertThat(response.path("error").path("message").asText())
-                    .as("Сообщение ошибки должно содержать имя неизвестного метода")
-                    .contains("неизвестный-метод");
-        
-        }
+        assertJsonRpcError(response, -32601);
+        assertThat(response.path("error").path("message").asText())
+                .as("Сообщение ошибки должно содержать имя неизвестного метода")
+                .contains("неизвестный-метод");
+    
+    
     }
 
     @Test
@@ -205,17 +197,16 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: Инициализация завершена\nШаги: 1. Отправить `notifications/initialized` без request id. 2. Проверить отсутствие JSON-RPC response на уведомление. 3. Отправить следующий обычный запрос.\nОжидаемый результат: Уведомление принимается без отдельного ответа; последующие запросы обрабатываются штатно.")
     @Tag("protocol")
     @Tag("case-MCP-004")
-    void shouldNotRespondToNotifications(McpClient client) {
-        {            client.notification("notifications/initialized", null);
+    void shouldNotRespondToNotifications(McpClient client) {        client.notification("notifications/initialized", null);
 
-            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
 
-            assertThat(ping.has("error"))
-                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
-                    .isFalse();
-            assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
-        
-        }
+        assertThat(ping.has("error"))
+                .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                .isFalse();
+        assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
+    
+    
     }
 
     @Test
@@ -226,22 +217,21 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: Классический lifecycle завершён; процесс в состоянии READY\nШаги: 1. Отправить второй `initialize` с новым request id. 2. Проверить ответ. 3. Выполнить `tools/list` исходной сессии.\nОжидаемый результат: Второй `initialize` отклоняется с `-32600 Invalid Request`; исходная сессия остаётся работоспособной и повторная инициализация не выполняется.")
     @Tag("negative")
     @Tag("case-MCP-025")
-    void shouldRejectSecondClassicInitialize(McpClient client) {
-        {            ObjectNode params = OBJECT_MAPPER.createObjectNode();
-            params.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
-            params.putObject("capabilities");
-            params.putObject("clientInfo")
-                    .put("name", McpTestData.CLIENT_NAME)
-                    .put("version", McpTestData.CLIENT_VERSION);
+    void shouldRejectSecondClassicInitialize(McpClient client) {        ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        params.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
+        params.putObject("capabilities");
+        params.putObject("clientInfo")
+                .put("name", McpTestData.CLIENT_NAME)
+                .put("version", McpTestData.CLIENT_VERSION);
 
-            var response = sendRequest(client, "initialize", params, REQUEST_TIMEOUT);
-            assertJsonRpcError(response, -32600);
+        var response = sendRequest(client, "initialize", params, REQUEST_TIMEOUT);
+        assertJsonRpcError(response, -32600);
 
-            var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
-            assertThat(tools.has("error")).as("Проверка tools.has('error'): ожидалось isFalse").isFalse();
-            assertThat(tools.path("result").path("tools").isArray()).as("Проверка tools.path('result').path('tools').isArray(): ожидалось isTrue").isTrue();
-        
-        }
+        var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
+        assertThat(tools.has("error")).as("Проверка tools.has('error'): ожидалось isFalse").isFalse();
+        assertThat(tools.path("result").path("tools").isArray()).as("Проверка tools.path('result').path('tools').isArray(): ожидалось isTrue").isTrue();
+    
+    
     }
 
     private static void sendRawLine(McpClient client, String line) {
