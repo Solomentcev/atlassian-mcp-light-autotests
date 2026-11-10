@@ -32,9 +32,7 @@ class ProcessBuilderLauncherTest {
     @Story("Запуск процесса и отдельный сбор STDERR")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Запуск процесса и отдельный сбор STDERR")
-    @Description("Предусловия: Доступен исполняемый файл Java текущей JVM.\nШаги: запустить java -version через ProcessBuilderLauncher; дождаться завершения; прочитать STDERR collector.\nОжидаемый результат: процесс завершается с кодом 0; диагностический вывод доступен через STDERR отдельно от STDOUT.")
-@Tag("process")
-    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
+    @Description("Предусловия: Доступен исполняемый файл Java текущей JVM.\nШаги: запустить java -version через ProcessBuilderLauncher; дождаться завершения; прочитать STDERR collector.\nОжидаемый результат: процесс завершается с кодом 0; диагностический вывод доступен через STDERR отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
         String executable = Path.of(
                 System.getProperty("java.home"),
                 "bin",

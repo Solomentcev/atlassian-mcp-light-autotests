@@ -53,9 +53,7 @@ class McpContractIntegrationTest {
     @Story("MCP-005 — Получение списка инструментов")
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-005: Получение списка инструментов")
-    @Description("Предусловия: STDIO-процесс запущен; доступен stateless tools/list.\nШаги: вызвать `tools/list` с корректными stateless metadata.\nОжидаемый результат: возвращён успешный JSON-RPC result, содержащий массив tools.")
-@Tag("integration")
-    @Tag("case-MCP-005")
+    @Description("Предусловия: STDIO-процесс запущен; доступен stateless tools/list.\nШаги: вызвать `tools/list` с корректными stateless metadata.\nОжидаемый результат: возвращён успешный JSON-RPC result, содержащий массив tools.")    @Tag("case-MCP-005")
     void shouldReturnToolsList(McpClient client) {
         JsonNode tools = getStatelessTools(client);
         assertThat(tools.isArray()).as("tools/list должен вернуть массив tools").isTrue();
@@ -67,9 +65,7 @@ class McpContractIntegrationTest {
     @Story("MCP-006 — Проверка состава инструментов")
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-006: Проверка состава инструментов")
-    @Description("Предусловия: Получен результат `tools/list`.\nШаги: извлечь имена инструментов и сравнить с ожидаемым перечнем.\nОжидаемый результат: присутствуют все 13 ожидаемых инструментов; имена уникальны; неожиданные инструменты отсутствуют.")
-@Tag("integration")
-    @Tag("case-MCP-006")
+    @Description("Предусловия: Получен результат `tools/list`.\nШаги: извлечь имена инструментов и сравнить с ожидаемым перечнем.\nОжидаемый результат: присутствуют все 13 ожидаемых инструментов; имена уникальны; неожиданные инструменты отсутствуют.")    @Tag("case-MCP-006")
     void shouldExposeExpectedToolNames(McpClient client) {
         JsonNode tools = getStatelessTools(client);
         Set<String> actualNames = new HashSet<>();
@@ -86,9 +82,7 @@ class McpContractIntegrationTest {
     @Story("MCP-007 — Проверка описаний инструментов")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-007: Проверка описаний инструментов")
-    @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить description каждого инструмента.\nОжидаемый результат: каждый инструмент содержит непустое текстовое описание.")
-@Tag("integration")
-    @Tag("case-MCP-007")
+    @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить description каждого инструмента.\nОжидаемый результат: каждый инструмент содержит непустое текстовое описание.")    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         JsonNode tools = getStatelessTools(client);
         for (JsonNode tool : tools) {
@@ -104,9 +98,7 @@ class McpContractIntegrationTest {
     @Story("MCP-008 — Проверка JSON Schema и annotations инструментов")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-008: Проверка JSON Schema и annotations инструментов")
-    @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить type, properties, required, additionalProperties, ограничения JSON Schema и annotations каждого инструмента; сравнить результат с mcp-contract.md.\nОжидаемый результат: схемы и annotations всех 13 инструментов соответствуют опубликованному контракту.")
-@Tag("integration")
-    @Tag("case-MCP-008")
+    @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить type, properties, required, additionalProperties, ограничения JSON Schema и annotations каждого инструмента; сравнить результат с mcp-contract.md.\nОжидаемый результат: схемы и annotations всех 13 инструментов соответствуют опубликованному контракту.")    @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {

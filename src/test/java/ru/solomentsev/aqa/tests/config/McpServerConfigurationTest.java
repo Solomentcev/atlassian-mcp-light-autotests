@@ -27,9 +27,7 @@ class McpServerConfigurationTest {
     @Story("Чтение режима запуска из переменных окружения")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Чтение режима запуска из переменных окружения")
-    @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")
-@Tag("configuration")
-    void shouldReadLocalModeFromEnvironment() {
+    @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")    void shouldReadLocalModeFromEnvironment() {
         McpServerConfiguration configuration = McpServerConfiguration.from(
                 Map.of(
                         "AQA_SERVER_MODE", "local",
@@ -48,9 +46,7 @@ class McpServerConfigurationTest {
     @Story("Приоритет системных свойств над переменными окружения")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Приоритет системных свойств над переменными окружения")
-    @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")
-@Tag("configuration")
-    void shouldPreferSystemPropertiesToEnvironment() {
+    @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")    void shouldPreferSystemPropertiesToEnvironment() {
         Properties properties = new Properties();
         properties.setProperty("aqa.server.mode", "docker");
         properties.setProperty("aqa.docker.image", "atlassian-mcp-light:test");
