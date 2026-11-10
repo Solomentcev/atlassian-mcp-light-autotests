@@ -38,7 +38,7 @@ class McpStatelessLifecycleIntegrationTest {
 
             JsonNode pingBeforeReady = session.client().request("ping", null, REQUEST_TIMEOUT);
             assertThat(pingBeforeReady.path("result").isObject()).isTrue();
-            assertThat(pingBeforeReady.path("result").isEmpty()).isTrue();
+            assertThat(pingBeforeReady.path("result").size()).isZero();
 
             JsonNode tools = session.client().listToolsStateless(
                     PROTOCOL_VERSION,
