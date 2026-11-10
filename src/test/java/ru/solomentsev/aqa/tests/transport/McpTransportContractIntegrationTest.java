@@ -3,6 +3,7 @@ package ru.solomentsev.aqa.mcp;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -44,6 +45,9 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-029")
     void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
+        Allure.parameter("Пустая входная строка", "\"\"");
+        Allure.parameter("Строка из пробелов", "\"   \"");
+        Allure.parameter("Контрольный запрос", "ping");
         sendRawLine(client, "");
         sendRawLine(client, "   ");
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
@@ -63,6 +67,8 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-030")
     void shouldRejectTrailingJsonTokens(McpClient client) {
+        Allure.parameter("Некорректная STDIO-строка", "{\\"jsonrpc\\":\\"2.0\\",\\"id\\":5,\\"method\\":\\"ping\\"} trailing");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32700);
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32700);
@@ -84,6 +90,8 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-015")
     void shouldRecoverAfterMalformedJson(McpClient client) {
+        Allure.parameter("Некорректная JSON-строка", "{invalid-json");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32700);
         sendRawLine(client, "{invalid-json");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32700);
@@ -105,6 +113,8 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-031")
     void shouldRejectNonObjectJsonRoot(McpClient client) {
+        Allure.parameter("JSON root", "[] (массив вместо объекта)");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
         sendRawLine(client, "[]");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32600);
@@ -126,6 +136,9 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-016")
     void shouldRejectRequestWithMissingMethod(McpClient client) {
+        Allure.parameter("JSON-RPC request", "{\\"jsonrpc\\":\\"2.0\\",\\"id\\":1}");
+        Allure.parameter("Отсутствующее поле", "method");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":1}");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32600);
@@ -146,6 +159,9 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-032")
     void shouldRejectRequestWithoutId(McpClient client) {
+        Allure.parameter("JSON-RPC method", "tools/list");
+        Allure.parameter("Отсутствующее поле", "id");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32600);
@@ -165,6 +181,8 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-014")
     void shouldReturnMethodNotFoundForUnknownMethod(McpClient client) {
+        Allure.parameter("JSON-RPC method", "aqa/unknown-method");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32601);
         var response = sendRequest(client, "aqa/unknown-method", null, REQUEST_TIMEOUT);
         assertJsonRpcError(response, -32601);
 
@@ -185,6 +203,9 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: Процесс запущен\nШаги: 1. Отправить запрос с неизвестным методом.\nОжидаемый результат: Возвращается JSON-RPC ошибка метода; идентификатор запроса сохранён; процесс продолжает работу.")
     @Tag("contract")
     void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {
+        Allure.parameter("JSON-RPC method", "aqa/неизвестный-метод");
+        Allure.parameter("Кодировка", "UTF-8");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32601);
         var response = sendRequest(client, "aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
 
         assertJsonRpcError(response, -32601);
@@ -204,6 +225,9 @@ class McpTransportContractIntegrationTest {
     @Tag("protocol")
     @Tag("case-MCP-004")
     void shouldNotRespondToNotifications(McpClient client) {
+        Allure.parameter("Notification method", "notifications/initialized");
+        Allure.parameter("Notification request id", "отсутствует");
+        Allure.parameter("Контрольный запрос", "ping");
         client.notification("notifications/initialized", null);
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
@@ -225,6 +249,9 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-025")
     void shouldRejectSecondClassicInitialize(McpClient client) {
+        Allure.parameter("Повторный JSON-RPC method", "initialize");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
+        Allure.parameter("Проверка сохранения сессии", "tools/list");
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
         params.putObject("capabilities");
