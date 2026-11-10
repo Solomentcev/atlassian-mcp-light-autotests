@@ -67,7 +67,7 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-030")
     void shouldRejectTrailingJsonTokens(McpClient client) {
-        Allure.parameter("Некорректная STDIO-строка", "{\\"jsonrpc\\":\\"2.0\\",\\"id\\":5,\\"method\\":\\"ping\\"} trailing");
+        Allure.parameter("Некорректная STDIO-строка", "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
         Allure.parameter("Ожидаемый JSON-RPC error code", -32700);
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
@@ -136,7 +136,7 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-016")
     void shouldRejectRequestWithMissingMethod(McpClient client) {
-        Allure.parameter("JSON-RPC request", "{\\"jsonrpc\\":\\"2.0\\",\\"id\\":1}");
+        Allure.parameter("JSON-RPC request", "{\"jsonrpc\":\"2.0\",\"id\":1}");
         Allure.parameter("Отсутствующее поле", "method");
         Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":1}");
