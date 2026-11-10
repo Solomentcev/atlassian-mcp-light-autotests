@@ -22,13 +22,13 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Проверяет stateless MCP lifecycle на отдельном процессе без classic initialize.
+ * Проверяет отдельные сценарии stateless и classic MCP lifecycle.
  */
-    @Tag("integration")
+@Tag("integration")
 @EnabledIfSystemProperty(named = "AQA_RUN_INTEGRATION", matches = "true")
 @Epic("MCP Server")
-    @Tag("lifecycle")
-    @Tag("protocol")
+@Tag("lifecycle")
+@Tag("protocol")
 class McpStatelessLifecycleIntegrationTest {
 
     private static final String PROTOCOL_VERSION = "2026-07-28";
@@ -36,47 +36,81 @@ class McpStatelessLifecycleIntegrationTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
-    @Feature("Stateless Lifecycle")
-    @Story("MCP-017 / MCP-019 / MCP-020 / MCP-021 / MCP-036 — Stateless и classic lifecycle до READY")
+    @Feature("Classic Lifecycle")
+    @Story("MCP-017 — Запрос до инициализации")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("Stateless tools и classic lifecycle до READY")
-    @Description("Предусловия: Запущен отдельный STDIO-процесс; classic initialize не отправлялся.\nШаги: вызвать classic tools/list и ping; выполнить stateless tools/list, tools/call и server/discover.\nОжидаемый результат: classic tools/list возвращает -32001; ping доступен до READY; stateless-запросы успешно обрабатываются без classic initialize и возвращают ожидаемые MCP-результаты.")
-    @Tag("integration")
+    @DisplayName("MCP-017: Запрос до инициализации")
+    @Description("Предусловия: STDIO-процесс запущен; initialize не отправлялся.\nШаги: вызвать classic tools/list.\nОжидаемый результат: сервер возвращает ошибку состояния протокола -32001 и не выполняет инструмент.")
     @Tag("case-MCP-017")
-    @Tag("case-MCP-019")
-    @Tag("case-MCP-020")
-    @Tag("case-MCP-021")
-    @Tag("case-MCP-036")
-    @Tag("case-MCP-010")
-    void shouldListToolsAndDiscoverWithoutClassicInitialize() throws Exception {
-        Allure.step("Stateless tools и classic lifecycle до READY", () -> {
+    void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
+        Allure.step("Отклонение classic tools/list до initialize", () -> {
             try (McpProcessSession session =
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-                JsonNode classicToolsBeforeReady = session.client().request(
-                        "tools/list",
-                        null,
-                        REQUEST_TIMEOUT
-                );
-                assertThat(classicToolsBeforeReady.path("error").path("code").asInt())
-                        .isEqualTo(-32001);
+                JsonNode response = session.client().request("tools/list", null, REQUEST_TIMEOUT);
+                assertThat(response.path("error").path("code").asInt()).isEqualTo(-32001);
+            }
+        });
+    }
 
-                JsonNode pingBeforeReady = session.client().request("ping", null, REQUEST_TIMEOUT);
-                assertThat(pingBeforeReady.path("result").isObject()).isTrue();
-                assertThat(pingBeforeReady.path("result").size()).isZero();
+    @Test
+    @Feature("Stateless Lifecycle")
+    @Story("MCP-019 — Обнаружение возможностей stateless-режима")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-019: Обнаружение возможностей stateless-режима")
+    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся.\nШаги: вызвать server/discover с корректными stateless metadata.\nОжидаемый результат: сервер возвращает успешный результат обнаружения с supportedVersions, capabilities и serverInfo.")
+    @Tag("case-MCP-019")
+    void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
+        Allure.step("Обнаружение stateless capabilities без initialize", () -> {
+            try (McpProcessSession session =
+                         McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+                JsonNode response = session.client().discoverStateless(
+                        PROTOCOL_VERSION, REQUEST_TIMEOUT);
+                assertThat(response.has("error")).isFalse();
+                assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
+                assertThat(response.path("result").path("supportedVersions").isArray()).isTrue();
+                assertThat(response.path("result").path("capabilities").path("tools").isObject()).isTrue();
+                assertThat(response.path("result").path("_meta")
+                        .path("io.modelcontextprotocol/serverInfo").path("name").asText())
+                        .isEqualTo("atlassian-lite");
+            }
+        });
+    }
 
-                JsonNode tools = session.client().listToolsStateless(
-                        PROTOCOL_VERSION,
-                        REQUEST_TIMEOUT
-                );
+    @Test
+    @Feature("Stateless Lifecycle")
+    @Story("MCP-020 — Вызов tools/list в stateless-режиме без initialize")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-020: Вызов tools/list в stateless-режиме без initialize")
+    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся.\nШаги: вызвать stateless tools/list с корректными metadata.\nОжидаемый результат: запрос успешно обработан без classic handshake; возвращены 13 инструментов и serverInfo metadata.")
+    @Tag("case-MCP-020")
+    void shouldListToolsStatelessWithoutInitialize() throws Exception {
+        Allure.step("Получение tools/list без classic initialize", () -> {
+            try (McpProcessSession session =
+                         McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+                JsonNode response = session.client().listToolsStateless(
+                        PROTOCOL_VERSION, REQUEST_TIMEOUT);
+                assertThat(response.has("error")).isFalse();
+                assertThat(response.path("result").path("tools").size()).isEqualTo(13);
+                assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
+            }
+        });
+    }
 
-                assertThat(tools.path("jsonrpc").asText()).isEqualTo("2.0");
-                assertThat(tools.has("error")).isFalse();
-                assertThat(tools.path("result").path("tools").size()).isEqualTo(13);
-
+    @Test
+    @Feature("Stateless Lifecycle")
+    @Story("MCP-021 — Вызов tools/call в stateless-режиме")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-021: Вызов tools/call в stateless-режиме")
+    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся; доступен безопасный read-инструмент.\nШаги: вызвать confluence_list_spaces через stateless tools/call с limit=1.\nОжидаемый результат: запрос выполняется без initialize и возвращает MCP tool result с resultType=complete.")
+    @Tag("case-MCP-021")
+    void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
+        Allure.step("Вызов read-инструмента без classic initialize", () -> {
+            try (McpProcessSession session =
+                         McpServerConfiguration.fromEnvironment().startStatelessSession()) {
                 ObjectNode params = OBJECT_MAPPER.createObjectNode();
-                params.put("name", "aqa_unknown_tool");
-                params.set("arguments", OBJECT_MAPPER.createObjectNode());
-                JsonNode statelessToolCall = session.client().requestStateless(
+                params.put("name", "confluence_list_spaces");
+                params.putObject("arguments").put("limit", 1);
+                JsonNode response = session.client().requestStateless(
                         "tools/call",
                         params,
                         PROTOCOL_VERSION,
@@ -84,26 +118,63 @@ class McpStatelessLifecycleIntegrationTest {
                         null,
                         REQUEST_TIMEOUT
                 );
-                assertThat(statelessToolCall.has("error")).isFalse();
-                assertThat(statelessToolCall.path("result").path("isError").asBoolean()).isTrue();
-                assertThat(statelessToolCall.path("result").path("resultType").asText())
-                        .isEqualTo("complete");
-
-                JsonNode discovery = session.client().discoverStateless(
-                        PROTOCOL_VERSION,
-                        REQUEST_TIMEOUT
-                );
-
-                assertThat(discovery.path("jsonrpc").asText()).isEqualTo("2.0");
-                assertThat(discovery.has("error")).isFalse();
-                assertThat(discovery.path("result").path("resultType").asText())
-                        .isEqualTo("complete");
-                assertThat(discovery.path("result").path("_meta")
-                        .path("io.modelcontextprotocol/serverInfo")
-                        .path("name").asText()).isEqualTo("atlassian-lite");
-
+                assertThat(response.has("error")).isFalse();
+                assertThat(response.path("result").path("isError").asBoolean()).isFalse();
+                assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
             }
-        
         });
+    }
+
+    @Test
+    @Feature("Classic Lifecycle")
+    @Story("MCP-036 — Обработка ping до и после READY")
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("MCP-036: Обработка ping до и после READY")
+    @Description("Предусловия: STDIO-процесс запущен и находится в состоянии NEW.\nШаги: вызвать ping до initialize; выполнить initialize; вызвать ping до notifications/initialized; проверить недоступность tools/list; отправить notifications/initialized и повторить ping.\nОжидаемый результат: ping возвращает пустой result и не меняет состояние lifecycle; tools/list недоступен до notifications/initialized и доступен после перехода в READY.")
+    @Tag("case-MCP-036")
+    void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
+        Allure.step("Проверка ping на разных этапах classic lifecycle", () -> {
+            try (McpProcessSession session =
+                         McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+                JsonNode pingBeforeInitialize =
+                        session.client().request("ping", null, REQUEST_TIMEOUT);
+                assertEmptyPingResult(pingBeforeInitialize);
+
+                ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
+                initializeParams.put("protocolVersion", "2025-11-25");
+                initializeParams.putObject("capabilities");
+                initializeParams.putObject("clientInfo")
+                        .put("name", "atlassian-mcp-light-autotests")
+                        .put("version", "1.0");
+                JsonNode initialize = session.client().request(
+                        "initialize", initializeParams, REQUEST_TIMEOUT);
+                assertThat(initialize.has("error")).isFalse();
+
+                JsonNode pingBeforeReady =
+                        session.client().request("ping", null, REQUEST_TIMEOUT);
+                assertEmptyPingResult(pingBeforeReady);
+
+                JsonNode toolsBeforeReady =
+                        session.client().request("tools/list", null, REQUEST_TIMEOUT);
+                assertThat(toolsBeforeReady.path("error").path("code").asInt()).isEqualTo(-32001);
+
+                session.client().notification("notifications/initialized", null);
+
+                JsonNode pingAfterReady =
+                        session.client().request("ping", null, REQUEST_TIMEOUT);
+                assertEmptyPingResult(pingAfterReady);
+
+                JsonNode toolsAfterReady =
+                        session.client().request("tools/list", null, REQUEST_TIMEOUT);
+                assertThat(toolsAfterReady.has("error")).isFalse();
+                assertThat(toolsAfterReady.path("result").path("tools").isArray()).isTrue();
+            }
+        });
+    }
+
+    private static void assertEmptyPingResult(JsonNode response) {
+        assertThat(response.has("error")).isFalse();
+        assertThat(response.path("result").isObject()).isTrue();
+        assertThat(response.path("result").isEmpty()).isTrue();
     }
 }
