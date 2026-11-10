@@ -46,7 +46,9 @@ class McpStatelessLifecycleIntegrationTest {
         {            try (McpProcessSession session =
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
                 JsonNode response = sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
-                assertThat(response.path("error").path("code").asInt()).isEqualTo(-32001);
+                assertThat(response.path("error").path("code").asInt())
+                        .as("До initialize сервер должен отклонять tools/list с ошибкой состояния -32001")
+                        .isEqualTo(-32001);
             }
         }
     }
@@ -63,8 +65,12 @@ class McpStatelessLifecycleIntegrationTest {
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
                 JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
                         McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
-                assertThat(response.has("error")).isFalse();
-                assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
+                assertThat(response.has("error"))
+                        .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
+                        .isFalse();
+                assertThat(response.path("result").path("resultType").asText())
+                        .as("Stateless-ответ должен иметь resultType=complete")
+                        .isEqualTo("complete");
                 assertThat(response.path("result").path("supportedVersions").isArray()).isTrue();
                 assertThat(response.path("result").path("capabilities").path("tools").isObject()).isTrue();
                 assertThat(response.path("result").path("_meta")
@@ -86,9 +92,15 @@ class McpStatelessLifecycleIntegrationTest {
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
                 JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
                         McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
-                assertThat(response.has("error")).isFalse();
-                assertThat(response.path("result").path("tools").size()).isEqualTo(13);
-                assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
+                assertThat(response.has("error"))
+                        .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
+                        .isFalse();
+                assertThat(response.path("result").path("tools").size())
+                        .as("Stateless tools/list должен вернуть все 13 инструментов контракта")
+                        .isEqualTo(13);
+                assertThat(response.path("result").path("resultType").asText())
+                        .as("Stateless-ответ должен иметь resultType=complete")
+                        .isEqualTo("complete");
             }
         }
     }
@@ -114,9 +126,15 @@ class McpStatelessLifecycleIntegrationTest {
                         null,
                         REQUEST_TIMEOUT
                 ));
-                assertThat(response.has("error")).isFalse();
-                assertThat(response.path("result").path("isError").asBoolean()).isFalse();
-                assertThat(response.path("result").path("resultType").asText()).isEqualTo("complete");
+                assertThat(response.has("error"))
+                        .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
+                        .isFalse();
+                assertThat(response.path("result").path("isError").asBoolean())
+                        .as("Успешный read-инструмент не должен возвращать MCP tool error")
+                        .isFalse();
+                assertThat(response.path("result").path("resultType").asText())
+                        .as("Stateless-ответ должен иметь resultType=complete")
+                        .isEqualTo("complete");
             }
         }
     }
@@ -136,14 +154,16 @@ class McpStatelessLifecycleIntegrationTest {
                 assertEmptyPingResult(pingBeforeInitialize);
 
                 ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
-                initializeParams.put("protocolVersion", McpTestData.CLASSIC_McpTestData.STATELESS_PROTOCOL_VERSION);
+                initializeParams.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
                 initializeParams.putObject("capabilities");
                 initializeParams.putObject("clientInfo")
                         .put("name", "atlassian-mcp-light-autotests")
                         .put("version", "1.0");
                 JsonNode initialize = sendRequest(session.client(), 
                         "initialize", initializeParams, REQUEST_TIMEOUT);
-                assertThat(initialize.has("error")).isFalse();
+                assertThat(initialize.has("error"))
+                        .as("Корректный initialize должен завершиться без JSON-RPC error")
+                        .isFalse();
 
                 JsonNode pingBeforeReady =
                         sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
@@ -151,7 +171,9 @@ class McpStatelessLifecycleIntegrationTest {
 
                 JsonNode toolsBeforeReady =
                         sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
-                assertThat(toolsBeforeReady.path("error").path("code").asInt()).isEqualTo(-32001);
+                assertThat(toolsBeforeReady.path("error").path("code").asInt())
+                        .as("До notifications/initialized инструменты должны оставаться недоступными")
+                        .isEqualTo(-32001);
 
                 Allure.step("Отправить notifications/initialized", () -> session.client().notification("notifications/initialized", null));
 
@@ -161,8 +183,12 @@ class McpStatelessLifecycleIntegrationTest {
 
                 JsonNode toolsAfterReady =
                         sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
-                assertThat(toolsAfterReady.has("error")).isFalse();
-                assertThat(toolsAfterReady.path("result").path("tools").isArray()).isTrue();
+                assertThat(toolsAfterReady.has("error"))
+                        .as("После notifications/initialized tools/list должен выполняться успешно")
+                        .isFalse();
+                assertThat(toolsAfterReady.path("result").path("tools").isArray())
+                        .as("После перехода в READY сервер должен вернуть массив инструментов")
+                        .isTrue();
             }
         }
     }
@@ -176,8 +202,14 @@ class McpStatelessLifecycleIntegrationTest {
     }
 
     private static void assertEmptyPingResult(JsonNode response) {
-        assertThat(response.has("error")).isFalse();
-        assertThat(response.path("result").isObject()).isTrue();
-        assertThat(response.path("result").isEmpty()).isTrue();
+        assertThat(response.has("error"))
+                        .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
+                        .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Ping должен возвращать объект result")
+                .isTrue();
+        assertThat(response.path("result").isEmpty())
+                .as("Результат ping должен быть пустым объектом")
+                .isTrue();
     }
 }

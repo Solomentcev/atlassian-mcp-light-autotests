@@ -11,6 +11,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Tag;
@@ -212,7 +213,7 @@ class McpTransportContractIntegrationTest {
     @Tag("case-MCP-025")
     void shouldRejectSecondClassicInitialize(McpClient client) {
         {            ObjectNode params = OBJECT_MAPPER.createObjectNode();
-            params.put("protocolVersion", "2025-11-25");
+            params.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
             params.putObject("capabilities");
             params.putObject("clientInfo")
                     .put("name", "atlassian-mcp-light-autotests")
@@ -232,15 +233,15 @@ class McpTransportContractIntegrationTest {
         Allure.step("Отправить строку STDIO", () -> client.sendRawLine(line));
     }
 
-    private static com.fasterxml.jackson.databind.JsonNode awaitRawResponse(
+    private static JsonNode awaitRawResponse(
             McpClient client, Duration timeout) {
         return Allure.step("Получить ответ STDIO", () -> client.awaitRawResponse(timeout));
     }
 
-    private static com.fasterxml.jackson.databind.JsonNode sendRequest(
-            McpClient client, String method, ObjectNode params) {
+    private static JsonNode sendRequest(
+            McpClient client, String method, JsonNode params, Duration timeout) {
         return Allure.step("Отправить MCP-запрос " + method,
-                () -> client.request(method, params, REQUEST_TIMEOUT));
+                () -> client.request(method, params, timeout));
     }
 
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,
