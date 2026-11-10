@@ -64,18 +64,21 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
+            JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
-            assertThat(response.path("result").path("supportedVersions").isArray()).as("Проверка response.path('result').path('supportedVersions').isArray(): ожидалось isTrue").isTrue();
-            assertThat(response.path("result").path("capabilities").path("tools").isObject()).as("Проверка response.path('result').path('capabilities').path('tools').isObject(): ожидалось isTrue").isTrue();
+            assertThat(response.path("result").path("supportedVersions").isArray())
+                    .as("server/discover должен вернуть массив поддерживаемых версий протокола").isTrue();
+            assertThat(response.path("result").path("capabilities").path("tools").isObject())
+                    .as("server/discover должен объявить capability tools").isTrue();
             assertThat(response.path("result").path("_meta")
-                    .path("io.modelcontextprotocol/serverInfo").path("name").asText()).as("Проверка response.path('result').path('_meta') .path('io.modelcontextprotocol/serverInfo').path('name').asTex: ожидалось isEqualTo('atlassian-lite')")
+                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
+                    .as("server/discover должен вернуть имя сервера в serverInfo metadata")
                     .isEqualTo("atlassian-lite");
         }
     
@@ -91,8 +94,8 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
+            JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();

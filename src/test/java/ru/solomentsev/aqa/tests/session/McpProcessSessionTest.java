@@ -59,7 +59,9 @@ class McpProcessSessionTest {
             Allure.step("Закрыть MCP-сессию", session::close);
         }
 
-        assertThat(Allure.step("Дождаться завершения MCP-процесса", () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT))).as("Проверка Allure.step('Дождаться завершения MCP-процесса', () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_: ожидалось isTrue").isTrue();
+        assertThat(Allure.step("Дождаться завершения MCP-процесса", () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)))
+                .as("MCP-процесс должен завершиться после закрытия сессии")
+                .isTrue();
         assertThat(process.exitCode()).as("Fake MCP server должен завершиться с кодом 0").isZero();
     
     
@@ -81,7 +83,7 @@ class McpProcessSessionTest {
         ManagedProcess process = session.process();
 
         try {
-            assertThat(process.isAlive()).as("Проверка process.isAlive(): ожидалось isTrue").isTrue();
+            assertThat(process.isAlive()).as("После запуска stateless-сессии процесс должен быть активен").isTrue();
 
             var discovery = discoverStateless(session.client(), 
                     McpTestData.STATELESS_PROTOCOL_VERSION,
@@ -101,11 +103,14 @@ class McpProcessSessionTest {
                     .as("tools/list должен вернуть массив инструментов")
                     .isTrue();
         } finally {
-            session.close();
+            Allure.step("Закрыть stateless MCP-сессию", session::close);
         }
 
-        assertThat(process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)).as("Проверка process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT): ожидалось isTrue").isTrue();
-        assertThat(process.exitCode()).as("Проверка process.exitCode(): ожидалось isZero").isZero();
+        assertThat(Allure.step("Дождаться завершения stateless MCP-процесса",
+                () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)))
+                .as("Stateless MCP-процесс должен завершиться после закрытия сессии")
+                .isTrue();
+        assertThat(process.exitCode()).as("Fake stateless MCP server должен завершиться с кодом 0").isZero();
     
     
     }
