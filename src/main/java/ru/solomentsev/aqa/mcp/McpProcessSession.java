@@ -58,6 +58,42 @@ public final class McpProcessSession implements AutoCloseable {
                                           String clientName,
                                           String clientVersion,
                                           Duration startupTimeout) throws IOException {
+        return start(launcher, command, environment, workingDirectory, protocolVersion,
+                clientName, clientVersion, startupTimeout, true);
+    }
+
+    /**
+     * Запускает тестовый процесс без классического initialize handshake.
+     *
+     * <p>Используется для проверки stateless MCP lifecycle, который не должен
+     * зависеть от состояния классической сессии.</p>
+     *
+     * @param launcher способ запуска процесса
+     * @param command команда и аргументы
+     * @param environment дополнительные переменные окружения
+     * @param workingDirectory рабочий каталог или {@code null}
+     * @param startupTimeout таймаут проверки запуска процесса
+     * @return сессия с доступным MCP Client
+     * @throws IOException если процесс не удалось запустить
+     */
+    public static McpProcessSession startWithoutHandshake(ProcessLauncher launcher,
+                                                           List<String> command,
+                                                           Map<String, String> environment,
+                                                           Path workingDirectory,
+                                                           Duration startupTimeout) throws IOException {
+        return start(launcher, command, environment, workingDirectory, null,
+                null, null, startupTimeout, false);
+    }
+
+    private static McpProcessSession start(ProcessLauncher launcher,
+                                           List<String> command,
+                                           Map<String, String> environment,
+                                           Path workingDirectory,
+                                           String protocolVersion,
+                                           String clientName,
+                                           String clientVersion,
+                                           Duration startupTimeout,
+                                           boolean initialize) throws IOException {
         Objects.requireNonNull(launcher, "launcher");
         Objects.requireNonNull(startupTimeout, "startupTimeout");
 
@@ -69,7 +105,9 @@ public final class McpProcessSession implements AutoCloseable {
             if (!process.isAlive()) {
                 throw new McpClientException("MCP process terminated before readiness handshake");
             }
-            client.initialize(protocolVersion, clientName, clientVersion, startupTimeout);
+            if (initialize) {
+                client.initialize(protocolVersion, clientName, clientVersion, startupTimeout);
+            }
             if (!process.isAlive()) {
                 throw new McpClientException("MCP process terminated during readiness handshake");
             }
