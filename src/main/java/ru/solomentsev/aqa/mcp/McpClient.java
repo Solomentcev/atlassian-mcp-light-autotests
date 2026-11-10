@@ -195,6 +195,82 @@ public final class McpClient implements AutoCloseable {
         return response;
     }
 
+    /**
+     * Выполняет stateless MCP request, добавляя обязательную protocol metadata.
+     *
+     * @param method имя MCP-метода
+     * @param params параметры метода без поля {@code _meta}; null означает пустой объект
+     * @param protocolVersion stateless protocol version
+     * @param clientCapabilities capabilities клиента
+     * @param clientInfo необязательная информация о клиенте
+     * @param timeout таймаут ответа
+     * @return полный JSON-RPC response
+     */
+    public JsonNode requestStateless(String method,
+                                     ObjectNode params,
+                                     String protocolVersion,
+                                     ObjectNode clientCapabilities,
+                                     ObjectNode clientInfo,
+                                     Duration timeout) {
+        requireText(protocolVersion, "protocolVersion");
+        Objects.requireNonNull(clientCapabilities, "clientCapabilities");
+
+        ObjectNode statelessParams = params == null
+                ? OBJECT_MAPPER.createObjectNode()
+                : params.deepCopy();
+        if (statelessParams.has("_meta")) {
+            throw new IllegalArgumentException("params must not already contain _meta");
+        }
+
+        ObjectNode metadata = statelessParams.putObject("_meta");
+        metadata.put("io.modelcontextprotocol/protocolVersion", protocolVersion);
+        metadata.set("io.modelcontextprotocol/clientCapabilities", clientCapabilities.deepCopy());
+        if (clientInfo != null) {
+            metadata.set("io.modelcontextprotocol/clientInfo", clientInfo.deepCopy());
+        }
+
+        return request(method, statelessParams, timeout);
+    }
+
+    /**
+     * Выполняет stateless discovery сервера.
+     *
+     * @param protocolVersion stateless protocol version
+     * @param timeout таймаут ответа
+     * @return discovery response
+     */
+    public JsonNode discoverStateless(String protocolVersion, Duration timeout) {
+        ObjectNode clientInfo = OBJECT_MAPPER.createObjectNode()
+                .put("name", "atlassian-mcp-light-autotests")
+                .put("version", "1.0");
+        return requestStateless(
+                "server/discover",
+                null,
+                protocolVersion,
+                OBJECT_MAPPER.createObjectNode(),
+                clientInfo,
+                timeout
+        );
+    }
+
+    /**
+     * Получает список инструментов через stateless MCP API.
+     *
+     * @param protocolVersion stateless protocol version
+     * @param timeout таймаут ответа
+     * @return tools/list response
+     */
+    public JsonNode listToolsStateless(String protocolVersion, Duration timeout) {
+        return requestStateless(
+                "tools/list",
+                null,
+                protocolVersion,
+                OBJECT_MAPPER.createObjectNode(),
+                null,
+                timeout
+        );
+    }
+
     private void writeMessage(ObjectNode message) {
         try {
             writer.write(OBJECT_MAPPER.writeValueAsString(message));
