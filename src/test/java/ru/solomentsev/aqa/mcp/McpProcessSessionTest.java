@@ -53,6 +53,55 @@ class McpProcessSessionTest {
         assertThat(process.exitCode()).isZero();
     }
 
+    @Test
+    void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
+        String javaExecutable = Path.of(
+                System.getProperty("java.home"),
+                "bin",
+                isWindows() ? "java.exe" : "java"
+        ).toString();
+        String testClasspath = System.getProperty(
+                "surefire.test.class.path",
+                System.getProperty("java.class.path")
+        );
+
+        McpProcessSession session = McpProcessSession.startWithoutHandshake(
+                new DefaultProcessLauncher(),
+                List.of(
+                        javaExecutable,
+                        "-cp",
+                        testClasspath,
+                        FakeStatelessMcpServer.class.getName()
+                ),
+                Map.of(),
+                null
+        );
+        var process = session.process();
+
+        try {
+            assertThat(process.isAlive()).isTrue();
+
+            var discovery = session.client().discoverStateless(
+                    "2026-07-28",
+                    Duration.ofSeconds(3)
+            );
+            assertThat(discovery.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo")
+                    .path("name").asText()).isEqualTo("fake-stateless-server");
+
+            var tools = session.client().listToolsStateless(
+                    "2026-07-28",
+                    Duration.ofSeconds(3)
+            );
+            assertThat(tools.path("result").path("tools").isArray()).isTrue();
+        } finally {
+            session.close();
+        }
+
+        assertThat(process.waitFor(Duration.ofSeconds(3))).isTrue();
+        assertThat(process.exitCode()).isZero();
+    }
+
     private static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
