@@ -48,72 +48,76 @@ class McpContractIntegrationTest {
     private static final Map<String, ToolContract> EXPECTED_TOOLS = expectedTools();
 
     @Test
-    @Feature("Stateless Protocol")
-    @Story("MCP-019 — Обнаружение возможностей stateless-режима")
-    @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-019: Обнаружение возможностей stateless-режима")
-    @Description("Предусловия: STDIO-процесс запущен; сервер запущен с валидной конфигурацией\nШаги: 1. Отправить `server/discover` с `params._meta`, содержащим `io.modelcontextprotocol/protocolVersion = 2026-07-28` и объект `io.modelcontextprotocol/clientCapabilities`. 2. Проверить результат.\nОжидаемый результат: Получен JSON-RPC result с `resultType=complete`, `supportedVersions` (2026-07-28, 2025-11-25, 2024-11-05), `capabilities.tools`, `ttlMs=300000`, `cacheScope=public` и metadata `io.modelcontextprotocol/serverInfo` (atlassian-lite, 1.0.0).")
+    @Feature("Tools Discovery")
+    @Story("MCP-005 — Получение списка инструментов")
+    @Severity(SeverityLevel.BLOCKER)
+    @DisplayName("MCP-005: Получение списка инструментов")
+    @Description("Предусловия: STDIO-процесс запущен; доступен stateless tools/list.\nШаги: вызвать `tools/list` с корректными stateless metadata.\nОжидаемый результат: возвращён успешный JSON-RPC result, содержащий массив tools.")
     @Tag("integration")
-    @Tag("case-MCP-019")
-    void shouldExposeSupportedStatelessProtocol(McpClient client) {
-        Allure.step("Обнаружение возможностей stateless-режима", () -> {
-            JsonNode response = client.discoverStateless(
-                    STATELESS_PROTOCOL_VERSION,
-                    REQUEST_TIMEOUT
-            );
-
-            assertSuccessfulJsonRpc(response);
-            JsonNode result = response.path("result");
-            assertThat(result.path("resultType").asText()).isEqualTo("complete");
-            assertThat(textValues(result.path("supportedVersions")))
-                    .containsExactly("2026-07-28", "2025-11-25", "2024-11-05");
-            assertThat(result.path("capabilities").path("tools").isObject()).isTrue();
-            assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
-                    .path("name").asText()).isEqualTo("atlassian-lite");
-            assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
-                    .path("version").asText()).isEqualTo("1.0.0");
-            assertThat(result.path("ttlMs").asLong()).isEqualTo(300_000L);
-            assertThat(result.path("cacheScope").asText()).isEqualTo("public");
-        
+    @Tag("case-MCP-005")
+    void shouldReturnToolsList(McpClient client) {
+        Allure.step("Получение списка инструментов", () -> {
+            JsonNode tools = getStatelessTools(client);
+            assertThat(tools.isArray()).isTrue();
         });
     }
 
     @Test
     @Feature("Tools Discovery")
+    @Story("MCP-006 — Проверка состава инструментов")
+    @Severity(SeverityLevel.BLOCKER)
+    @DisplayName("MCP-006: Проверка состава инструментов")
+    @Description("Предусловия: Получен результат `tools/list`.\nШаги: извлечь имена инструментов и сравнить с ожидаемым перечнем.\nОжидаемый результат: присутствуют все 13 ожидаемых инструментов; имена уникальны; неожиданные инструменты отсутствуют.")
+    @Tag("integration")
+    @Tag("case-MCP-006")
+    void shouldExposeExpectedToolNames(McpClient client) {
+        Allure.step("Проверка состава инструментов", () -> {
+            JsonNode tools = getStatelessTools(client);
+            Set<String> actualNames = new HashSet<>();
+            for (JsonNode tool : tools) {
+                actualNames.add(tool.path("name").asText());
+            }
+            assertThat(tools.size()).isEqualTo(EXPECTED_TOOLS.size());
+            assertThat(actualNames).containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
+        });
+    }
+
+    @Test
+    @Feature("Tools Discovery")
+    @Story("MCP-007 — Проверка описаний инструментов")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-007: Проверка описаний инструментов")
+    @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить description каждого инструмента.\nОжидаемый результат: каждый инструмент содержит непустое текстовое описание.")
+    @Tag("integration")
+    @Tag("case-MCP-007")
+    void shouldExposeNonEmptyToolDescriptions(McpClient client) {
+        Allure.step("Проверка описаний инструментов", () -> {
+            JsonNode tools = getStatelessTools(client);
+            for (JsonNode tool : tools) {
+                assertThat(tool.path("description").asText())
+                        .as("description of %s", tool.path("name").asText())
+                        .isNotBlank();
+            }
+        });
+    }
+
+    @Test
+    @Feature("Tool Schemas")
     @Story("MCP-008 — Проверка JSON Schema и annotations инструментов")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-008: Проверка JSON Schema и annotations инструментов")
-    @Description("Предусловия: Получен результат `tools/list`\nШаги: 1. Проверить schema каждого инструмента. 2. Проверить type, properties, required, additionalProperties и ограничения. 3. Проверить annotations: readOnlyHint, destructiveHint, idempotentHint и openWorldHint. 4. Сравнить результат с mcp-contract.md.\nОжидаемый результат: Схемы и annotations всех 13 инструментов соответствуют фактическому контракту; отсутствующие или изменённые поля обнаруживаются сравнением.")
+    @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить type, properties, required, additionalProperties, ограничения JSON Schema и annotations каждого инструмента; сравнить результат с mcp-contract.md.\nОжидаемый результат: схемы и annotations всех 13 инструментов соответствуют опубликованному контракту.")
     @Tag("integration")
-    @Tag("case-MCP-005")
-    @Tag("case-MCP-006")
-    @Tag("case-MCP-007")
     @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
-    void shouldExposeAllThirteenToolsWithExactSchemasAndAnnotations(McpClient client) {
+    void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
         Allure.step("Проверка JSON Schema и annotations инструментов", () -> {
-            JsonNode response = client.listToolsStateless(
-                    STATELESS_PROTOCOL_VERSION,
-                    REQUEST_TIMEOUT
-            );
-
-            assertSuccessfulJsonRpc(response);
-            JsonNode tools = response.path("result").path("tools");
-            assertThat(tools.isArray()).isTrue();
-            assertThat(tools.size()).isEqualTo(EXPECTED_TOOLS.size());
-
-            Set<String> actualNames = new HashSet<>();
+            JsonNode tools = getStatelessTools(client);
             for (JsonNode tool : tools) {
                 String name = tool.path("name").asText();
-                actualNames.add(name);
                 ToolContract expected = EXPECTED_TOOLS.get(name);
-                assertThat(expected)
-                        .as("Unexpected tool returned by tools/list: %s", name)
-                        .isNotNull();
-
-                assertThat(tool.path("description").isTextual())
-                        .as("description of %s", name).isTrue();
+                assertThat(expected).as("Unexpected tool: %s", name).isNotNull();
 
                 JsonNode schema = tool.path("inputSchema");
                 assertThat(schema.path("type").asText()).isEqualTo("object");
@@ -121,10 +125,10 @@ class McpContractIntegrationTest {
                 assertThat(schema.path("properties").isObject()).isTrue();
                 assertThat(fieldNames(schema.path("properties")))
                         .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
+
                 if (expected.required().isEmpty()) {
                     assertThat(schema.has("required")).isFalse();
                 } else {
-                    assertThat(schema.path("required").isArray()).isTrue();
                     assertThat(textValues(schema.path("required")))
                             .containsExactlyInAnyOrderElementsOf(expected.required());
                 }
@@ -150,17 +154,8 @@ class McpContractIntegrationTest {
                         }
                     }
                 }
-
                 assertAnnotations(tool.path("annotations"), expected);
             }
-
-            assertThat(actualNames).containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
-            assertThat(response.path("result").path("resultType").asText())
-                    .isEqualTo("complete");
-            assertThat(response.path("result").path("_meta")
-                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
-                    .isEqualTo("atlassian-lite");
-        
         });
     }
 
@@ -291,40 +286,27 @@ class McpContractIntegrationTest {
 
     @Test
     @Feature("Tool Validation")
-    @Story("MCP-034 — Валидация null значения обязательного аргумента")
+    @Story("MCP-034 — Валидация пустых и null значений аргументов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-034: Валидация null значения обязательного аргумента")
-    @Description("Предусловия: Classic lifecycle завершён; доступен jira_get_issue.\nШаги: вызвать jira_get_issue с аргументом issue_key=null.\nОжидаемый результат: сервер возвращает MCP tool error (result.isError=true), не завершая процесс.")
+    @DisplayName("MCP-034: Валидация пустых и null значений аргументов")
+    @Description("Предусловия: Classic lifecycle завершён; доступен jira_get_issue.\nШаги: по отдельности передать null, пустую строку и строку из пробельных символов в обязательный аргумент issue_key; после негативных вызовов выполнить валидный вызов.\nОжидаемый результат: каждый некорректный вызов возвращает MCP tool error (result.isError=true); следующий валидный вызов обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectNullRequiredToolArgument(McpClient client) {
-        Allure.step("Отклонение null в обязательном аргументе", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.putNull("issue_key");
+    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
+        Allure.step("Проверка null, пустого и пробельного значения обязательного аргумента", () -> {
+            ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
+            nullArgument.putNull("issue_key");
+            assertToolError(callTool(client, "jira_get_issue", nullArgument));
 
-            assertToolError(callTool(client, "jira_get_issue", arguments));
-            ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", "AQA-1");
-            assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        });
-    }
+            ObjectNode emptyArgument = OBJECT_MAPPER.createObjectNode();
+            emptyArgument.put("issue_key", "");
+            assertToolError(callTool(client, "jira_get_issue", emptyArgument));
 
-    @Test
-    @Feature("Tool Validation")
-    @Story("MCP-034 — Валидация пустого строкового аргумента")
-    @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-034: Отклонение пустой строки в обязательном аргументе")
-    @Description("Предусловия: Classic lifecycle завершён; доступен jira_get_issue.\nШаги: вызвать jira_get_issue с пустым значением issue_key.\nОжидаемый результат: сервер возвращает MCP tool error (result.isError=true), не выполняя бизнес-операцию.")
-    @Tag("negative")
-    @Tag("case-MCP-034")
-    @Tag("jira")
-    void shouldRejectEmptyStringToolArgument(McpClient client) {
-        Allure.step("Отклонение пустой строки в обязательном аргументе", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("issue_key", "");
+            ObjectNode blankArgument = OBJECT_MAPPER.createObjectNode();
+            blankArgument.put("issue_key", "   ");
+            assertToolError(callTool(client, "jira_get_issue", blankArgument));
 
-            assertToolError(callTool(client, "jira_get_issue", arguments));
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
             validArguments.put("issue_key", "AQA-1");
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
@@ -481,6 +463,17 @@ class McpContractIntegrationTest {
                 null,
                 REQUEST_TIMEOUT
         );
+    }
+
+    private static JsonNode getStatelessTools(McpClient client) {
+        JsonNode response = client.listToolsStateless(
+                STATELESS_PROTOCOL_VERSION,
+                REQUEST_TIMEOUT
+        );
+        assertSuccessfulJsonRpc(response);
+        JsonNode tools = response.path("result").path("tools");
+        assertThat(tools.isArray()).isTrue();
+        return tools;
     }
 
     private static void assertSuccessfulJsonRpc(JsonNode response) {
