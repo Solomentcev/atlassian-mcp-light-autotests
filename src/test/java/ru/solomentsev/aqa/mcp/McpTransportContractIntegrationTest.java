@@ -32,6 +32,11 @@ class McpTransportContractIntegrationTest {
         assertThat(parseError.has("id")).isTrue();
         assertThat(parseError.get("id").isNull()).isTrue();
 
+        client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
+        var trailingTokensError = client.awaitRawResponse(REQUEST_TIMEOUT);
+        assertJsonRpcError(trailingTokensError, -32700);
+        assertThat(trailingTokensError.get("id").isNull()).isTrue();
+
         var ping = client.request("ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error")).isFalse();
         assertThat(ping.path("result").isObject()).isTrue();
