@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.config;
 
 import ru.solomentsev.aqa.mcp.McpProcessSession;
+import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.process.DockerMcpServerLauncher;
 import ru.solomentsev.aqa.process.LocalMcpServerLauncher;
 import ru.solomentsev.aqa.process.McpServerLauncher;
@@ -17,7 +18,6 @@ import java.util.UUID;
 /** Читает настройки запуска MCP-сервера из system properties и environment. */
 public final class McpServerConfiguration {
 
-    private static final String DEFAULT_PROTOCOL_VERSION = "2025-11-25";
     private static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofSeconds(15);
 
     private final String mode;
@@ -53,7 +53,7 @@ public final class McpServerConfiguration {
         runId = createRunId(value(environment, properties,
                 "aqa.run.id", "AQA_RUN_ID", "local"));
         protocolVersion = value(environment, properties,
-                "aqa.mcp.protocolVersion", "AQA_MCP_PROTOCOL_VERSION", DEFAULT_PROTOCOL_VERSION);
+                "aqa.mcp.protocolVersion", "AQA_MCP_PROTOCOL_VERSION", McpTestData.CLASSIC_PROTOCOL_VERSION);
         startupTimeout = Duration.ofSeconds(parsePositiveLong(value(environment, properties,
                 "aqa.server.startupTimeoutSeconds", "AQA_SERVER_STARTUP_TIMEOUT_SECONDS", "15"),
                 "startup timeout"));
@@ -115,8 +115,8 @@ public final class McpServerConfiguration {
                 Map.of(),
                 workingDirectory,
                 protocolVersion,
-                "atlassian-mcp-light-autotests",
-                "1.0",
+                McpTestData.CLIENT_NAME,
+                McpTestData.CLIENT_VERSION,
                 startupTimeout
         );
     }

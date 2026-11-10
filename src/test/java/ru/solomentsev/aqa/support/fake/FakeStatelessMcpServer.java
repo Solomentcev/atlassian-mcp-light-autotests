@@ -2,6 +2,7 @@ package ru.solomentsev.aqa.support.fake;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -26,7 +27,7 @@ public final class FakeStatelessMcpServer {
                      new OutputStreamWriter(System.out, StandardCharsets.UTF_8))) {
             JsonNode discoveryRequest = OBJECT_MAPPER.readTree(reader.readLine());
             if (!"server/discover".equals(discoveryRequest.path("method").asText())
-                    || !"2026-07-28".equals(discoveryRequest.path("params").path("_meta")
+                    || !McpTestData.STATELESS_PROTOCOL_VERSION.equals(discoveryRequest.path("params").path("_meta")
                     .path("io.modelcontextprotocol/protocolVersion").asText())) {
                 System.exit(2);
             }
@@ -51,8 +52,8 @@ public final class FakeStatelessMcpServer {
         var result = OBJECT_MAPPER.createObjectNode();
         result.put("resultType", "complete");
         result.putArray("supportedVersions")
-                .add("2026-07-28")
-                .add("2025-11-25")
+                .add(McpTestData.STATELESS_PROTOCOL_VERSION)
+                .add(McpTestData.CLASSIC_PROTOCOL_VERSION)
                 .add("2024-11-05");
         result.putObject("capabilities").putObject("tools");
         result.putObject("_meta").putObject("io.modelcontextprotocol/serverInfo")

@@ -2,6 +2,7 @@ package ru.solomentsev.aqa.support.fake;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -33,7 +34,7 @@ public final class FakeMcpServer {
             response.put("jsonrpc", "2.0");
             response.set("id", initializeRequest.get("id"));
             var result = response.putObject("result");
-            result.put("protocolVersion", "2025-11-25");
+            result.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
             result.putObject("capabilities").putObject("tools");
             result.putObject("serverInfo").put("name", "fake-mcp-server").put("version", "1.0");
             writer.write(OBJECT_MAPPER.writeValueAsString(response));

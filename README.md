@@ -42,6 +42,17 @@ Jenkins собирает тестируемый сервер из исходни
 
 Основной проект не является Maven-зависимостью AQA. Между проектами сохраняется black-box граница: AQA использует только собранный исполняемый артефакт и публичный STDIO/MCP контракт.
 
+## Структура исходников
+
+Тестовые сценарии и поддерживающая инфраструктура разделены по пакетам:
+
+- `tests/contract`, `tests/transport`, `tests/client`, `tests/session`, `tests/process`, `tests/config`, `tests/support` — только тестовые классы;
+- `mcp` — MCP Client и MCP process session;
+- `process` — запуск и управление процессами, Docker launcher и сбор STDERR;
+- `config` — конфигурация запуска тестового сервера;
+- `support/junit`, `support/diagnostics`, `support/fake` — JUnit extension, безопасная диагностика и fake-серверы;
+- `testdata` — общие параметры MCP и тестовые данные Jira/Confluence.
+
 ## Текущая реализация
 
 Базовая инфраструктура STDIO-слоя реализована в `src/test/java`:
@@ -114,7 +125,7 @@ mvn clean -Pintegration test
 
 Для Docker-режима дополнительно задаются `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`. Обычная команда `mvn test` выполняет только unit-тесты и не требует запуска Atlassian MCP Light.
 
-В текущей ветке — 41 JUnit test method. Последняя подтверждённая локальная проверка до текущего расширения Allure: `mvn clean test` и `mvn -Pintegration test` завершились успешно; интеграционный прогон выполнил 37 тестов без ошибок и пропусков. После добавления Allure-разметки, четырёх тестов и диагностики требуется повторно выполнить обе команды. Docker runtime и Jenkins Pipeline пока не проверены.
+Количество выполненных тестов и пропусков определяется по актуальным Surefire/JUnit-отчётам. После текущего рефакторинга необходимо повторно выполнить `mvn clean test` и `mvn -Pintegration test`; результаты предыдущих запусков не подтверждают корректность изменённой структуры. Docker runtime и Jenkins Pipeline пока не проверены.
 
 
 ### Allure-разметка и результаты

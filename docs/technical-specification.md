@@ -199,7 +199,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 ### Реализация конфигурации и JUnit lifecycle
 
-Реализация первой версии использует `McpServerConfiguration`, которая читает system properties `aqa.*` (приоритет) и environment variables `AQA_*`.
+Реализация первой версии использует `config.McpServerConfiguration`, которая читает system properties `aqa.*` (приоритет) и environment variables `AQA_*`.
 
 - `AQA_SERVER_MODE=local`: обязателен `AQA_SERVER_JAR`; запускается `<java> -jar <jar>`.
 - `AQA_SERVER_MODE=docker`: обязательны `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`; запускается отдельный контейнер через Docker launcher.
@@ -208,7 +208,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - `AQA_RUN_ID` задаёт базовый ID Jenkins-прогона; launcher добавляет уникальный суффикс для контейнера каждого тестового класса.
 - `AQA_MCP_PROTOCOL_VERSION` задаёт версию классического MCP lifecycle (по умолчанию `2025-11-25`).
 
-Аннотация `@McpServerTest` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, выполняет classic initialize handshake, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер. Для stateless lifecycle `McpServerConfiguration.startStatelessSession()` создаёт отдельный процесс без classic initialize; готовность подтверждается первым stateless-запросом.
+Аннотация `support.junit.@McpServerTest` подключает `support.junit.McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, выполняет classic initialize handshake, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер. Для stateless lifecycle `McpServerConfiguration.startStatelessSession()` создаёт отдельный процесс без classic initialize; готовность подтверждается первым stateless-запросом.
 ### Stateless client и интеграционные проверки
 
 `McpClient.requestStateless` добавляет в `params._meta` обязательные поля `io.modelcontextprotocol/protocolVersion` и `io.modelcontextprotocol/clientCapabilities`, а также необязательное `io.modelcontextprotocol/clientInfo`. Исходный объект params не изменяется; повторное поле `_meta` отклоняется до отправки запроса.
@@ -288,7 +288,9 @@ Allure labels и структура сценария:
 - `@Severity` — P0 → BLOCKER, P1 → CRITICAL, P2 → NORMAL;
 - JUnit `@Tag` — тип/область теста и тег `case-<ID>` для связи с каталогом;
 - `@DisplayName` и `@Description` — читаемое название, предусловия, шаги и ожидаемый результат;
-- `Allure.step` — фактические действия сценария, обмен JSON-RPC и lifecycle процесса.
+- `Allure.step` — только фактические действия: отправка/получение MCP-сообщений и управление lifecycle процесса. Проверки выполняются вне шагов и снабжаются сообщениями, объясняющими ожидаемое поведение.
+- Тестовые классы находятся в пакетах `tests.*`; MCP client/session, process launchers, config, JUnit support и diagnostics вынесены в отдельные инфраструктурные пакеты. Общие параметры и тестовые данные находятся в `testdata`.
+- `AllureDiagnosticsTest` проверяет собственную функцию маскирования секретов; отдельные тесты стороннего Allure framework не создаются.
 
 Результаты Allure сохраняются в `target/allure-results`, JUnit XML — в `target/surefire-reports`. HTML-отчёт локально формируется через Allure Maven Plugin 3.1.0 с явно закреплённым runtime Allure Report 2.39.0 (классический интерфейс Allure 2) командами `mvn allure:serve` (просмотр в браузере) или `mvn allure:report` (статический HTML в `target/site/allure-maven/index.html`); в Jenkins используется Jenkins Allure plugin.
 
