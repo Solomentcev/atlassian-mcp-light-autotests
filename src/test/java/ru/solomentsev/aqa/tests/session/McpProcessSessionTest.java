@@ -3,6 +3,7 @@ package ru.solomentsev.aqa.tests.session;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.support.fake.FakeMcpServer;
 import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -43,10 +44,10 @@ class McpProcessSessionTest {
                     launcherFor(FakeMcpServer.class),
                     Map.of(),
                     null,
-                    "2025-11-25",
+                    McpTestData.CLASSIC_PROTOCOL_VERSION,
                     "atlassian-mcp-light-autotests",
                     "1.0",
-                    Duration.ofSeconds(5)
+                    McpTestData.PROCESS_STARTUP_TIMEOUT
             );
             ManagedProcess process = session.process();
 
@@ -57,7 +58,7 @@ class McpProcessSessionTest {
                 session.close();
             }
 
-            assertThat(process.waitFor(Duration.ofSeconds(3))).isTrue();
+            assertThat(process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)).isTrue();
             assertThat(process.exitCode()).isZero();
         
         });
@@ -83,23 +84,23 @@ class McpProcessSessionTest {
                 assertThat(process.isAlive()).isTrue();
 
                 var discovery = session.client().discoverStateless(
-                        "2026-07-28",
-                        Duration.ofSeconds(3)
+                        McpTestData.STATELESS_PROTOCOL_VERSION,
+                        McpTestData.PROCESS_SHUTDOWN_TIMEOUT
                 );
                 assertThat(discovery.path("result").path("_meta")
                         .path("io.modelcontextprotocol/serverInfo")
                         .path("name").asText()).isEqualTo("fake-stateless-server");
 
                 var tools = session.client().listToolsStateless(
-                        "2026-07-28",
-                        Duration.ofSeconds(3)
+                        McpTestData.STATELESS_PROTOCOL_VERSION,
+                        McpTestData.PROCESS_SHUTDOWN_TIMEOUT
                 );
                 assertThat(tools.path("result").path("tools").isArray()).isTrue();
             } finally {
                 session.close();
             }
 
-            assertThat(process.waitFor(Duration.ofSeconds(3))).isTrue();
+            assertThat(process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)).isTrue();
             assertThat(process.exitCode()).isZero();
         
         });

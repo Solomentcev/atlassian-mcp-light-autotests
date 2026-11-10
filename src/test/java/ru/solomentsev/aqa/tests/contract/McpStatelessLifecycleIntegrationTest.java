@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import java.time.Duration;
 
@@ -31,8 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("protocol")
 class McpStatelessLifecycleIntegrationTest {
 
-    private static final String PROTOCOL_VERSION = "2026-07-28";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
@@ -141,7 +141,7 @@ class McpStatelessLifecycleIntegrationTest {
                 assertEmptyPingResult(pingBeforeInitialize);
 
                 ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
-                initializeParams.put("protocolVersion", "2025-11-25");
+                initializeParams.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
                 initializeParams.putObject("capabilities");
                 initializeParams.putObject("clientInfo")
                         .put("name", "atlassian-mcp-light-autotests")

@@ -16,7 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.mcp.McpClient;
-import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -42,8 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     @Tag("protocol")
 class McpContractIntegrationTest {
 
-    private static final String STATELESS_PROTOCOL_VERSION = "2026-07-28";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final Map<String, ToolContract> EXPECTED_TOOLS = expectedTools();
@@ -175,7 +174,7 @@ class McpContractIntegrationTest {
 
             ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
             missingCapabilitiesParams.putObject("_meta")
-                    .put("io.modelcontextprotocol/protocolVersion", STATELESS_PROTOCOL_VERSION);
+                    .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
             JsonNode missingCapabilities = client.request(
                     "tools/list", missingCapabilitiesParams, REQUEST_TIMEOUT);
             assertThat(missingCapabilities.path("error").path("code").asInt()).isEqualTo(-32602);
@@ -188,7 +187,7 @@ class McpContractIntegrationTest {
             assertThat(missingVersion.path("error").path("code").asInt()).isEqualTo(-32602);
 
             assertSuccessfulJsonRpc(client.listToolsStateless(
-                    STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
         });
     }
 
@@ -459,7 +458,7 @@ class McpContractIntegrationTest {
         return client.requestStateless(
                 "tools/call",
                 params,
-                STATELESS_PROTOCOL_VERSION,
+                McpTestData.STATELESS_PROTOCOL_VERSION,
                 OBJECT_MAPPER.createObjectNode(),
                 null,
                 REQUEST_TIMEOUT
@@ -468,7 +467,7 @@ class McpContractIntegrationTest {
 
     private static JsonNode getStatelessTools(McpClient client) {
         JsonNode response = client.listToolsStateless(
-                STATELESS_PROTOCOL_VERSION,
+                McpTestData.STATELESS_PROTOCOL_VERSION,
                 REQUEST_TIMEOUT
         );
         assertSuccessfulJsonRpc(response);

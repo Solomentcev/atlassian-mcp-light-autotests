@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.tests.client;
 
 import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -55,7 +56,7 @@ class McpClientTest {
             server.start();
 
             try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-                JsonNode response = client.request("ping", null, Duration.ofSeconds(3));
+                JsonNode response = client.request("ping", null, McpTestData.SHORT_REQUEST_TIMEOUT);
 
                 assertThat(response.path("jsonrpc").asText()).isEqualTo("2.0");
                 assertThat(response.path("result").isObject()).isTrue();
@@ -137,7 +138,7 @@ class McpClientTest {
                     response.put("jsonrpc", "2.0");
                     response.set("id", initializeRequest.get("id"));
                     var result = response.putObject("result");
-                    result.put("protocolVersion", "2025-11-25");
+                    result.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
                     result.putObject("capabilities").putObject("tools");
                     result.putObject("serverInfo").put("name", "atlassian-lite").put("version", "1.0.0");
                     writer.write(OBJECT_MAPPER.writeValueAsString(response));
@@ -155,14 +156,14 @@ class McpClientTest {
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             JsonNode response = client.initialize(
-                    "2025-11-25",
+                    McpTestData.CLASSIC_PROTOCOL_VERSION,
                     "atlassian-mcp-light-autotests",
                     "1.0",
-                    Duration.ofSeconds(3)
+                    McpTestData.SHORT_REQUEST_TIMEOUT
             );
 
             assertThat(response.path("result").path("protocolVersion").asText())
-                    .isEqualTo("2025-11-25");
+                    .isEqualTo(McpTestData.CLASSIC_PROTOCOL_VERSION);
             assertThat(initializedNotificationReceived.await(3, TimeUnit.SECONDS)).isTrue();
             assertThat(initializedNotification.get().path("method").asText())
                     .isEqualTo("notifications/initialized");
@@ -223,10 +224,10 @@ class McpClientTest {
             JsonNode response = client.requestStateless(
                     "tools/list",
                     originalParams,
-                    "2026-07-28",
+                    McpTestData.STATELESS_PROTOCOL_VERSION,
                     capabilities,
                     clientInfo,
-                    Duration.ofSeconds(3)
+                    McpTestData.SHORT_REQUEST_TIMEOUT
             );
 
             assertThat(response.path("result").path("resultType").asText())
@@ -235,7 +236,7 @@ class McpClientTest {
             assertThat(received.get().path("params").path("filter").asText()).isEqualTo("all");
             assertThat(received.get().path("params").path("_meta")
                     .path("io.modelcontextprotocol/protocolVersion").asText())
-                    .isEqualTo("2026-07-28");
+                    .isEqualTo(McpTestData.STATELESS_PROTOCOL_VERSION);
             assertThat(received.get().path("params").path("_meta")
                     .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean())
                     .isTrue();
@@ -270,7 +271,7 @@ class McpClientTest {
                 org.assertj.core.api.Assertions.assertThatThrownBy(() -> client.requestStateless(
                         "tools/list",
                         params,
-                        "2026-07-28",
+                        McpTestData.STATELESS_PROTOCOL_VERSION,
                         OBJECT_MAPPER.createObjectNode(),
                         null,
                         Duration.ofSeconds(1)
