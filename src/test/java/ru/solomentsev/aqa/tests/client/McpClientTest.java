@@ -12,6 +12,7 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.DisplayName;
@@ -284,12 +285,12 @@ class McpClientTest {
     
     }
 
-    private static JsonNode sendRequest(McpClient client, String method, JsonNode params, Duration timeout) {
+    private static JsonNode sendRequest(McpClient client, String method, ObjectNode params, Duration timeout) {
         return Allure.step("Отправить MCP-запрос " + method,
                 () -> client.request(method, params, timeout));
     }
 
-    private static void sendNotification(McpClient client, String method, JsonNode params) {
+    private static void sendNotification(McpClient client, String method, ObjectNode params) {
         Allure.step("Отправить MCP-уведомление " + method, () -> client.notification(method, params));
     }
 
@@ -299,9 +300,9 @@ class McpClientTest {
                 client.initialize(version, clientName, clientVersion, timeout));
     }
 
-    private static JsonNode requestStateless(McpClient client, String method, JsonNode params,
-                                             String version, JsonNode capabilities,
-                                             JsonNode clientInfo, Duration timeout) {
+    private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
+                                             String version, ObjectNode capabilities,
+                                             ObjectNode clientInfo, Duration timeout) {
         return Allure.step("Отправить stateless MCP-запрос " + method, () ->
                 client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
     }

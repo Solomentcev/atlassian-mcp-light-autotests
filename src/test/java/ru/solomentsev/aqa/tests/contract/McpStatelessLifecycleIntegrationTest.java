@@ -196,7 +196,7 @@ class McpStatelessLifecycleIntegrationTest {
 
     private static JsonNode sendRequest(ru.solomentsev.aqa.mcp.McpClient client,
                                         String method,
-                                        JsonNode params,
+                                        ObjectNode params,
                                         Duration timeout) {
         return Allure.step("Отправить MCP-запрос " + method,
                 () -> client.request(method, params, timeout));
