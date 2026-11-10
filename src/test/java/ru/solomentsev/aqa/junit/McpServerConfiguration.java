@@ -100,6 +100,20 @@ public final class McpServerConfiguration {
      * @throws IOException если процесс не удалось запустить
      */
     public McpProcessSession startSession() throws IOException {
+        return startSession(true);
+    }
+
+    /**
+     * Запускает тестовый экземпляр без classic initialize handshake.
+     *
+     * @return сессия для stateless MCP-запросов
+     * @throws IOException если процесс не удалось запустить
+     */
+    public McpProcessSession startStatelessSession() throws IOException {
+        return startSession(false);
+    }
+
+    private McpProcessSession startSession(boolean initialize) throws IOException {
         ProcessLauncher launcher;
         List<String> command;
 
@@ -115,6 +129,15 @@ public final class McpServerConfiguration {
                     dockerStopTimeoutSeconds
             );
             command = List.of();
+        }
+
+        if (!initialize) {
+            return McpProcessSession.startWithoutHandshake(
+                    launcher,
+                    command,
+                    Map.of(),
+                    workingDirectory
+            );
         }
 
         return McpProcessSession.start(
