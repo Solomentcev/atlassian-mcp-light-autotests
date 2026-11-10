@@ -442,7 +442,7 @@ class McpContractIntegrationTest {
     
     }
 
-    private static JsonNode sendRequest(McpClient client, String method, JsonNode params) {
+    private static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
         return Allure.step("Отправить MCP-запрос " + method,
                 () -> client.request(method, params, REQUEST_TIMEOUT));
     }
