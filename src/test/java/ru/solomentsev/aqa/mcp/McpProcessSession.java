@@ -7,6 +7,7 @@ import ru.solomentsev.aqa.process.McpServerLauncher;
 import ru.solomentsev.aqa.process.StderrCollector;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -105,7 +106,7 @@ public final class McpProcessSession implements AutoCloseable {
         } catch (RuntimeException | Error exception) {
             client.close();
             try {
-                Allure.step("Очистить процесс после ошибки запуска", process::close);
+                closeProcessWithAllure(process);
             } catch (IOException cleanupException) {
                 exception.addSuppressed(cleanupException);
             }
@@ -135,6 +136,20 @@ public final class McpProcessSession implements AutoCloseable {
         return stderrCollector.content();
     }
 
+    private static void closeProcessWithAllure(ManagedProcess process) throws IOException {
+        try {
+            Allure.step("Завершить тестовый MCP-процесс", () -> {
+                try {
+                    process.close();
+                } catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+            });
+        } catch (UncheckedIOException exception) {
+            throw exception.getCause();
+        }
+    }
+
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("MCP process session is closed");
@@ -155,7 +170,7 @@ public final class McpProcessSession implements AutoCloseable {
 
         IOException closeException = null;
         try {
-            Allure.step("Завершить тестовый MCP-процесс", process::close);
+            closeProcessWithAllure(process);
         } catch (IOException exception) {
             closeException = exception;
         }
