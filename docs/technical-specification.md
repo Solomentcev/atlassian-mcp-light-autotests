@@ -290,7 +290,7 @@ Allure labels и структура сценария:
 - `@DisplayName` и `@Description` — читаемое название, предусловия, шаги и ожидаемый результат;
 - `Allure.step` — фактические действия сценария, обмен JSON-RPC и lifecycle процесса.
 
-Результаты Allure сохраняются в `target/allure-results`, JUnit XML — в `target/surefire-reports`. HTML-отчёт формируется Allure CLI или Jenkins Allure plugin.
+Результаты Allure сохраняются в `target/allure-results`, JUnit XML — в `target/surefire-reports`. HTML-отчёт локально формируется через Allure Maven Plugin командами `mvn allure:serve` (просмотр в браузере) или `mvn allure:report` (статический HTML в `target/site/allure-maven/index.html`); в Jenkins используется Jenkins Allure plugin.
 
 Для JSON-RPC обмена к Allure прикладываются только безопасные summaries: method/request id, поля верхнего уровня, error code, resultType и количество элементов; params и текстовый content не сохраняются. При падении интеграционного теста STDERR тестируемого процесса может прикладываться к Allure после маскирования Authorization headers и значений TOKEN/PASSWORD/SECRET. Сырые JSON-RPC payload и текстовые данные ответов Atlassian не прикладываются. Credentials, Authorization headers и другие секреты запрещено записывать в реестр, логи или attachments.
 
