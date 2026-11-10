@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.contract;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -20,6 +21,7 @@ class McpStatelessLifecycleIntegrationTest {
 
     private static final String PROTOCOL_VERSION = "2026-07-28";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
     void shouldListToolsAndDiscoverWithoutClassicInitialize() throws Exception {
@@ -45,6 +47,22 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(tools.path("jsonrpc").asText()).isEqualTo("2.0");
             assertThat(tools.has("error")).isFalse();
             assertThat(tools.path("result").path("tools").size()).isEqualTo(13);
+
+            ObjectNode params = OBJECT_MAPPER.createObjectNode();
+            params.put("name", "aqa_unknown_tool");
+            params.set("arguments", OBJECT_MAPPER.createObjectNode());
+            JsonNode statelessToolCall = session.client().requestStateless(
+                    "tools/call",
+                    params,
+                    PROTOCOL_VERSION,
+                    OBJECT_MAPPER.createObjectNode(),
+                    null,
+                    REQUEST_TIMEOUT
+            );
+            assertThat(statelessToolCall.has("error")).isFalse();
+            assertThat(statelessToolCall.path("result").path("isError").asBoolean()).isTrue();
+            assertThat(statelessToolCall.path("result").path("resultType").asText())
+                    .isEqualTo("complete");
 
             JsonNode discovery = session.client().discoverStateless(
                     PROTOCOL_VERSION,
