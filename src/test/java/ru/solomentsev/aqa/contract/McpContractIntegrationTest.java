@@ -56,8 +56,6 @@ class McpContractIntegrationTest {
         assertThat(response.has("error")).isFalse();
         JsonNode result = response.path("result");
         assertThat(result.path("resultType").asText()).isEqualTo("complete");
-        assertThat(result.path("supportedVersions").findValuesAsText(""))
-                .isNotEmpty();
         assertThat(result.path("supportedVersions").toString())
                 .contains("2026-07-28", "2025-11-25", "2024-11-05");
         assertThat(result.path("capabilities").path("tools").isObject()).isTrue();
@@ -77,7 +75,7 @@ class McpContractIntegrationTest {
         assertThat(response.has("error")).isFalse();
         JsonNode tools = response.path("result").path("tools");
         assertThat(tools.isArray()).isTrue();
-        assertThat(tools).hasSize(13);
+        assertThat(tools.size()).isEqualTo(13);
 
         Set<String> actualNames = new HashSet<>();
         for (JsonNode tool : tools) {
