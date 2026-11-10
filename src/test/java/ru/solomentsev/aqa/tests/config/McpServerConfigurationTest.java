@@ -82,12 +82,12 @@ class McpServerConfigurationTest {
     void shouldRequireJarInLocalMode() {
         Allure.parameter("AQA_SERVER_MODE", "local");
         Allure.parameter("AQA_SERVER_JAR", "отсутствует");
-        Allure.step("Проверить конфигурацию local mode без обязательного JAR", () -> assertThatThrownBy(() -> McpServerConfiguration.from(
+        assertThatThrownBy(() => McpServerConfiguration.from(
                 Map.of("AQA_SERVER_MODE", "local"),
                 new Properties()
         )).as("Local mode без AQA_SERVER_JAR должен отклоняться с понятной ошибкой")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("AQA_SERVER_JAR"));
+                .hasMessageContaining("AQA_SERVER_JAR");
     
     
     }
@@ -103,7 +103,7 @@ class McpServerConfigurationTest {
         Allure.parameter("AQA_SERVER_MODE", "docker");
         Allure.parameter("AQA_DOCKER_IMAGE", "atlassian-mcp-light:test");
         Allure.parameter("AQA_DOCKER_ENV_FILE", "отсутствует");
-        Allure.step("Проверить конфигурацию Docker mode без env-файла", () -> assertThatThrownBy(() -> McpServerConfiguration.from(
+        assertThatThrownBy(() => McpServerConfiguration.from(
                 Map.of(
                         "AQA_SERVER_MODE", "docker",
                         "AQA_DOCKER_IMAGE", "atlassian-mcp-light:test"
@@ -111,7 +111,7 @@ class McpServerConfigurationTest {
                 new Properties()
         )).as("Docker mode без обязательного env-файла должен отклоняться")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("AQA_DOCKER_ENV_FILE"));
+                .hasMessageContaining("AQA_DOCKER_ENV_FILE");
     
     
     }
@@ -125,12 +125,12 @@ class McpServerConfigurationTest {
     @Tag("negative")
     void shouldRejectUnknownMode() {
         Allure.parameter("AQA_SERVER_MODE", "remote");
-        Allure.step("Проверить конфигурацию с неподдерживаемым режимом", () -> assertThatThrownBy(() -> McpServerConfiguration.from(
+        assertThatThrownBy(() => McpServerConfiguration.from(
                 Map.of("AQA_SERVER_MODE", "remote"),
                 new Properties()
         )).as("Неизвестный режим запуска должен отклоняться")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("AQA_SERVER_MODE"));
+                .hasMessageContaining("AQA_SERVER_MODE");
     
     
     }
