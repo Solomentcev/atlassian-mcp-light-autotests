@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.tests.config;
 
 import ru.solomentsev.aqa.config.McpServerConfiguration;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -28,13 +29,15 @@ class McpServerConfigurationTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Чтение AQA_SERVER_MODE=local и AQA_SERVER_JAR из environment")
     @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")    void shouldReadLocalModeFromEnvironment() {
-        McpServerConfiguration configuration = McpServerConfiguration.from(
+        Allure.parameter("AQA_SERVER_MODE", "local");
+        Allure.parameter("AQA_SERVER_JAR", "server/target/server.jar");
+        McpServerConfiguration configuration = Allure.step("Построить конфигурацию из переменных окружения", () -> McpServerConfiguration.from(
                 Map.of(
                         "AQA_SERVER_MODE", "local",
                         "AQA_SERVER_JAR", "server/target/server.jar"
                 ),
                 new Properties()
-        );
+        ));
 
         assertThat(configuration.mode()).as("При AQA_SERVER_MODE=local конфигурация должна выбрать local mode").isEqualTo("local");
     
@@ -47,18 +50,22 @@ class McpServerConfigurationTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Приоритет AQA_SERVER_MODE=docker из system properties над environment=local")
     @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")    void shouldPreferSystemPropertiesToEnvironment() {
+        Allure.parameter("Environment AQA_SERVER_MODE", "local");
+        Allure.parameter("System property aqa.server.mode", "docker");
+        Allure.parameter("Docker image", "atlassian-mcp-light:test");
+        Allure.parameter("Docker env file", ".runtime.env");
         Properties properties = new Properties();
         properties.setProperty("aqa.server.mode", "docker");
         properties.setProperty("aqa.docker.image", "atlassian-mcp-light:test");
         properties.setProperty("aqa.docker.envFile", ".runtime.env");
 
-        McpServerConfiguration configuration = McpServerConfiguration.from(
+        McpServerConfiguration configuration = Allure.step("Построить конфигурацию из environment и system properties", () -> McpServerConfiguration.from(
                 Map.of(
                         "AQA_SERVER_MODE", "local",
                         "AQA_SERVER_JAR", "server.jar"
                 ),
                 properties
-        );
+        ));
 
         assertThat(configuration.mode()).as("Системное свойство должно иметь приоритет и выбирать docker mode").isEqualTo("docker");
     
@@ -73,12 +80,14 @@ class McpServerConfigurationTest {
     @Description("Предусловия: задан local-режим, но AQA_SERVER_JAR отсутствует.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_JAR.")
     @Tag("negative")
     void shouldRequireJarInLocalMode() {
-        assertThatThrownBy(() -> McpServerConfiguration.from(
+        Allure.parameter("AQA_SERVER_MODE", "local");
+        Allure.parameter("AQA_SERVER_JAR", "отсутствует");
+        Allure.step("Проверить конфигурацию local mode без обязательного JAR", () -> assertThatThrownBy(() -> McpServerConfiguration.from(
                 Map.of("AQA_SERVER_MODE", "local"),
                 new Properties()
         )).as("Local mode без AQA_SERVER_JAR должен отклоняться с понятной ошибкой")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("AQA_SERVER_JAR");
+                .hasMessageContaining("AQA_SERVER_JAR"));
     
     
     }
@@ -91,7 +100,10 @@ class McpServerConfigurationTest {
     @Description("Предусловия: задан Docker-режим и image, но отсутствует env-файл.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_DOCKER_ENV_FILE.")
     @Tag("negative")
     void shouldRequireImageAndEnvFileInDockerMode() {
-        assertThatThrownBy(() -> McpServerConfiguration.from(
+        Allure.parameter("AQA_SERVER_MODE", "docker");
+        Allure.parameter("AQA_DOCKER_IMAGE", "atlassian-mcp-light:test");
+        Allure.parameter("AQA_DOCKER_ENV_FILE", "отсутствует");
+        Allure.step("Проверить конфигурацию Docker mode без env-файла", () -> assertThatThrownBy(() -> McpServerConfiguration.from(
                 Map.of(
                         "AQA_SERVER_MODE", "docker",
                         "AQA_DOCKER_IMAGE", "atlassian-mcp-light:test"
@@ -99,7 +111,7 @@ class McpServerConfigurationTest {
                 new Properties()
         )).as("Docker mode без обязательного env-файла должен отклоняться")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("AQA_DOCKER_ENV_FILE");
+                .hasMessageContaining("AQA_DOCKER_ENV_FILE"));
     
     
     }
@@ -112,12 +124,13 @@ class McpServerConfigurationTest {
     @Description("Предусловия: AQA_SERVER_MODE задан как неподдерживаемое значение remote.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_MODE.")
     @Tag("negative")
     void shouldRejectUnknownMode() {
-        assertThatThrownBy(() -> McpServerConfiguration.from(
+        Allure.parameter("AQA_SERVER_MODE", "remote");
+        Allure.step("Проверить конфигурацию с неподдерживаемым режимом", () -> assertThatThrownBy(() -> McpServerConfiguration.from(
                 Map.of("AQA_SERVER_MODE", "remote"),
                 new Properties()
         )).as("Неизвестный режим запуска должен отклоняться")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("AQA_SERVER_MODE");
+                .hasMessageContaining("AQA_SERVER_MODE"));
     
     
     }
