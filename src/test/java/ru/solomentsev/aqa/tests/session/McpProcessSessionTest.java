@@ -2,6 +2,7 @@ package ru.solomentsev.aqa.tests.session;
 
 import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
+import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.support.fake.FakeMcpServer;
 import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
 import ru.solomentsev.aqa.testdata.McpTestData;
@@ -48,7 +49,7 @@ class McpProcessSessionTest {
                 McpTestData.CLASSIC_PROTOCOL_VERSION,
                 McpTestData.CLIENT_NAME,
                 McpTestData.CLIENT_VERSION,
-                McpTestData.PROCESS_STARTUP_TIMEOUT
+                McpServerConfiguration.DEFAULT_STARTUP_TIMEOUT
         );
         ManagedProcess process = session.process();
 
