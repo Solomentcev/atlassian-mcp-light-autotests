@@ -185,7 +185,7 @@ class McpContractIntegrationTest {
     @Story("MCP-022 — Отклонение неподдерживаемой stateless protocolVersion")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-022: Отклонение protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION)
-    @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить stateless-запрос с версией, отличной от `2026-07-28`.\nОжидаемый результат: Получен JSON-RPC error `-32022 Unsupported protocol version`; в `error.data.supportedVersions` присутствует `2026-07-28`.")
+    @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить stateless-запрос с неподдерживаемой версией `" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION + "`.\nОжидаемый результат: Получен JSON-RPC error `-32022 Unsupported protocol version`; в `error.data.supportedVersions` присутствует `" + McpTestData.STATELESS_PROTOCOL_VERSION + "`.")
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
@@ -199,9 +199,9 @@ class McpContractIntegrationTest {
                 params
         );
 
-        assertThat(response.path("error").path("code").asInt()).as("Неподдерживаемая protocolVersion должна завершаться ошибкой -32022").isEqualTo(-32022);
+        assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.UNSUPPORTED_PROTOCOL_VERSION).isEqualTo(-32022);
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
-                .containsExactly("2026-07-28");
+                .containsExactly(McpTestData.STATELESS_PROTOCOL_VERSION);
     
     
     }
@@ -325,7 +325,7 @@ class McpContractIntegrationTest {
     @Story("MCP-028 — Проверка границ параметра limit")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-028: Проверка limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + ", limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; допустимый диапазон " + McpTestData.MIN_LIMIT + "–" + McpTestData.MAX_LIMIT)
-    @Description("Предусловия: MCP lifecycle завершён; доступны `jira_search`, `confluence_search`, `confluence_list_spaces`\nШаги: 1. Для каждого инструмента передать `limit=0`. 2. Повторить с `limit=101`. 3. Выполнить вызов с допустимым `limit=1`.\nОжидаемый результат: Значения вне диапазона 1–100 отклоняются как MCP tool error (`result.isError=true`); допустимое значение обрабатывается штатно.")
+    @Description("Предусловия: MCP lifecycle завершён; доступны `jira_search`, `confluence_search`, `confluence_list_spaces`\nШаги: передать limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX; 3. Выполнить вызов с допустимым limit=" + McpTestData.DEFAULT_LIMIT + ".\nОжидаемый результат: значения вне диапазона [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "] отклоняются как MCP tool error (`result.isError=true`); допустимое значение обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-028")
     @Tag("jira")
@@ -429,10 +429,8 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step(
                 "Вызвать " + toolName + " с limit=" + limit,
                 () -> callTool(client, toolName, arguments));
-        assertThat(response.path("result").path("isError").asBoolean())
-                .as("%s должен отклонять limit=%d; допустимый диапазон [%d, %d]",
-                        toolName, limit, McpTestData.MIN_LIMIT, McpTestData.MAX_LIMIT)
-                .isTrue();
+        assertToolError(response, toolName + " с limit=" + limit
+                + " (допустимый диапазон [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "])");
     }
 
     private static void assertSuccessfulJsonRpc(JsonNode response) {
@@ -451,22 +449,29 @@ class McpContractIntegrationTest {
     }
 
     private static void assertToolError(JsonNode response) {
+        assertToolError(response, "MCP-инструмент");
+    }
+
+    private static void assertToolError(JsonNode response, String context) {
         assertSuccessfulJsonRpc(response);
         JsonNode result = response.path("result");
         assertThat(result.path("isError").asBoolean())
-                .as("Ошибочный вызов MCP-инструмента должен иметь isError=true")
+                .as("%s должен вернуть isError=true", context)
                 .isTrue();
         assertThat(result.path("content").isArray())
-                .as("Ошибка MCP-инструмента должна содержать массив content")
+                .as("%s должен вернуть массив content", context)
                 .isTrue();
         assertThat(result.path("content").size())
-                .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
+                .as("%s должен вернуть диагностическое сообщение", context)
                 .isGreaterThan(0);
-        assertThat(result.path("content").get(0).path("type").asText()).as("Элемент MCP tool result должен иметь тип text").isEqualTo("text");
-        assertThat(result.path("content").get(0).path("text").asText()).as("Текст ошибки MCP-инструмента должен начинаться с диагностического префикса")
+        assertThat(result.path("content").get(0).path("type").asText())
+                .as("%s: элемент content должен иметь type=text", context)
+                .isEqualTo("text");
+        assertThat(result.path("content").get(0).path("text").asText())
+                .as("%s: текст ошибки должен начинаться с «Ошибка: »", context)
                 .startsWith("Ошибка: ");
         assertThat(result.has("error"))
-                .as("Ошибка выполнения инструмента должна быть представлена в result, а не JSON-RPC error")
+                .as("%s: ошибка должна находиться в result, а не в JSON-RPC error", context)
                 .isFalse();
     }
 
