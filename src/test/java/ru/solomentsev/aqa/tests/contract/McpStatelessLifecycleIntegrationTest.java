@@ -219,7 +219,7 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
         Allure.parameter("MCP method", "ping");
         Allure.parameter("Lifecycle states", "NEW; INITIALIZING; READY");
-        Allure.parameter("Expected ping result", "пустой объект");
+        Allure.parameter("Ожидаемый результат ping", "пустой объект");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode pingBeforeInitialize =
