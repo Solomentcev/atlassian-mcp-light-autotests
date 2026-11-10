@@ -72,12 +72,13 @@ public final class DockerProcessLauncher implements ProcessLauncher {
      * @throws IOException если Docker CLI не удалось запустить
      */
     @Override
-    public ManagedProcess launch(List<String> ignoredCommand,
+    public ManagedProcess launch(List<String> containerCommand,
                                  Map<String, String> environment,
                                  Path workingDirectory) throws IOException {
+        Objects.requireNonNull(containerCommand, "containerCommand");
         Objects.requireNonNull(environment, "environment");
         List<String> command = buildRunCommand(
-                dockerExecutable, containerName, envFile, image);
+                dockerExecutable, containerName, envFile, image, containerCommand);
         return new DefaultProcessLauncher().launch(
                 command,
                 environment,
@@ -98,7 +99,8 @@ public final class DockerProcessLauncher implements ProcessLauncher {
     static List<String> buildRunCommand(String dockerExecutable,
                                         String containerName,
                                         Path envFile,
-                                        String image) {
+                                        String image,
+                                        List<String> containerCommand) {
         List<String> command = new ArrayList<>();
         command.add(dockerExecutable);
         command.add("run");
@@ -111,6 +113,7 @@ public final class DockerProcessLauncher implements ProcessLauncher {
         command.add("--env-file");
         command.add(envFile.toAbsolutePath().normalize().toString());
         command.add(image);
+        command.addAll(containerCommand);
         return List.copyOf(command);
     }
 
