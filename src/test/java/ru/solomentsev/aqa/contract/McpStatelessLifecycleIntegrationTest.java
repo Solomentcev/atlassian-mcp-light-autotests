@@ -25,6 +25,18 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldListToolsAndDiscoverWithoutClassicInitialize() throws Exception {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+            JsonNode classicToolsBeforeReady = session.client().request(
+                    "tools/list",
+                    null,
+                    REQUEST_TIMEOUT
+            );
+            assertThat(classicToolsBeforeReady.path("error").path("code").asInt())
+                    .isEqualTo(-32001);
+
+            JsonNode pingBeforeReady = session.client().request("ping", null, REQUEST_TIMEOUT);
+            assertThat(pingBeforeReady.path("result").isObject()).isTrue();
+            assertThat(pingBeforeReady.path("result").isEmpty()).isTrue();
+
             JsonNode tools = session.client().listToolsStateless(
                     PROTOCOL_VERSION,
                     REQUEST_TIMEOUT
