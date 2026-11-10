@@ -120,16 +120,27 @@ public final class DockerProcessLauncher implements ProcessLauncher {
     private void cleanupContainer() throws IOException {
         CommandResult inspect = executeDocker(
                 "inspect",
-                "--format={{.State.Running}}",
+                "--format={{index .Config.Labels \"aqa.run-id\"}}|{{.State.Running}}",
                 containerName
         );
 
         if (inspect.exitCode() != 0) {
-            // --rm may already have removed the container after normal shutdown.
-            return;
+            String output = inspect.output().toLowerCase();
+            if (output.contains("no such object") || output.contains("no such container")) {
+                return;
+            }
+            throw new IOException("Failed to inspect Docker container " + containerName
+                    + ": " + inspect.output());
         }
 
-        if ("true".equalsIgnoreCase(inspect.output().trim())) {
+        String[] state = inspect.output().trim().split("\\|", -1);
+        String expectedRunId = containerName.substring("aml-".length());
+        if (state.length != 2 || !expectedRunId.equals(state[0])) {
+            throw new IOException("Docker container label does not match AQA run; refusing cleanup: "
+                    + containerName);
+        }
+
+        if ("true".equalsIgnoreCase(state[1])) {
             executeDocker("stop", "--time", Integer.toString(stopTimeoutSeconds), containerName);
         }
 
