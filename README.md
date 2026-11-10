@@ -78,18 +78,18 @@ JUnit-аннотация `@McpServerTest` подключает `McpServerExtensi
 Пример локального запуска:
 
 ```bash
-AQA_SERVER_MODE=local \\
-AQA_SERVER_JAR=../atlassian-mcp-light/atlassian-mcp-app/target/atlassian-mcp-light-1.0-SNAPSHOT.jar \\
+AQA_SERVER_MODE=local \
+AQA_SERVER_JAR=../atlassian-mcp-light/atlassian-mcp-app/target/atlassian-mcp-light-1.0-SNAPSHOT.jar \
 mvn test
 ```
 
 Пример Docker-режима:
 
 ```bash
-AQA_SERVER_MODE=docker \\
-AQA_DOCKER_IMAGE=atlassian-mcp-light:latest \\
-AQA_DOCKER_ENV_FILE=.runtime.env \\
-AQA_RUN_ID=${BUILD_TAG:-local} \\
+AQA_SERVER_MODE=docker \
+AQA_DOCKER_IMAGE=atlassian-mcp-light:latest \
+AQA_DOCKER_ENV_FILE=.runtime.env \
+AQA_RUN_ID=${BUILD_TAG:-local} \
 mvn test
 ```
 
