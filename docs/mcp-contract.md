@@ -123,7 +123,7 @@ Stateless-запросы не переводят классический lifecy
 - корневой тип схемы — object;
 - `additionalProperties: false`;
 - строковые поля имеют `minLength: 1`;
-- обязательные поля перечислены в `required`;
+- обязательные поля перечислены в `required`; если обязательных полей нет, `required` в схеме не публикуется (например, `confluence_list_spaces`);
 - поддерживаются типы string и integer;
 - integer может иметь minimum/maximum;
 - серверная валидация отклоняет отсутствующие обязательные поля, null, пустые/пробельные строки, неверный тип, неизвестные аргументы и значения за границами integer.
@@ -214,7 +214,7 @@ Confluence URL необязателен: при отсутствии испол�
 2. JSON-RPC validation, request IDs, неизвестные методы и notification semantics.
 3. Классический lifecycle: initialize, согласование версии, notifications/initialized, повторный initialize, запросы до READY.
 4. Stateless lifecycle: discovery, metadata validation, версия, stateless tools/list и tools/call без initialize.
-5. tools/list: 13 уникальных имён, описания, inputSchema, required, additionalProperties, типы, границы и annotations.
+5. tools/list: 13 уникальных имён, описания, inputSchema, required (включая отсутствие поля у инструментов без обязательных аргументов), additionalProperties, типы, границы и annotations.
 6. tools/call: успех, неизвестный инструмент, отсутствующие/null/лишние аргументы, неверные типы и значения за границами; различение JSON-RPC error и isError.
 7. Конфигурация и запуск процесса.
 8. Интеграция с реальными тестовыми Jira и Confluence ресурсами.
