@@ -101,13 +101,10 @@ public final class McpClient implements AutoCloseable {
 
         long startedAt = System.nanoTime();
         LOG.debug("Отправка JSON-RPC request: method={}, id={}", method, requestId);
-        Allure.step("Отправить JSON-RPC request: " + method, () -> writeMessage(request));
-        Allure.addAttachment(
-                "JSON-RPC request metadata",
-                "text/plain",
-                "method=" + method + "; id=" + requestId
-        );
-        ReadEvent event = Allure.step("Ожидать JSON-RPC response", () -> pollResponse(timeout));
+        runStep("Отправить JSON-RPC request: " + method, () -> writeMessage(request));
+        attach("JSON-RPC request metadata", "text/plain",
+                "method=" + method + "; id=" + requestId);
+        ReadEvent event = callStep("Ожидать JSON-RPC response", () -> pollResponse(timeout));
         if (event == null) {
             failed = true;
             LOG.warn("Таймаут JSON-RPC response: method={}, id={}, timeoutMs={}",
@@ -143,11 +140,7 @@ public final class McpClient implements AutoCloseable {
                     + ": " + response);
         }
 
-        Allure.addAttachment(
-                "JSON-RPC response summary",
-                "text/plain",
-                summarizeResponse(response)
-        );
+        attach("JSON-RPC response summary", "text/plain", summarizeResponse(response));
         LOG.debug("Получен JSON-RPC response: method={}, id={}, durationMs={}, hasError={}",
                 method, requestId,
                 TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
@@ -172,7 +165,7 @@ public final class McpClient implements AutoCloseable {
             notification.set("params", params);
         }
         LOG.debug("Отправка JSON-RPC notification: method={}", method);
-        Allure.step("Отправить JSON-RPC notification: " + method, () -> writeMessage(notification));
+        runStep("Отправить JSON-RPC notification: " + method, () -> writeMessage(notification));
     }
 
     /**
@@ -294,7 +287,7 @@ public final class McpClient implements AutoCloseable {
     synchronized void sendRawLine(String line) {
         ensureUsable();
         Objects.requireNonNull(line, "line");
-        Allure.step("Отправить raw STDIO line", () -> {
+        runStep("Отправить raw STDIO line", () -> {
             try {
                 writer.write(line);
                 writer.newLine();
@@ -309,7 +302,7 @@ public final class McpClient implements AutoCloseable {
     synchronized JsonNode awaitRawResponse(Duration timeout) {
         ensureUsable();
         validateTimeout(timeout);
-        ReadEvent event = Allure.step("Ожидать raw STDIO response", () -> pollResponse(timeout));
+        ReadEvent event = callStep("Ожидать raw STDIO response", () -> pollResponse(timeout));
         if (event == null) {
             failed = true;
             throw new McpClientException("Timed out waiting for raw MCP response");
@@ -330,6 +323,35 @@ public final class McpClient implements AutoCloseable {
         }
     }
 
+
+    /**
+     * Allure test case отсутствует в JUnit beforeAll/afterAll callbacks.
+     * Вне тестового метода выполняем действие без Allure instrumentation.
+     */
+    private static boolean isAllureTestCaseRunning() {
+        return Allure.getLifecycle().getCurrentTestCase().isPresent();
+    }
+
+    private static void runStep(String name, Runnable action) {
+        if (isAllureTestCaseRunning()) {
+            Allure.step(name, action);
+        } else {
+            action.run();
+        }
+    }
+
+    private static <T> T callStep(String name, java.util.function.Supplier<T> action) {
+        if (isAllureTestCaseRunning()) {
+            return Allure.step(name, action::get);
+        }
+        return action.get();
+    }
+
+    private static void attach(String name, String type, String content) {
+        if (isAllureTestCaseRunning()) {
+            Allure.addAttachment(name, type, content);
+        }
+    }
 
     private ReadEvent pollResponse(Duration timeout) {
         try {
