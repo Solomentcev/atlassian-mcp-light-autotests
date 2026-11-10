@@ -85,7 +85,7 @@ class McpContractIntegrationTest {
             assertThat(schema.path("type").asText()).isEqualTo("object");
             assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
             assertThat(fieldNames(schema.path("properties")))
-                    .containsExactlyInAnyElementsOf(expected.propertyTypes().keySet());
+                    .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
             assertThat(textValues(schema.path("required")))
                     .containsExactlyInAnyOrderElementsOf(expected.required());
 
