@@ -19,9 +19,16 @@ public final class ManagedProcess implements AutoCloseable {
     private static final Duration DEFAULT_FORCED_TIMEOUT = Duration.ofSeconds(3);
 
     private final Process process;
+    private final ProcessCleanup cleanup;
+    private boolean closed;
 
     ManagedProcess(Process process) {
+        this(process, null);
+    }
+
+    ManagedProcess(Process process, ProcessCleanup cleanup) {
         this.process = Objects.requireNonNull(process, "process");
+        this.cleanup = cleanup;
     }
 
     /**
@@ -115,7 +122,11 @@ public final class ManagedProcess implements AutoCloseable {
      * @throws IOException если не удалось закрыть потоки процесса
      */
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
+        if (closed) {
+            return;
+        }
+        closed = true;
         IOException closeException = null;
         try {
             process.getOutputStream().close();
@@ -153,6 +164,18 @@ public final class ManagedProcess implements AutoCloseable {
                 closeException = exception;
             } else {
                 closeException.addSuppressed(exception);
+            }
+        }
+
+        if (cleanup != null) {
+            try {
+                cleanup.cleanup();
+            } catch (IOException exception) {
+                if (closeException == null) {
+                    closeException = exception;
+                } else {
+                    closeException.addSuppressed(exception);
+                }
             }
         }
 
