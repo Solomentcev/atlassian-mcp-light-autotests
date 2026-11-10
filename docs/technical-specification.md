@@ -193,6 +193,19 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 Локальная разработка может использовать локальный env-файл, исключённый из git. В Jenkins env-файл формируется из credentials или переменные environment передаются напрямую.
 
+### Реализация конфигурации и JUnit lifecycle
+
+Реализация первой версии использует `McpServerConfiguration`, которая читает system properties `aqa.*` (приоритет) и environment variables `AQA_*`.
+
+- `AQA_SERVER_MODE=local`: обязателен `AQA_SERVER_JAR`; запускается `<java> -jar <jar>`.
+- `AQA_SERVER_MODE=docker`: обязательны `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`; запускается отдельный контейнер через Docker launcher.
+- `AQA_SERVER_STARTUP_TIMEOUT_SECONDS` задаёт таймаут MCP readiness handshake (по умолчанию 15 секунд).
+- `AQA_DOCKER_STOP_TIMEOUT_SECONDS` задаёт время штатной остановки контейнера (по умолчанию 10 секунд).
+- `AQA_RUN_ID` задаёт базовый ID Jenkins-прогона; launcher добавляет уникальный суффикс для контейнера каждого тестового класса.
+- `AQA_MCP_PROTOCOL_VERSION` задаёт версию классического MCP lifecycle (по умолчанию `2025-11-25`).
+
+Аннотация `@McpServerTest` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер.
+
 ## 10. Jenkins Pipeline
 
 Рекомендуемые логические этапы:
