@@ -71,13 +71,6 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
-            assertThat(response.path("result").path("content").isArray())
-                    .as("Успешный MCP tool result должен содержать массив content")
-                    .isTrue();
-            assertThat(response.path("result").path("_meta")
-                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
-                    .as("Stateless MCP tool result должен содержать serverInfo с именем сервера")
-                    .isEqualTo(McpTestData.SERVER_NAME);
             assertThat(response.path("result").path("supportedVersions").isArray())
                     .as("server/discover должен вернуть массив поддерживаемых версий протокола").isTrue();
             assertThat(response.path("result").path("capabilities").path("tools").isObject())
@@ -85,7 +78,11 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("name").asText())
                     .as("server/discover должен вернуть имя сервера в serverInfo metadata")
-                    .isEqualTo("atlassian-lite");
+                    .isEqualTo(McpTestData.SERVER_NAME);
+            assertThat(response.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo").path("version").asText())
+                    .as("serverInfo должен содержать версию MCP-сервера")
+                    .isEqualTo(McpTestData.SERVER_VERSION);
         }
     
     }
@@ -111,6 +108,14 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
+            assertThat(response.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
+                    .as("Stateless tools/list должен возвращать serverInfo с именем сервера")
+                    .isEqualTo(McpTestData.SERVER_NAME);
+            assertThat(response.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo").path("version").asText())
+                    .as("Stateless tools/list должен возвращать версию MCP-сервера в serverInfo")
+                    .isEqualTo(McpTestData.SERVER_VERSION);
         }
     
     }
@@ -145,6 +150,17 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
+            assertThat(response.path("result").path("content").isArray())
+                    .as("Успешный MCP tool result должен содержать массив content")
+                    .isTrue();
+            assertThat(response.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
+                    .as("Stateless tools/call должен возвращать serverInfo с именем сервера")
+                    .isEqualTo(McpTestData.SERVER_NAME);
+            assertThat(response.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo").path("version").asText())
+                    .as("Stateless tools/call должен возвращать версию MCP-сервера в serverInfo")
+                    .isEqualTo(McpTestData.SERVER_VERSION);
         }
     
     }
