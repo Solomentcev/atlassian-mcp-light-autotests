@@ -33,6 +33,9 @@ class ProcessBuilderLauncherTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Запуск процесса и отдельный сбор STDERR")
     @Description("Предусловия: Доступен исполняемый файл Java текущей JVM.\nШаги: запустить java -version через ProcessBuilderLauncher; дождаться завершения; прочитать STDERR collector.\nОжидаемый результат: процесс завершается с кодом 0; диагностический вывод доступен через STDERR отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
+        Allure.parameter("Команда", "java -version");
+        Allure.parameter("Process timeout", McpTestData.JAVA_VERSION_PROCESS_TIMEOUT.toMillis() + " ms");
+        Allure.parameter("STDERR collection timeout", McpTestData.STDERR_COLLECTION_TIMEOUT.toMillis() + " ms");
         String executable = Path.of(
                 System.getProperty("java.home"),
                 "bin",
