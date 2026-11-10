@@ -31,6 +31,10 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: Заданы Docker executable, run id, env-файл и image.\nШаги: сформировать docker run command.\nОжидаемый результат: команда содержит --rm, --name, label текущего прогона, -i и --env-file; не содержит TTY и публикацию портов.")
     @Tag("process")
     void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {
+        Allure.parameter("Docker executable", "docker");
+        Allure.parameter("AQA_RUN_ID", "build_123");
+        Allure.parameter("Docker env file", ".runtime.env");
+        Allure.parameter("Docker image", "atlassian-mcp-light:latest");
         List<String> command = Allure.step("Сформировать команду запуска Docker для STDIO", () -> DockerMcpServerLauncher.buildRunCommand(
                 "docker",
                 "aml-build_123",
@@ -56,6 +60,8 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: Передан run id с недопустимым символом /.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием runId.")
     @Tag("negative")
     void shouldRejectUnsafeRunId() {
+        Allure.parameter("AQA_RUN_ID", "unsafe/run-id");
+        Allure.parameter("Ожидаемая проверка", "runId должен содержать только безопасные символы");
         assertThatThrownBy(() -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
@@ -77,6 +83,8 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: stop timeout задан равным нулю.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием stopTimeoutSeconds.")
     @Tag("negative")
     void shouldRejectZeroStopTimeout() {
+        Allure.parameter("Docker stop timeout, seconds", 0);
+        Allure.parameter("Ожидаемая проверка", "stopTimeoutSeconds должен быть больше нуля");
         assertThatThrownBy(() -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
