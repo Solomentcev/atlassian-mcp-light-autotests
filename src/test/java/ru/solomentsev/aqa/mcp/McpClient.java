@@ -295,34 +295,25 @@ public final class McpClient implements AutoCloseable {
     synchronized JsonNode awaitRawResponse(Duration timeout) {
         ensureUsable();
         validateTimeout(timeout);
-        return Allure.step("Получить и разобрать raw STDIO response", () -> {
-            ReadEvent event;
-            try {
-                event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                failed = true;
-                throw new McpClientException("Interrupted while waiting for raw MCP response", exception);
-            }
-            if (event == null) {
-                failed = true;
-                throw new McpClientException("Timed out waiting for raw MCP response");
-            }
-            if (event.error() != null) {
-                failed = true;
-                throw new McpClientException("Failed to read MCP STDOUT", event.error());
-            }
-            if (event.eof()) {
-                failed = true;
-                throw new McpClientException("MCP process closed STDOUT before sending a response");
-            }
-            try {
-                return OBJECT_MAPPER.readTree(event.line());
-            } catch (IOException exception) {
-                failed = true;
-                throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
-            }
-        });
+        ReadEvent event = Allure.step("Ожидать raw STDIO response", () -> pollResponse(timeout));
+        if (event == null) {
+            failed = true;
+            throw new McpClientException("Timed out waiting for raw MCP response");
+        }
+        if (event.error() != null) {
+            failed = true;
+            throw new McpClientException("Failed to read MCP STDOUT", event.error());
+        }
+        if (event.eof()) {
+            failed = true;
+            throw new McpClientException("MCP process closed STDOUT before sending a response");
+        }
+        try {
+            return OBJECT_MAPPER.readTree(event.line());
+        } catch (IOException exception) {
+            failed = true;
+            throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
+        }
     }
 
 

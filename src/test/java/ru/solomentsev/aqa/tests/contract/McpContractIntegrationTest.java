@@ -36,11 +36,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * настроенного тестового экземпляра Atlassian MCP Light.</p>
  */
 @McpServerTest
-    @Tag("integration")
+@Tag("integration")
 @EnabledIfSystemProperty(named = "AQA_RUN_INTEGRATION", matches = "true")
 @Epic("MCP Server")
-    @Tag("contract")
-    @Tag("protocol")
+@Tag("contract")
+@Tag("protocol")
 class McpContractIntegrationTest {
 
     private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
@@ -54,7 +54,7 @@ class McpContractIntegrationTest {
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-005: Получение списка инструментов")
     @Description("Предусловия: STDIO-процесс запущен; доступен stateless tools/list.\nШаги: вызвать `tools/list` с корректными stateless metadata.\nОжидаемый результат: возвращён успешный JSON-RPC result, содержащий массив tools.")
-    @Tag("integration")
+@Tag("integration")
     @Tag("case-MCP-005")
     void shouldReturnToolsList(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -68,7 +68,7 @@ class McpContractIntegrationTest {
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-006: Проверка состава инструментов")
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: извлечь имена инструментов и сравнить с ожидаемым перечнем.\nОжидаемый результат: присутствуют все 13 ожидаемых инструментов; имена уникальны; неожиданные инструменты отсутствуют.")
-    @Tag("integration")
+@Tag("integration")
     @Tag("case-MCP-006")
     void shouldExposeExpectedToolNames(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -87,7 +87,7 @@ class McpContractIntegrationTest {
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-007: Проверка описаний инструментов")
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить description каждого инструмента.\nОжидаемый результат: каждый инструмент содержит непустое текстовое описание.")
-    @Tag("integration")
+@Tag("integration")
     @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -105,7 +105,7 @@ class McpContractIntegrationTest {
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-008: Проверка JSON Schema и annotations инструментов")
     @Description("Предусловия: Получен результат `tools/list`.\nШаги: проверить type, properties, required, additionalProperties, ограничения JSON Schema и annotations каждого инструмента; сравнить результат с mcp-contract.md.\nОжидаемый результат: схемы и annotations всех 13 инструментов соответствуют опубликованному контракту.")
-    @Tag("integration")
+@Tag("integration")
     @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")

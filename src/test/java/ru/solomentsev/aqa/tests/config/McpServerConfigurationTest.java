@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Epic("AQA Test Infrastructure")
-    @Tag("unit")
-    @Tag("configuration")
+@Tag("unit")
+@Tag("configuration")
 class McpServerConfigurationTest {
 
     @Test
@@ -28,7 +28,7 @@ class McpServerConfigurationTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Чтение режима запуска из переменных окружения")
     @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")
-    @Tag("configuration")
+@Tag("configuration")
     void shouldReadLocalModeFromEnvironment() {
         McpServerConfiguration configuration = McpServerConfiguration.from(
                 Map.of(
@@ -49,7 +49,7 @@ class McpServerConfigurationTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Приоритет системных свойств над переменными окружения")
     @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")
-    @Tag("configuration")
+@Tag("configuration")
     void shouldPreferSystemPropertiesToEnvironment() {
         Properties properties = new Properties();
         properties.setProperty("aqa.server.mode", "docker");

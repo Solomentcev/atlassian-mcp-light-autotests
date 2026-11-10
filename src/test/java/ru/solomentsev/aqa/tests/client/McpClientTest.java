@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("AQA Test Infrastructure")
-    @Tag("unit")
-    @Tag("mcp-client")
+@Tag("unit")
+@Tag("mcp-client")
 class McpClientTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -43,7 +43,7 @@ class McpClientTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Отправка запроса и сопоставление ответа по request id")
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: отправить ping через MCP Client; получить ответ.\nОжидаемый результат: ответ содержит JSON-RPC 2.0, исходный request id и ожидаемый result.")
-    @Tag("protocol")
+@Tag("protocol")
     void shouldSendRequestAndMatchResponseById() throws Exception {
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
@@ -74,7 +74,7 @@ class McpClientTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Отправка notification без request id")
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация сервера.\nШаги: отправить notifications/initialized; проверить принятое сервером сообщение.\nОжидаемый результат: notification не содержит id и передаётся без ожидания response.")
-    @Tag("protocol")
+@Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
@@ -117,7 +117,7 @@ class McpClientTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Выполнение classic initialize handshake")
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: выполнить initialize через MCP Client; дождаться notifications/initialized.\nОжидаемый результат: версия протокола проверена; notification отправлен без request id.")
-    @Tag("protocol")
+@Tag("protocol")
     void shouldCompleteClassicInitializeHandshake() throws Exception {
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
@@ -183,7 +183,7 @@ class McpClientTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Добавление stateless metadata без изменения исходных params")
     @Description("Предусловия: Созданы тестовые STDIO-потоки; подготовлены исходные params и client capabilities.\nШаги: выполнить stateless request; проверить переданные серверу metadata и исходный объект params.\nОжидаемый результат: protocolVersion, clientCapabilities и clientInfo добавлены в копию params; исходный объект не изменён.")
-    @Tag("protocol")
+@Tag("protocol")
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);

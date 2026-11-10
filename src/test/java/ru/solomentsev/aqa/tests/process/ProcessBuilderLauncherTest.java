@@ -17,15 +17,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.DisplayName;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("AQA Test Infrastructure")
-    @Tag("unit")
-    @Tag("process")
+@Tag("unit")
+@Tag("process")
 class ProcessBuilderLauncherTest {
 
     @Test
@@ -34,7 +33,7 @@ class ProcessBuilderLauncherTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Запуск процесса и отдельный сбор STDERR")
     @Description("Предусловия: Доступен исполняемый файл Java текущей JVM.\nШаги: запустить java -version через ProcessBuilderLauncher; дождаться завершения; прочитать STDERR collector.\nОжидаемый результат: процесс завершается с кодом 0; диагностический вывод доступен через STDERR отдельно от STDOUT.")
-    @Tag("process")
+@Tag("process")
     void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
         String executable = Path.of(
                 System.getProperty("java.home"),
