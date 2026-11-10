@@ -157,21 +157,21 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
-        JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
+        JsonNode missingMetadata = sendRequest(client, "server/discover", null);
         assertThat(missingMetadata.path("error").path("code").asInt()).as("Запрос без stateless metadata должен завершаться ошибкой -32602").isEqualTo(-32602);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
         missingCapabilitiesParams.putObject("_meta")
                 .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         JsonNode missingCapabilities = sendRequest(client, 
-                "tools/list", missingCapabilitiesParams, REQUEST_TIMEOUT);
+                "tools/list", missingCapabilitiesParams);
         assertThat(missingCapabilities.path("error").path("code").asInt()).as("Stateless-запрос без clientCapabilities должен завершаться ошибкой -32602").isEqualTo(-32602);
 
         ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
         missingVersionParams.putObject("_meta")
                 .putObject("io.modelcontextprotocol/clientCapabilities");
         JsonNode missingVersion = sendRequest(client, 
-                "tools/list", missingVersionParams, REQUEST_TIMEOUT);
+                "tools/list", missingVersionParams);
         assertThat(missingVersion.path("error").path("code").asInt()).as("Stateless-запрос без protocolVersion должен завершаться ошибкой -32602").isEqualTo(-32602);
 
         assertSuccessfulJsonRpc(client.listToolsStateless(
@@ -195,8 +195,7 @@ class McpContractIntegrationTest {
 
         JsonNode response = sendRequest(client, 
                 "server/discover",
-                params,
-                REQUEST_TIMEOUT
+                params
         );
 
         assertThat(response.path("error").path("code").asInt()).as("Неподдерживаемая protocolVersion должна завершаться ошибкой -32022").isEqualTo(-32022);
