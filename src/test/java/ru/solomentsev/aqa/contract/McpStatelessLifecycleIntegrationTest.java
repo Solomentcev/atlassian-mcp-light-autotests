@@ -22,9 +22,18 @@ class McpStatelessLifecycleIntegrationTest {
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
     @Test
-    void shouldDiscoverAndListToolsWithoutClassicInitialize() throws Exception {
+    void shouldListToolsAndDiscoverWithoutClassicInitialize() throws Exception {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+            JsonNode tools = session.client().listToolsStateless(
+                    PROTOCOL_VERSION,
+                    REQUEST_TIMEOUT
+            );
+
+            assertThat(tools.path("jsonrpc").asText()).isEqualTo("2.0");
+            assertThat(tools.has("error")).isFalse();
+            assertThat(tools.path("result").path("tools").size()).isEqualTo(13);
+
             JsonNode discovery = session.client().discoverStateless(
                     PROTOCOL_VERSION,
                     REQUEST_TIMEOUT
@@ -38,14 +47,6 @@ class McpStatelessLifecycleIntegrationTest {
                     .path("io.modelcontextprotocol/serverInfo")
                     .path("name").asText()).isEqualTo("atlassian-lite");
 
-            JsonNode tools = session.client().listToolsStateless(
-                    PROTOCOL_VERSION,
-                    REQUEST_TIMEOUT
-            );
-
-            assertThat(tools.path("jsonrpc").asText()).isEqualTo("2.0");
-            assertThat(tools.has("error")).isFalse();
-            assertThat(tools.path("result").path("tools").size()).isEqualTo(13);
         }
     }
 }
