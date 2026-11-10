@@ -96,8 +96,7 @@ public final class McpProcessSession implements AutoCloseable {
                 throw new McpClientException("MCP process terminated before readiness handshake");
             }
             if (initialize) {
-                Allure.step("Проверить MCP readiness через initialize", () ->
-                        client.initialize(protocolVersion, clientName, clientVersion, startupTimeout));
+                client.initialize(protocolVersion, clientName, clientVersion, startupTimeout);
             }
             if (!process.isAlive()) {
                 throw new McpClientException("MCP process terminated during readiness handshake");

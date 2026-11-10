@@ -101,54 +101,44 @@ public final class McpClient implements AutoCloseable {
                 "text/plain",
                 "method=" + method + "; id=" + requestId
         );
-        return Allure.step("Получить и проверить JSON-RPC response", () -> {
-            ReadEvent event;
-            try {
-                event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                failed = true;
-                throw new McpClientException("Interrupted while waiting for MCP response", exception);
-            }
+        ReadEvent event = Allure.step("Ожидать JSON-RPC response", () -> pollResponse(timeout));
+        if (event == null) {
+            failed = true;
+            throw new McpClientException("Timed out waiting for MCP response to request " + requestId);
+        }
+        if (event.error() != null) {
+            failed = true;
+            throw new McpClientException("Failed to read MCP STDOUT", event.error());
+        }
+        if (event.eof()) {
+            failed = true;
+            throw new McpClientException("MCP process closed STDOUT before sending a response");
+        }
 
-            if (event == null) {
-                failed = true;
-                throw new McpClientException("Timed out waiting for MCP response to request " + requestId);
-            }
-            if (event.error() != null) {
-                failed = true;
-                throw new McpClientException("Failed to read MCP STDOUT", event.error());
-            }
-            if (event.eof()) {
-                failed = true;
-                throw new McpClientException("MCP process closed STDOUT before sending a response");
-            }
+        JsonNode response;
+        try {
+            response = OBJECT_MAPPER.readTree(event.line());
+        } catch (IOException exception) {
+            failed = true;
+            throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
+        }
 
-            JsonNode response;
-            try {
-                response = OBJECT_MAPPER.readTree(event.line());
-            } catch (IOException exception) {
-                failed = true;
-                throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
-            }
+        if (response == null || !response.isObject()
+                || !"2.0".equals(response.path("jsonrpc").asText())
+                || !response.has("id")
+                || !response.get("id").isIntegralNumber()
+                || response.get("id").longValue() != requestId) {
+            failed = true;
+            throw new McpClientException("MCP response does not match request id " + requestId
+                    + ": " + response);
+        }
 
-            if (response == null || !response.isObject()
-                    || !"2.0".equals(response.path("jsonrpc").asText())
-                    || !response.has("id")
-                    || !response.get("id").isIntegralNumber()
-                    || response.get("id").longValue() != requestId) {
-                failed = true;
-                throw new McpClientException("MCP response does not match request id " + requestId
-                        + ": " + response);
-            }
-
-            Allure.addAttachment(
-                    "JSON-RPC response summary",
-                    "text/plain",
-                    summarizeResponse(response)
-            );
-            return response;
-        });
+        Allure.addAttachment(
+                "JSON-RPC response summary",
+                "text/plain",
+                summarizeResponse(response)
+        );
+        return response;
     }
 
     /**
@@ -226,26 +216,24 @@ public final class McpClient implements AutoCloseable {
                                      ObjectNode clientCapabilities,
                                      ObjectNode clientInfo,
                                      Duration timeout) {
-        return Allure.step("Подготовить stateless metadata и отправить " + method, () -> {
-            requireText(protocolVersion, "protocolVersion");
-            Objects.requireNonNull(clientCapabilities, "clientCapabilities");
+        requireText(protocolVersion, "protocolVersion");
+        Objects.requireNonNull(clientCapabilities, "clientCapabilities");
 
-            ObjectNode statelessParams = params == null
-                    ? OBJECT_MAPPER.createObjectNode()
-                    : params.deepCopy();
-            if (statelessParams.has("_meta")) {
-                throw new IllegalArgumentException("params must not already contain _meta");
-            }
+        ObjectNode statelessParams = params == null
+                ? OBJECT_MAPPER.createObjectNode()
+                : params.deepCopy();
+        if (statelessParams.has("_meta")) {
+            throw new IllegalArgumentException("params must not already contain _meta");
+        }
 
-            ObjectNode metadata = statelessParams.putObject("_meta");
-            metadata.put("io.modelcontextprotocol/protocolVersion", protocolVersion);
-            metadata.set("io.modelcontextprotocol/clientCapabilities", clientCapabilities.deepCopy());
-            if (clientInfo != null) {
-                metadata.set("io.modelcontextprotocol/clientInfo", clientInfo.deepCopy());
-            }
+        ObjectNode metadata = statelessParams.putObject("_meta");
+        metadata.put("io.modelcontextprotocol/protocolVersion", protocolVersion);
+        metadata.set("io.modelcontextprotocol/clientCapabilities", clientCapabilities.deepCopy());
+        if (clientInfo != null) {
+            metadata.set("io.modelcontextprotocol/clientInfo", clientInfo.deepCopy());
+        }
 
-            return request(method, statelessParams, timeout);
-        });
+        return request(method, statelessParams, timeout);
     }
 
     /**
@@ -336,6 +324,16 @@ public final class McpClient implements AutoCloseable {
         });
     }
 
+
+    private ReadEvent pollResponse(Duration timeout) {
+        try {
+            return responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            failed = true;
+            throw new McpClientException("Interrupted while waiting for MCP response", exception);
+        }
+    }
 
     private static String summarizeResponse(JsonNode response) {
         StringBuilder summary = new StringBuilder()
