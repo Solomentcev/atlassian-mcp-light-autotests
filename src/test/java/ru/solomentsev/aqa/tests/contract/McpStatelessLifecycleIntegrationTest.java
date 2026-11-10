@@ -71,10 +71,31 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
-            assertThat(response.path("result").path("supportedVersions").isArray())
-                    .as("server/discover должен вернуть массив поддерживаемых версий протокола").isTrue();
+            JsonNode supportedVersions = response.path("result").path("supportedVersions");
+            assertThat(supportedVersions.isArray())
+                    .as("server/discover должен вернуть массив поддерживаемых версий протокола")
+                    .isTrue();
+            assertThat(supportedVersions.size())
+                    .as("server/discover должен перечислить все три поддерживаемые версии протокола")
+                    .isEqualTo(3);
+            assertThat(supportedVersions.get(0).asText())
+                    .as("Первой должна быть текущая stateless protocolVersion")
+                    .isEqualTo(McpTestData.STATELESS_PROTOCOL_VERSION);
+            assertThat(supportedVersions.get(1).asText())
+                    .as("Вторая поддерживаемая версия должна совпадать с classic protocolVersion")
+                    .isEqualTo(McpTestData.CLASSIC_PROTOCOL_VERSION);
+            assertThat(supportedVersions.get(2).asText())
+                    .as("Третьей должна быть legacy protocolVersion")
+                    .isEqualTo(McpTestData.LEGACY_PROTOCOL_VERSION);
             assertThat(response.path("result").path("capabilities").path("tools").isObject())
-                    .as("server/discover должен объявить capability tools").isTrue();
+                    .as("server/discover должен объявить capability tools")
+                    .isTrue();
+            assertThat(response.path("result").path("ttlMs").asLong())
+                    .as("server/discover должен вернуть установленный TTL кэша")
+                    .isEqualTo(McpTestData.DISCOVERY_TTL_MS);
+            assertThat(response.path("result").path("cacheScope").asText())
+                    .as("server/discover должен объявить область кэширования public")
+                    .isEqualTo(McpTestData.DISCOVERY_CACHE_SCOPE);
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("name").asText())
                     .as("server/discover должен вернуть имя сервера в serverInfo metadata")
@@ -104,7 +125,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .isFalse();
             assertThat(response.path("result").path("tools").size())
                     .as("Stateless tools/list должен вернуть все 13 инструментов контракта")
-                    .isEqualTo(13);
+                    .isEqualTo(McpTestData.EXPECTED_TOOL_COUNT);
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
@@ -150,8 +171,18 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
-            assertThat(response.path("result").path("content").isArray())
+            JsonNode content = response.path("result").path("content");
+            assertThat(content.isArray())
                     .as("Успешный MCP tool result должен содержать массив content")
+                    .isTrue();
+            assertThat(content.size())
+                    .as("Успешный MCP tool result должен содержать хотя бы один элемент content")
+                    .isGreaterThan(0);
+            assertThat(content.get(0).path("type").asText())
+                    .as("Первый элемент MCP tool result должен иметь тип text")
+                    .isEqualTo("text");
+            assertThat(content.get(0).path("text").isTextual())
+                    .as("Первый элемент MCP tool result должен содержать текст")
                     .isTrue();
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("name").asText())
