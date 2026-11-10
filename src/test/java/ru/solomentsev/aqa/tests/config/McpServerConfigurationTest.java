@@ -26,7 +26,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Чтение режима запуска из переменных окружения")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Чтение режима запуска из переменных окружения")
+    @DisplayName("Чтение AQA_SERVER_MODE=local и AQA_SERVER_JAR из environment")
     @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")    void shouldReadLocalModeFromEnvironment() {
         McpServerConfiguration configuration = McpServerConfiguration.from(
                 Map.of(
@@ -45,7 +45,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Приоритет системных свойств над переменными окружения")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Приоритет системных свойств над переменными окружения")
+    @DisplayName("Приоритет AQA_SERVER_MODE=docker из system properties над environment=local")
     @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")    void shouldPreferSystemPropertiesToEnvironment() {
         Properties properties = new Properties();
         properties.setProperty("aqa.server.mode", "docker");
@@ -69,7 +69,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Проверка обязательного пути к JAR в local-режиме")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Проверка обязательного пути к JAR в local-режиме")
+    @DisplayName("Отклонение local mode без AQA_SERVER_JAR")
     @Description("Предусловия: задан local-режим, но AQA_SERVER_JAR отсутствует.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_JAR.")
     @Tag("negative")
     void shouldRequireJarInLocalMode() {
@@ -87,7 +87,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Проверка обязательных параметров Docker-режима")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Проверка обязательных параметров Docker-режима")
+    @DisplayName("Отклонение Docker mode без AQA_DOCKER_ENV_FILE")
     @Description("Предусловия: задан Docker-режим и image, но отсутствует env-файл.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_DOCKER_ENV_FILE.")
     @Tag("negative")
     void shouldRequireImageAndEnvFileInDockerMode() {
@@ -108,7 +108,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Отклонение неизвестного режима запуска")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение неизвестного режима запуска")
+    @DisplayName("Отклонение неподдерживаемого AQA_SERVER_MODE=remote")
     @Description("Предусловия: AQA_SERVER_MODE задан как неподдерживаемое значение remote.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_MODE.")
     @Tag("negative")
     void shouldRejectUnknownMode() {
