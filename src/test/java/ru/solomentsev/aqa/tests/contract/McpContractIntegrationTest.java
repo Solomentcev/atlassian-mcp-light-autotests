@@ -1,5 +1,6 @@
 package ru.solomentsev.aqa.tests.contract;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -183,14 +184,14 @@ class McpContractIntegrationTest {
     @Feature("Stateless Protocol")
     @Story("MCP-022 — Отклонение неподдерживаемой stateless protocolVersion")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-022: Отклонение неподдерживаемой stateless protocolVersion")
+    @DisplayName("MCP-022: Отклонение protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION)
     @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить stateless-запрос с версией, отличной от `2026-07-28`.\nОжидаемый результат: Получен JSON-RPC error `-32022 Unsupported protocol version`; в `error.data.supportedVersions` присутствует `2026-07-28`.")
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         ObjectNode metadata = params.putObject("_meta");
-        metadata.put("io.modelcontextprotocol/protocolVersion", "2099-01-01");
+        metadata.put("io.modelcontextprotocol/protocolVersion", McpTestData.UNSUPPORTED_PROTOCOL_VERSION);
         metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
         JsonNode response = sendRequest(client, 
@@ -250,19 +251,31 @@ class McpContractIntegrationTest {
     void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
         ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
         nullArgument.putNull("issue_key");
-        assertToolError(callTool(client, "jira_get_issue", nullArgument));
+        JsonNode nullResponse = Allure.step(
+                "Вызвать jira_get_issue с issue_key=null",
+                () -> callTool(client, "jira_get_issue", nullArgument));
+        assertToolError(nullResponse);
 
         ObjectNode emptyArgument = OBJECT_MAPPER.createObjectNode();
         emptyArgument.put("issue_key", "");
-        assertToolError(callTool(client, "jira_get_issue", emptyArgument));
+        JsonNode emptyResponse = Allure.step(
+                "Вызвать jira_get_issue с issue_key=пустая строка",
+                () -> callTool(client, "jira_get_issue", emptyArgument));
+        assertToolError(emptyResponse);
 
         ObjectNode blankArgument = OBJECT_MAPPER.createObjectNode();
         blankArgument.put("issue_key", "   ");
-        assertToolError(callTool(client, "jira_get_issue", blankArgument));
+        JsonNode blankResponse = Allure.step(
+                "Вызвать jira_get_issue с issue_key из трёх пробелов",
+                () -> callTool(client, "jira_get_issue", blankArgument));
+        assertToolError(blankResponse);
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+        JsonNode validResponse = Allure.step(
+                "Вызвать jira_get_issue с валидным issue_key=" + JiraTestData.ISSUE_KEY,
+                () -> callTool(client, "jira_get_issue", validArguments));
+        assertSuccessfulJsonRpc(validResponse);
     
     }
 
@@ -311,33 +324,23 @@ class McpContractIntegrationTest {
     @Feature("Tool Validation")
     @Story("MCP-028 — Проверка границ параметра limit")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-028: Проверка границ параметра limit")
+    @DisplayName("MCP-028: Проверка limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + ", limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; допустимый диапазон " + McpTestData.MIN_LIMIT + "–" + McpTestData.MAX_LIMIT)
     @Description("Предусловия: MCP lifecycle завершён; доступны `jira_search`, `confluence_search`, `confluence_list_spaces`\nШаги: 1. Для каждого инструмента передать `limit=0`. 2. Повторить с `limit=101`. 3. Выполнить вызов с допустимым `limit=1`.\nОжидаемый результат: Значения вне диапазона 1–100 отклоняются как MCP tool error (`result.isError=true`); допустимое значение обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-028")
     @Tag("jira")
     @Tag("confluence")
     void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
-        ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
-        zeroLimit.put("jql", JiraTestData.SEARCH_JQL);
-        zeroLimit.put("limit", McpTestData.INVALID_LIMIT_BELOW_MIN);
-        assertToolError(callTool(client, "jira_search", zeroLimit));
-
-        ObjectNode excessiveLimit = OBJECT_MAPPER.createObjectNode();
-        excessiveLimit.put("jql", JiraTestData.SEARCH_JQL);
-        excessiveLimit.put("limit", McpTestData.INVALID_LIMIT_ABOVE_MAX);
-        assertToolError(callTool(client, "jira_search", excessiveLimit));
+        assertLimitRejected(client, "jira_search", "jql", JiraTestData.SEARCH_JQL,
+                McpTestData.INVALID_LIMIT_BELOW_MIN);
+        assertLimitRejected(client, "jira_search", "jql", JiraTestData.SEARCH_JQL,
+                McpTestData.INVALID_LIMIT_ABOVE_MAX);
 
         for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
             String queryField = "confluence_search".equals(toolName) ? "cql" : null;
-            for (int limit : new int[]{McpTestData.INVALID_LIMIT_BELOW_MIN, McpTestData.INVALID_LIMIT_ABOVE_MAX}) {
-                ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-                if (queryField != null) {
-                    arguments.put(queryField, ConfluenceTestData.SEARCH_CQL);
-                }
-                arguments.put("limit", limit);
-                assertToolError(callTool(client, toolName, arguments));
-            }
+            String query = queryField == null ? null : ConfluenceTestData.SEARCH_CQL;
+            assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_BELOW_MIN);
+            assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_ABOVE_MAX);
         }
 
         ObjectNode validJiraLimit = OBJECT_MAPPER.createObjectNode();
@@ -345,7 +348,9 @@ class McpContractIntegrationTest {
         validJiraLimit.put("limit", McpTestData.DEFAULT_LIMIT);
         JsonNode jiraResponse = callTool(client, "jira_search", validJiraLimit);
         assertSuccessfulJsonRpc(jiraResponse);
-        assertThat(jiraResponse.path("result").path("isError").asBoolean()).as("Валидный Jira-вызов не должен возвращать MCP tool error").isFalse();
+        assertThat(jiraResponse.path("result").path("isError").asBoolean())
+                .as("jira_search должен принимать допустимый limit=%d", McpTestData.DEFAULT_LIMIT)
+                .isFalse();
 
         for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
             ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
@@ -355,7 +360,9 @@ class McpContractIntegrationTest {
             arguments.put("limit", McpTestData.DEFAULT_LIMIT);
             JsonNode response = callTool(client, toolName, arguments);
             assertSuccessfulJsonRpc(response);
-            assertThat(response.path("result").path("isError").asBoolean()).as("Валидный вызов MCP-инструмента не должен возвращать isError=true").isFalse();
+            assertThat(response.path("result").path("isError").asBoolean())
+                    .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.DEFAULT_LIMIT)
+                    .isFalse();
         }
     
     
@@ -406,6 +413,26 @@ class McpContractIntegrationTest {
         JsonNode tools = response.path("result").path("tools");
         assertThat(tools.isArray()).as("tools/list должен вернуть массив инструментов").isTrue();
         return tools;
+    }
+
+    private static void assertLimitRejected(McpClient client,
+                                            String toolName,
+                                            String queryField,
+                                            String query,
+                                            int limit) {
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        if (queryField != null) {
+            arguments.put(queryField, query);
+        }
+        arguments.put("limit", limit);
+
+        JsonNode response = Allure.step(
+                "Вызвать " + toolName + " с limit=" + limit,
+                () -> callTool(client, toolName, arguments));
+        assertThat(response.path("result").path("isError").asBoolean())
+                .as("%s должен отклонять limit=%d; допустимый диапазон [%d, %d]",
+                        toolName, limit, McpTestData.MIN_LIMIT, McpTestData.MAX_LIMIT)
+                .isTrue();
     }
 
     private static void assertSuccessfulJsonRpc(JsonNode response) {
