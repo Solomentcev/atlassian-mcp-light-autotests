@@ -148,7 +148,7 @@ class McpContractIntegrationTest {
                     if ("limit".equals(property.getKey())) {
                         assertThat(definition.path("maximum").asInt())
                                 .as("%s.%s maximum", name, property.getKey())
-                                .isEqualTo(100);
+                                .isEqualTo(McpTestData.MAX_LIMIT);
                     }
                 }
             }
