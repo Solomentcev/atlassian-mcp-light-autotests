@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.mcp;
+package ru.solomentsev.aqa.support.fake;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

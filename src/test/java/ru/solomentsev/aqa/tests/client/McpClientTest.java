@@ -1,4 +1,6 @@
-package ru.solomentsev.aqa.mcp;
+package ru.solomentsev.aqa.tests.client;
+
+import ru.solomentsev.aqa.mcp.McpClient;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;

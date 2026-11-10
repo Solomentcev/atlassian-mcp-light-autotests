@@ -1,4 +1,8 @@
-package ru.solomentsev.aqa.mcp;
+package ru.solomentsev.aqa.tests.session;
+
+import ru.solomentsev.aqa.mcp.McpProcessSession;
+import ru.solomentsev.aqa.support.fake.FakeMcpServer;
+import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
