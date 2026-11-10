@@ -210,7 +210,7 @@ Confluence URL необязателен: при отсутствии испол�
 
 ## 10. Обязательные группы AQA-проверок
 
-1. STDIO framing, UTF-8, пустые строки, parse error и продолжение обработки.
+1. STDIO framing, UTF-8, пустые строки, parse error и продолжение обработки (часть проверок реализована в `McpTransportContractIntegrationTest`).
 2. JSON-RPC validation, request IDs, неизвестные методы и notification semantics.
 3. Классический lifecycle: initialize, согласование версии, notifications/initialized, повторный initialize, запросы до READY.
 4. Stateless lifecycle: discovery, metadata validation, версия, stateless tools/list и tools/call без initialize.
