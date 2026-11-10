@@ -221,7 +221,9 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - ошибки отсутствующих обязательных, лишних и пустых аргументов, границы limit и условие title/content для Confluence update;
 - отличие MCP tool error от JSON-RPC error.
 
-`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что stateless discovery и tools/list доступны независимо от состояния классического lifecycle.
+`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что stateless tools/list доступен до discovery, а discovery работает независимо от состояния классического lifecycle.
+
+`McpTransportContractIntegrationTest` проверяет STDIO framing и JSON-RPC поведение реального процесса: пропуск пустых строк, parse error с продолжением обработки следующих сообщений, некорректную форму запроса, неизвестный метод, notification без ответа и повторный initialize.
 
 Интеграционный прогон запускает реальный сервер и поэтому требует тестовой конфигурации Jira/Confluence. Проверки discovery/list и неизвестного инструмента не создают и не изменяют Atlassian-объекты. Обычный `mvn test` пропускает интеграционный класс и не требует серверного JAR или Docker image.
 
