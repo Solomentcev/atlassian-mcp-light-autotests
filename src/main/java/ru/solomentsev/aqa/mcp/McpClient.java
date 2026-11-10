@@ -1,0 +1,263 @@
+package ru.solomentsev.aqa.mcp;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Минимальный синхронный MCP/JSON-RPC клиент для одного STDIO-процесса.
+ *
+ * <p>Клиент отправляет по одному JSON-RPC сообщению на строку и читает ответы
+ * только из STDOUT. STDERR должен обслуживаться отдельным {@code StderrCollector}.</p>
+ *
+ * <p>Один экземпляр клиента обслуживает одну MCP-сессию. Параллельные запросы
+ * через один экземпляр не поддерживаются.</p>
+ */
+public final class McpClient implements AutoCloseable {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private final BufferedWriter writer;
+    private final BlockingQueue<ReadEvent> responses = new LinkedBlockingQueue<>();
+    private final AtomicLong requestIds = new AtomicLong();
+    private final Thread readerThread;
+
+    private volatile boolean closed;
+    private volatile boolean failed;
+
+    /**
+     * Создаёт клиента и запускает отдельный поток чтения STDOUT.
+     *
+     * @param stdout STDOUT тестируемого процесса
+     * @param stdin STDIN тестируемого процесса
+     */
+    public McpClient(InputStream stdout, OutputStream stdin) {
+        Objects.requireNonNull(stdout, "stdout");
+        Objects.requireNonNull(stdin, "stdin");
+        this.writer = new BufferedWriter(new OutputStreamWriter(stdin, StandardCharsets.UTF_8));
+        this.readerThread = new Thread(() -> readResponses(stdout), "aqa-mcp-stdout-reader");
+        this.readerThread.setDaemon(true);
+        this.readerThread.start();
+    }
+
+    private void readResponses(InputStream stdout) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(stdout, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                responses.put(ReadEvent.line(line));
+            }
+            responses.put(ReadEvent.eof());
+        } catch (IOException exception) {
+            responses.offer(ReadEvent.failure(exception));
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            responses.offer(ReadEvent.failure(exception));
+        }
+    }
+
+    /**
+     * Отправляет JSON-RPC request и ожидает соответствующий response.
+     *
+     * @param method имя метода
+     * @param params объект параметров; {@code null} означает отсутствие params
+     * @param timeout таймаут ожидания ответа
+     * @return полный JSON-RPC response
+     */
+    public synchronized JsonNode request(String method, ObjectNode params, Duration timeout) {
+        ensureUsable();
+        validateMethod(method);
+        validateTimeout(timeout);
+
+        long requestId = requestIds.incrementAndGet();
+        ObjectNode request = OBJECT_MAPPER.createObjectNode();
+        request.put("jsonrpc", "2.0");
+        request.put("id", requestId);
+        request.put("method", method);
+        if (params != null) {
+            request.set("params", params);
+        }
+
+        writeMessage(request);
+        ReadEvent event;
+        try {
+            event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            failed = true;
+            throw new McpClientException("Interrupted while waiting for MCP response", exception);
+        }
+
+        if (event == null) {
+            failed = true;
+            throw new McpClientException("Timed out waiting for MCP response to request " + requestId);
+        }
+        if (event.error() != null) {
+            failed = true;
+            throw new McpClientException("Failed to read MCP STDOUT", event.error());
+        }
+        if (event.eof()) {
+            failed = true;
+            throw new McpClientException("MCP process closed STDOUT before sending a response");
+        }
+
+        JsonNode response;
+        try {
+            response = OBJECT_MAPPER.readTree(event.line());
+        } catch (IOException exception) {
+            failed = true;
+            throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
+        }
+
+        if (response == null || !response.isObject()
+                || !"2.0".equals(response.path("jsonrpc").asText())
+                || !response.has("id")
+                || !response.get("id").isIntegralNumber()
+                || response.get("id").longValue() != requestId) {
+            failed = true;
+            throw new McpClientException("MCP response does not match request id " + requestId
+                    + ": " + response);
+        }
+
+        return response;
+    }
+
+    /**
+     * Отправляет JSON-RPC notification без ожидания ответа.
+     *
+     * @param method имя notification
+     * @param params объект параметров; {@code null} означает отсутствие params
+     */
+    public synchronized void notification(String method, ObjectNode params) {
+        ensureUsable();
+        validateMethod(method);
+
+        ObjectNode notification = OBJECT_MAPPER.createObjectNode();
+        notification.put("jsonrpc", "2.0");
+        notification.put("method", method);
+        if (params != null) {
+            notification.set("params", params);
+        }
+        writeMessage(notification);
+    }
+
+    /**
+     * Выполняет классический MCP handshake и переводит сессию в READY.
+     *
+     * @param protocolVersion запрашиваемая версия протокола
+     * @param clientName имя AQA-клиента
+     * @param clientVersion версия AQA-клиента
+     * @param timeout таймаут ответа initialize
+     * @return response на initialize
+     */
+    public synchronized JsonNode initialize(String protocolVersion,
+                                             String clientName,
+                                             String clientVersion,
+                                             Duration timeout) {
+        requireText(protocolVersion, "protocolVersion");
+        requireText(clientName, "clientName");
+        requireText(clientVersion, "clientVersion");
+
+        ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        params.put("protocolVersion", protocolVersion);
+        params.putObject("capabilities");
+        params.putObject("clientInfo")
+                .put("name", clientName)
+                .put("version", clientVersion);
+
+        JsonNode response = request("initialize", params, timeout);
+        if (response.has("error")) {
+            throw new McpClientException("MCP initialize failed: " + response.get("error"));
+        }
+        if (!response.path("result").isObject()
+                || !response.path("result").path("protocolVersion").isTextual()
+                || !response.path("result").path("capabilities").isObject()
+                || !response.path("result").path("serverInfo").isObject()) {
+            throw new McpClientException("MCP initialize response does not match the expected contract");
+        }
+
+        notification("notifications/initialized", null);
+        return response;
+    }
+
+    private void writeMessage(ObjectNode message) {
+        try {
+            writer.write(OBJECT_MAPPER.writeValueAsString(message));
+            writer.newLine();
+            writer.flush();
+        } catch (IOException exception) {
+            failed = true;
+            throw new McpClientException("Failed to write MCP message to STDIN", exception);
+        }
+    }
+
+    private void ensureUsable() {
+        if (closed) {
+            throw new IllegalStateException("MCP client is closed");
+        }
+        if (failed) {
+            throw new McpClientException("MCP client cannot continue after a transport failure");
+        }
+    }
+
+    private static void validateMethod(String method) {
+        requireText(method, "method");
+    }
+
+    private static void validateTimeout(Duration timeout) {
+        Objects.requireNonNull(timeout, "timeout");
+        if (timeout.isZero() || timeout.isNegative()) {
+            throw new IllegalArgumentException("timeout must be positive");
+        }
+    }
+
+    private static void requireText(String value, String name) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(name + " must not be blank");
+        }
+    }
+
+    @Override
+    public synchronized void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        try {
+            writer.close();
+        } catch (IOException ignored) {
+            // Closing the client is best-effort; process cleanup is owned by ManagedProcess.
+        }
+    }
+
+    private record ReadEvent(String line, IOException error, boolean eof) {
+        private static ReadEvent line(String value) {
+            return new ReadEvent(value, null, false);
+        }
+
+        private static ReadEvent failure(Exception exception) {
+            IOException ioException = exception instanceof IOException io
+                    ? io : new IOException(exception);
+            return new ReadEvent(null, ioException, false);
+        }
+
+        private static ReadEvent eof() {
+            return new ReadEvent(null, null, true);
+        }
+    }
+}
