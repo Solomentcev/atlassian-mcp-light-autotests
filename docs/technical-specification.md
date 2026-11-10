@@ -221,7 +221,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - ошибки отсутствующих обязательных, лишних и пустых аргументов, границы limit и условие title/content для Confluence update;
 - отличие MCP tool error от JSON-RPC error.
 
-`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что classic `tools/list` до READY возвращает `-32001`, `ping` доступен до READY, а stateless `tools/list` работает ещё до `server/discover`.
+`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что classic `tools/list` до READY возвращает `-32001`, `ping` доступен до READY, а stateless `tools/list` и `tools/call` работают ещё до `server/discover`.
 
 `McpTransportContractIntegrationTest` проверяет STDIO framing и JSON-RPC поведение реального процесса: пропуск пустых строк, parse error с продолжением обработки следующих сообщений, некорректную форму запроса, неизвестный метод, notification без ответа и повторный initialize.
 
