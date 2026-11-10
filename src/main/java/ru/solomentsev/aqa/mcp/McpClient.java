@@ -62,7 +62,7 @@ public final class McpClient implements AutoCloseable {
             while ((line = reader.readLine()) != null) {
                 responses.put(ReadEvent.line(line));
             }
-            responses.put(ReadEvent.eof());
+            responses.put(ReadEvent.endOfStream());
         } catch (IOException exception) {
             responses.offer(ReadEvent.failure(exception));
         } catch (InterruptedException exception) {
@@ -256,7 +256,7 @@ public final class McpClient implements AutoCloseable {
             return new ReadEvent(null, ioException, false);
         }
 
-        private static ReadEvent eof() {
+        private static ReadEvent endOfStream() {
             return new ReadEvent(null, null, true);
         }
     }
