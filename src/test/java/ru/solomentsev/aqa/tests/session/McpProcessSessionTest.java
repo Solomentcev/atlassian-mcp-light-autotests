@@ -39,8 +39,7 @@ class McpProcessSessionTest {
     @Description("Предусловия: Доступен fake MCP server с classic initialize handshake.\nШаги: запустить McpProcessSession; проверить доступность процесса и клиента; закрыть сессию.\nОжидаемый результат: readiness handshake завершён; процесс завершён с exit code 0.")
     @Tag("process")
     void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
-        Allure.step("Запуск готовой MCP-сессии и завершение процесса при закрытии", () -> {
-            McpProcessSession session = McpProcessSession.start(
+        {            McpProcessSession session = startSession(
                     launcherFor(FakeMcpServer.class),
                     Map.of(),
                     null,
@@ -52,16 +51,16 @@ class McpProcessSessionTest {
             ManagedProcess process = session.process();
 
             try {
-                assertThat(process.isAlive()).isTrue();
-                assertThat(session.client()).isNotNull();
+                assertThat(process.isAlive()).as("После запуска MCP-сессии процесс должен быть активен").isTrue();
+                assertThat(session.client()).as("Запущенная MCP-сессия должна предоставить MCP Client").isNotNull();
             } finally {
                 session.close();
             }
 
             assertThat(process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)).isTrue();
-            assertThat(process.exitCode()).isZero();
+            assertThat(process.exitCode()).as("Fake MCP server должен завершиться с кодом 0").isZero();
         
-        });
+        }
     }
 
     @Test
@@ -72,8 +71,7 @@ class McpProcessSessionTest {
     @Description("Предусловия: Доступен fake stateless MCP server.\nШаги: запустить сессию без handshake; выполнить server/discover и tools/list; закрыть сессию.\nОжидаемый результат: stateless запросы выполняются без classic initialize; процесс завершается с exit code 0.")
     @Tag("process")
     void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
-        Allure.step("Запуск stateless-сессии без classic initialize", () -> {
-            McpProcessSession session = McpProcessSession.startWithoutHandshake(
+        {            McpProcessSession session = startStatelessSession(
                     launcherFor(FakeStatelessMcpServer.class),
                     Map.of(),
                     null
@@ -103,7 +101,26 @@ class McpProcessSessionTest {
             assertThat(process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)).isTrue();
             assertThat(process.exitCode()).isZero();
         
-        });
+        }
+    }
+
+    private static McpProcessSession startSession(McpServerLauncher launcher,
+                                                   Map<String, String> environment,
+                                                   Path workingDirectory,
+                                                   String protocolVersion,
+                                                   String clientName,
+                                                   String clientVersion,
+                                                   Duration timeout) throws Exception {
+        return Allure.step("Запустить MCP-сессию и выполнить readiness handshake", () ->
+                McpProcessSession.start(launcher, environment, workingDirectory,
+                        protocolVersion, clientName, clientVersion, timeout));
+    }
+
+    private static McpProcessSession startStatelessSession(McpServerLauncher launcher,
+                                                           Map<String, String> environment,
+                                                           Path workingDirectory) throws Exception {
+        return Allure.step("Запустить MCP-сессию без classic handshake", () ->
+                McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory));
     }
 
     private static McpServerLauncher launcherFor(Class<?> serverClass) {

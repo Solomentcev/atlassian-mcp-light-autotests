@@ -35,31 +35,34 @@ class ProcessBuilderLauncherTest {
     @Description("Предусловия: Доступен исполняемый файл Java текущей JVM.\nШаги: запустить java -version через ProcessBuilderLauncher; дождаться завершения; прочитать STDERR collector.\nОжидаемый результат: процесс завершается с кодом 0; диагностический вывод доступен через STDERR отдельно от STDOUT.")
     @Tag("process")
     void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
-        Allure.step("Запуск процесса и отдельный сбор STDERR", () -> {
-            String executable = Path.of(
+        {            String executable = Path.of(
                     System.getProperty("java.home"),
                     "bin",
                     isWindows() ? "java.exe" : "java"
             ).toString();
 
-            ManagedProcess process = new ProcessBuilderLauncher().launch(
+            ManagedProcess process = Allure.step("Запустить java -version через ProcessBuilder", () -> new ProcessBuilderLauncher().launch(
                     List.of(executable, "-version"),
                     Map.of(),
                     null
-            );
+            ));
             StderrCollector stderrCollector = new StderrCollector(process.stderr(), 8_192);
 
             try {
-                assertThat(process.waitFor(Duration.ofSeconds(15))).isTrue();
-                assertThat(process.exitCode()).isZero();
-                assertThat(stderrCollector.await(Duration.ofSeconds(3))).isTrue();
-                assertThat(stderrCollector.content()).contains("version");
+                assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(Duration.ofSeconds(15))))
+                        .as("Процесс java -version должен завершиться в пределах 15 секунд")
+                        .isTrue();
+                assertThat(process.exitCode()).as("Процесс java -version должен завершиться с кодом 0").isZero();
+                assertThat(Allure.step("Дождаться сбора STDERR", () -> stderrCollector.await(Duration.ofSeconds(3))))
+                        .as("STDERR collector должен завершить чтение потока")
+                        .isTrue();
+                assertThat(stderrCollector.content()).as("STDERR должен содержать сведения о версии Java").contains("version");
             } finally {
                 process.close();
                 stderrCollector.close();
             }
         
-        });
+        }
     }
 
     private static boolean isWindows() {

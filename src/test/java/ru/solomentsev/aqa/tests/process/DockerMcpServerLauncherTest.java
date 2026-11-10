@@ -32,22 +32,21 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: Заданы Docker executable, run id, env-файл и image.\nШаги: сформировать docker run command.\nОжидаемый результат: команда содержит --rm, --name, label текущего прогона, -i и --env-file; не содержит TTY и публикацию портов.")
     @Tag("process")
     void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {
-        Allure.step("Формирование Docker run-команды для STDIO без TTY и опубликованных портов", () -> {
-            List<String> command = DockerMcpServerLauncher.buildRunCommand(
+        {            List<String> command = Allure.step("Сформировать команду запуска Docker для STDIO", () -> DockerMcpServerLauncher.buildRunCommand(
                     "docker",
                     "aml-build_123",
                     Path.of(".runtime.env"),
                     "atlassian-mcp-light:latest"
-            );
+            ));
 
-            assertThat(command).containsSubsequence(
+            assertThat(command).as("Docker run должен включать параметры интерактивного STDIO-запуска без TTY").containsSubsequence(
                     "docker", "run", "--rm", "--name", "aml-build_123",
                     "--label", "aqa.run-id=build_123", "-i", "--env-file"
             );
-            assertThat(command).contains("atlassian-mcp-light:latest");
-            assertThat(command).doesNotContain("-t", "-p", "--publish");
+            assertThat(command).as("Docker run должен использовать заданный image").contains("atlassian-mcp-light:latest");
+            assertThat(command).as("STDIO-контейнер нельзя запускать с TTY или опубликованными портами").doesNotContain("-t", "-p", "--publish");
         
-        });
+        }
     }
 
     @Test
@@ -58,8 +57,7 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: Передан run id с недопустимым символом /.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием runId.")
     @Tag("negative")
     void shouldRejectUnsafeRunId() {
-        Allure.step("Отклонение небезопасного Docker run id", () -> {
-            assertThatThrownBy(() -> new DockerMcpServerLauncher(
+        {            assertThatThrownBy(() -> new DockerMcpServerLauncher(
                     "docker",
                     "atlassian-mcp-light:latest",
                     Path.of(".runtime.env"),
@@ -68,7 +66,7 @@ class DockerMcpServerLauncherTest {
             )).isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("runId");
         
-        });
+        }
     }
 
     @Test
@@ -79,8 +77,7 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: stop timeout задан равным нулю.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием stopTimeoutSeconds.")
     @Tag("negative")
     void shouldRejectZeroStopTimeout() {
-        Allure.step("Отклонение нулевого timeout остановки контейнера", () -> {
-            assertThatThrownBy(() -> new DockerMcpServerLauncher(
+        {            assertThatThrownBy(() -> new DockerMcpServerLauncher(
                     "docker",
                     "atlassian-mcp-light:latest",
                     Path.of(".runtime.env"),
@@ -89,6 +86,6 @@ class DockerMcpServerLauncherTest {
             )).isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("stopTimeoutSeconds");
         
-        });
+        }
     }
 }

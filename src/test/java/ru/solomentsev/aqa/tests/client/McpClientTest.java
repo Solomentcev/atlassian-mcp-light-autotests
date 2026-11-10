@@ -45,8 +45,7 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: отправить ping через MCP Client; получить ответ.\nОжидаемый результат: ответ содержит JSON-RPC 2.0, исходный request id и ожидаемый result.")
     @Tag("protocol")
     void shouldSendRequestAndMatchResponseById() throws Exception {
-        Allure.step("Отправка запроса и сопоставление ответа по request id", () -> {
-            PipedInputStream clientStdout = new PipedInputStream(8_192);
+        {            PipedInputStream clientStdout = new PipedInputStream(8_192);
             PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
             PipedInputStream serverStdin = new PipedInputStream(8_192);
             PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -56,17 +55,17 @@ class McpClientTest {
             server.start();
 
             try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-                JsonNode response = client.request("ping", null, McpTestData.SHORT_REQUEST_TIMEOUT);
+                JsonNode response = sendRequest(client, "ping", null, McpTestData.SHORT_REQUEST_TIMEOUT);
 
-                assertThat(response.path("jsonrpc").asText()).isEqualTo("2.0");
-                assertThat(response.path("result").isObject()).isTrue();
-                assertThat(response.path("result").path("alive").asBoolean()).isTrue();
+                assertThat(response.path("jsonrpc").asText()).as("Ответ должен соответствовать JSON-RPC версии 2.0").isEqualTo("2.0");
+                assertThat(response.path("result").isObject()).as("Ответ на ping должен содержать объект result").isTrue();
+                assertThat(response.path("result").path("alive").asBoolean()).as("Fake MCP server должен вернуть alive=true").isTrue();
             } finally {
                 serverStdin.close();
                 serverStdout.close();
             }
         
-        });
+        }
     }
 
     @Test
@@ -77,8 +76,7 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация сервера.\nШаги: отправить notifications/initialized; проверить принятое сервером сообщение.\nОжидаемый результат: notification не содержит id и передаётся без ожидания response.")
     @Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
-        Allure.step("Отправка notification без request id", () -> {
-            PipedInputStream clientStdout = new PipedInputStream(8_192);
+        {            PipedInputStream clientStdout = new PipedInputStream(8_192);
             PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
             PipedInputStream serverStdin = new PipedInputStream(8_192);
             PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -98,18 +96,18 @@ class McpClientTest {
         server.start();
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            client.notification("notifications/initialized", null);
+            sendNotification(client, "notifications/initialized", null);
 
-            assertThat(notificationReceived.await(3, TimeUnit.SECONDS)).isTrue();
+            assertThat(notificationReceived.await(3, TimeUnit.SECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
             assertThat(received.get().path("method").asText())
                     .isEqualTo("notifications/initialized");
-            assertThat(received.get().has("id")).isFalse();
+            assertThat(received.get().has("id")).as("MCP notification не должен содержать request id").isFalse();
         } finally {
             serverStdin.close();
             serverStdout.close();
         }
     
-        });
+        }
     }
 
     @Test
@@ -120,8 +118,7 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: выполнить initialize через MCP Client; дождаться notifications/initialized.\nОжидаемый результат: версия протокола проверена; notification отправлен без request id.")
     @Tag("protocol")
     void shouldCompleteClassicInitializeHandshake() throws Exception {
-        Allure.step("Выполнение classic initialize handshake", () -> {
-            PipedInputStream clientStdout = new PipedInputStream(8_192);
+        {            PipedInputStream clientStdout = new PipedInputStream(8_192);
             PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
             PipedInputStream serverStdin = new PipedInputStream(8_192);
             PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -155,7 +152,7 @@ class McpClientTest {
         server.start();
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            JsonNode response = client.initialize(
+            JsonNode response = initialize(client, 
                     McpTestData.CLASSIC_PROTOCOL_VERSION,
                     "atlassian-mcp-light-autotests",
                     "1.0",
@@ -163,8 +160,9 @@ class McpClientTest {
             );
 
             assertThat(response.path("result").path("protocolVersion").asText())
+                    .as("Initialize должен согласовать ожидаемую версию MCP-протокола")
                     .isEqualTo(McpTestData.CLASSIC_PROTOCOL_VERSION);
-            assertThat(initializedNotificationReceived.await(3, TimeUnit.SECONDS)).isTrue();
+            assertThat(initializedNotificationReceived.await(3, TimeUnit.SECONDS)).as("После initialize клиент должен отправить notifications/initialized").isTrue();
             assertThat(initializedNotification.get().path("method").asText())
                     .isEqualTo("notifications/initialized");
             assertThat(initializedNotification.get().has("id")).isFalse();
@@ -173,7 +171,7 @@ class McpClientTest {
             serverStdout.close();
         }
     
-        });
+        }
     }
 
     @Test
@@ -184,8 +182,7 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки; подготовлены исходные params и client capabilities.\nШаги: выполнить stateless request; проверить переданные серверу metadata и исходный объект params.\nОжидаемый результат: protocolVersion, clientCapabilities и clientInfo добавлены в копию params; исходный объект не изменён.")
     @Tag("protocol")
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
-        Allure.step("Добавление stateless metadata без изменения исходных params", () -> {
-            PipedInputStream clientStdout = new PipedInputStream(8_192);
+        {            PipedInputStream clientStdout = new PipedInputStream(8_192);
             PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
             PipedInputStream serverStdin = new PipedInputStream(8_192);
             PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
@@ -221,7 +218,7 @@ class McpClientTest {
                 .put("version", "1.0");
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            JsonNode response = client.requestStateless(
+            JsonNode response = requestStateless(client, 
                     "tools/list",
                     originalParams,
                     McpTestData.STATELESS_PROTOCOL_VERSION,
@@ -249,7 +246,7 @@ class McpClientTest {
             serverStdout.close();
         }
     
-        });
+        }
     }
 
     @Test
@@ -260,15 +257,14 @@ class McpClientTest {
     @Description("Предусловия: Переданы params с уже существующим полем _meta.\nШаги: вызвать requestStateless.\nОжидаемый результат: клиент выбрасывает IllegalArgumentException и не отправляет запрос.")
     @Tag("negative")
     void shouldRejectStatelessParamsContainingMetadata() throws Exception {
-        Allure.step("Отклонение params с уже заданным _meta", () -> {
-            PipedInputStream clientStdout = new PipedInputStream(1_024);
+        {            PipedInputStream clientStdout = new PipedInputStream(1_024);
             PipedInputStream serverStdin = new PipedInputStream(1_024);
             PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
             var params = OBJECT_MAPPER.createObjectNode();
             params.putObject("_meta");
 
             try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-                org.assertj.core.api.Assertions.assertThatThrownBy(() -> client.requestStateless(
+                org.assertj.core.api.Assertions.assertThatThrownBy(() -> requestStateless(client, 
                         "tools/list",
                         params,
                         McpTestData.STATELESS_PROTOCOL_VERSION,
@@ -282,7 +278,29 @@ class McpClientTest {
                 serverStdin.close();
             }
         
-        });
+        }
+    }
+
+    private static JsonNode sendRequest(McpClient client, String method, JsonNode params, Duration timeout) {
+        return Allure.step("Отправить MCP-запрос " + method,
+                () -> client.request(method, params, timeout));
+    }
+
+    private static void sendNotification(McpClient client, String method, JsonNode params) {
+        Allure.step("Отправить MCP-уведомление " + method, () -> client.notification(method, params));
+    }
+
+    private static JsonNode initialize(McpClient client, String version, String clientName,
+                                        String clientVersion, Duration timeout) {
+        return Allure.step("Выполнить MCP initialize", () ->
+                client.initialize(version, clientName, clientVersion, timeout));
+    }
+
+    private static JsonNode requestStateless(McpClient client, String method, JsonNode params,
+                                             String version, JsonNode capabilities,
+                                             JsonNode clientInfo, Duration timeout) {
+        return Allure.step("Отправить stateless MCP-запрос " + method, () ->
+                client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
     }
 
     private static void respondToSingleRequest(PipedInputStream serverStdin,

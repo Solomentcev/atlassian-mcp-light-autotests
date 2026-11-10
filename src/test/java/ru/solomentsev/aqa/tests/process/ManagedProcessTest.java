@@ -36,20 +36,19 @@ class ManagedProcessTest {
     @Description("Предусловия: Используется имитация процесса, который остаётся жив после destroyForcibly.\nШаги: вызвать close; проверить результат принудительной остановки; затем смоделировать завершение процесса и повторить close.\nОжидаемый результат: первая попытка сообщает IOException о незавершённом процессе; после фактического завершения повторный close проходит успешно.")
     @Tag("process")
     void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
-        Allure.step("Диагностика процесса, не завершившегося после принудительной остановки", () -> {
-            NonTerminatingProcess process = new NonTerminatingProcess();
+        {            NonTerminatingProcess process = new NonTerminatingProcess();
             ManagedProcess managedProcess = new ManagedProcess(process);
 
-            assertThatThrownBy(managedProcess::close)
+            assertThatThrownBy(() -> Allure.step("Закрыть управляемый процесс", managedProcess::close))
                     .isInstanceOf(IOException.class)
                     .hasMessageContaining("did not terminate after destroyForcibly");
-            assertThat(process.destroyForciblyCalled).isTrue();
+            assertThat(process.destroyForciblyCalled).as("После таймаута ManagedProcess должен вызвать destroyForcibly").isTrue();
 
             process.alive = false;
             managedProcess.close();
-            assertThat(managedProcess.isAlive()).isFalse();
+            assertThat(managedProcess.isAlive()).as("После завершения процесса ManagedProcess должен сообщать isAlive=false").isFalse();
         
-        });
+        }
     }
 
     private static final class NonTerminatingProcess extends Process {
