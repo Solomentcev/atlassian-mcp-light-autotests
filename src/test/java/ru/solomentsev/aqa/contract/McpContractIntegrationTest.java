@@ -67,7 +67,7 @@ class McpContractIntegrationTest {
         assertSuccessfulJsonRpc(response);
         JsonNode tools = response.path("result").path("tools");
         assertThat(tools.isArray()).isTrue();
-        assertThat(tools).hasSize(EXPECTED_TOOLS.size());
+        assertThat(tools.size()).isEqualTo(EXPECTED_TOOLS.size());
 
         Set<String> actualNames = new HashSet<>();
         for (JsonNode tool : tools) {
@@ -216,7 +216,7 @@ class McpContractIntegrationTest {
         JsonNode result = response.path("result");
         assertThat(result.path("isError").asBoolean()).isTrue();
         assertThat(result.path("content").isArray()).isTrue();
-        assertThat(result.path("content")).isNotEmpty();
+        assertThat(result.path("content").size()).isGreaterThan(0);
         assertThat(result.path("content").get(0).path("type").asText()).isEqualTo("text");
         assertThat(result.path("content").get(0).path("text").asText())
                 .startsWith("Ошибка: ");
@@ -224,6 +224,10 @@ class McpContractIntegrationTest {
     }
 
     private static void assertAnnotations(JsonNode annotations, ToolContract expected) {
+        assertThat(annotations.path("readOnlyHint").isBoolean()).isTrue();
+        assertThat(annotations.path("destructiveHint").isBoolean()).isTrue();
+        assertThat(annotations.path("idempotentHint").isBoolean()).isTrue();
+        assertThat(annotations.path("openWorldHint").isBoolean()).isTrue();
         assertThat(annotations.path("readOnlyHint").asBoolean())
                 .isEqualTo(expected.readOnly());
         assertThat(annotations.path("destructiveHint").asBoolean())
