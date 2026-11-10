@@ -26,9 +26,11 @@ class AllureDiagnosticsTest {
     @DisplayName("Маскирование Basic и Bearer Authorization headers")
     @Description("Проверяет, что диагностические вложения не раскрывают Basic и Bearer credentials.")
     void shouldMaskAuthorizationHeaders() {
+        Allure.parameter("Проверяемые заголовки", "Authorization: Basic; Authorization: Bearer");
+        Allure.parameter("Ожидаемый маркер маскирования", "[REDACTED]");
         String source = "Authorization: Basic dXNlcjp0b2tlbg\nAuthorization: Bearer secret-value";
 
-        String masked = AllureDiagnostics.maskSecrets(source);
+        String masked = Allure.step("Замаскировать Basic и Bearer credentials", () -> AllureDiagnostics.maskSecrets(source));
 
         assertThat(masked)
                 .as("Authorization Basic и Bearer должны быть замаскированы в диагностике")
@@ -44,9 +46,11 @@ class AllureDiagnosticsTest {
     @DisplayName("Маскирование значений TOKEN, PASSWORD и SECRET")
     @Description("Проверяет маскирование секретов в строках диагностики до прикрепления к Allure.")
     void shouldMaskSensitiveEnvironmentValues() {
+        Allure.parameter("Проверяемые секретные поля", "TOKEN; PASSWORD; SECRET; access_token");
+        Allure.parameter("Ожидаемый маркер маскирования", "[REDACTED]");
         String source = "JIRA_TOKEN=token-value\nAQA_PASSWORD=pass-value\nsecret: another-value\n{\"access_token\":\"json-secret\"}";
 
-        String masked = AllureDiagnostics.maskSecrets(source);
+        String masked = Allure.step("Замаскировать значения секретных переменных и JSON-полей", () -> AllureDiagnostics.maskSecrets(source));
 
         assertThat(masked)
                 .as("Значения секретных переменных окружения и JSON-полей должны быть замаскированы")
