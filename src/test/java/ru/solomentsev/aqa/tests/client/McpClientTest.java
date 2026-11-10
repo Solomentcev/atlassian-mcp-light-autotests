@@ -3,6 +3,7 @@ package ru.solomentsev.aqa.tests.client;
 import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -45,6 +46,8 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: отправить ping через MCP Client; получить ответ.\nОжидаемый результат: ответ содержит JSON-RPC 2.0, исходный request id и ожидаемый result.")
     @Tag("protocol")
     void shouldSendRequestAndMatchResponseById() throws Exception {
+        Allure.parameter("JSON-RPC method", "ping");
+        Allure.parameter("Request timeout", McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms");
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
@@ -76,6 +79,9 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация сервера.\nШаги: отправить notifications/initialized; проверить принятое сервером сообщение.\nОжидаемый результат: notification не содержит id и передаётся без ожидания response.")
     @Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
+        Allure.parameter("Notification method", "notifications/initialized");
+        Allure.parameter("Request id", "отсутствует");
+        Allure.parameter("Ожидание получения", McpTestData.ASYNC_EVENT_TIMEOUT.toMillis() + " ms");
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
@@ -119,6 +125,10 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: выполнить initialize через MCP Client; дождаться notifications/initialized.\nОжидаемый результат: версия протокола проверена; notification отправлен без request id.")
     @Tag("protocol")
     void shouldCompleteClassicInitializeHandshake() throws Exception {
+        Allure.parameter("MCP protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
+        Allure.parameter("Client name", McpTestData.CLIENT_NAME);
+        Allure.parameter("Client version", McpTestData.CLIENT_VERSION);
+        Allure.parameter("Request timeout", McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms");
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
@@ -185,6 +195,12 @@ class McpClientTest {
     @Description("Предусловия: Созданы тестовые STDIO-потоки; подготовлены исходные params и client capabilities.\nШаги: выполнить stateless request; проверить переданные серверу metadata и исходный объект params.\nОжидаемый результат: protocolVersion, clientCapabilities и clientInfo добавлены в копию params; исходный объект не изменён.")
     @Tag("protocol")
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
+        Allure.parameter("JSON-RPC method", "tools/list");
+        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("Исходный params.filter", "all");
+        Allure.parameter("clientCapabilities.experimental", true);
+        Allure.parameter("clientInfo.name", McpTestData.MOCK_CLIENT_NAME);
+        Allure.parameter("clientInfo.version", McpTestData.MOCK_CLIENT_VERSION);
         PipedInputStream clientStdout = new PipedInputStream(8_192);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
         PipedInputStream serverStdin = new PipedInputStream(8_192);
@@ -265,6 +281,9 @@ class McpClientTest {
     @Description("Предусловия: Переданы params с уже существующим полем _meta.\nШаги: вызвать requestStateless.\nОжидаемый результат: клиент выбрасывает IllegalArgumentException и не отправляет запрос.")
     @Tag("negative")
     void shouldRejectStatelessParamsContainingMetadata() throws Exception {
+        Allure.parameter("JSON-RPC method", "tools/list");
+        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("Исходный params._meta", "уже присутствует");
         PipedInputStream clientStdout = new PipedInputStream(1_024);
         PipedInputStream serverStdin = new PipedInputStream(1_024);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
