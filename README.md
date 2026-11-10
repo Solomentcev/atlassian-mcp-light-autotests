@@ -50,7 +50,7 @@ Jenkins собирает тестируемый сервер из исходни
 - `ManagedProcess` предоставляет потоки процесса и выполняет штатное/принудительное завершение.
 - `StderrCollector` независимо читает STDERR и хранит ограниченный хвост диагностики.
 - `McpClient` отправляет JSON-RPC сообщения по STDIN, читает ответы из STDOUT, проверяет request id и поддерживает классический `initialize → notifications/initialized`.
-- `McpProcessSession` объединяет запуск процесса, сбор STDERR, MCP handshake и последующее завершение процесса.
+- `McpProcessSession` объединяет запуск процесса, сбор STDERR, при необходимости classic MCP handshake и последующее завершение процесса; stateless-сессия запускается без initialize.
 - `DockerProcessLauncher` запускает отдельный контейнер через `docker run --rm -i`, без TTY и опубликованных портов. Для контейнера назначаются уникальные имя и label AQA run; cleanup проверяет label, выполняет stop и при необходимости rm -f.
 
 Docker launcher использует тот же `ManagedProcess`, `McpProcessSession` и `McpClient`, что и локальный режим. Для Docker CLI нужны доступный Docker Engine, собранный image и env-файл; AQA не подключается к уже работающему контейнеру.
