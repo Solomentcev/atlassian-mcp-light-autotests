@@ -254,21 +254,21 @@ class McpContractIntegrationTest {
         JsonNode nullResponse = Allure.step(
                 "Вызвать jira_get_issue с issue_key=null",
                 () -> callTool(client, "jira_get_issue", nullArgument));
-        assertToolError(nullResponse);
+        assertToolError(nullResponse, "jira_get_issue с issue_key=null");
 
         ObjectNode emptyArgument = OBJECT_MAPPER.createObjectNode();
         emptyArgument.put("issue_key", "");
         JsonNode emptyResponse = Allure.step(
                 "Вызвать jira_get_issue с issue_key=пустая строка",
                 () -> callTool(client, "jira_get_issue", emptyArgument));
-        assertToolError(emptyResponse);
+        assertToolError(emptyResponse, "jira_get_issue с issue_key=пустая строка");
 
         ObjectNode blankArgument = OBJECT_MAPPER.createObjectNode();
         blankArgument.put("issue_key", "   ");
         JsonNode blankResponse = Allure.step(
                 "Вызвать jira_get_issue с issue_key из трёх пробелов",
                 () -> callTool(client, "jira_get_issue", blankArgument));
-        assertToolError(blankResponse);
+        assertToolError(blankResponse, "jira_get_issue с issue_key из трёх пробелов");
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
