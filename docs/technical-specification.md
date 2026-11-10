@@ -205,6 +205,19 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - `AQA_MCP_PROTOCOL_VERSION` задаёт версию классического MCP lifecycle (по умолчанию `2025-11-25`).
 
 Аннотация `@McpServerTest` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер.
+### Stateless client и интеграционные проверки
+
+`McpClient.requestStateless` добавляет в `params._meta` обязательные поля `io.modelcontextprotocol/protocolVersion` и `io.modelcontextprotocol/clientCapabilities`, а также необязательное `io.modelcontextprotocol/clientInfo`. Исходный объект params не изменяется; повторное поле `_meta` отклоняется до отправки запроса.
+
+Для типовых запросов доступны `discoverStateless` и `listToolsStateless`. Версия stateless-протокола задаётся вызывающим тестом отдельно от версии классического initialize lifecycle.
+
+Интеграционный класс `McpContractIntegrationTest` помечен условием `AQA_RUN_INTEGRATION=true` и запускается Maven-профилем `integration`. Он проверяет:
+- discovery и опубликованные сервером stateless protocol versions;
+- наличие всех 13 имён инструментов и базовую структуру их inputSchema;
+- отклонение неподдерживаемой версии с JSON-RPC кодом `-32022`;
+- отличие MCP tool error неизвестного инструмента от JSON-RPC error.
+
+Интеграционный прогон запускает реальный сервер и поэтому требует тестовой конфигурации Jira/Confluence. Проверки discovery/list и неизвестного инструмента не создают и не изменяют Atlassian-объекты. Обычный `mvn test` пропускает интеграционный класс и не требует серверного JAR или Docker image.
 
 ## 10. Jenkins Pipeline
 
