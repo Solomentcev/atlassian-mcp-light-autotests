@@ -56,10 +56,9 @@ class McpContractIntegrationTest {
     @Tag("integration")
     @Tag("case-MCP-005")
     void shouldReturnToolsList(McpClient client) {
-        Allure.step("Получение списка инструментов", () -> {
-            JsonNode tools = getStatelessTools(client);
+        {            JsonNode tools = getStatelessTools(client);
             assertThat(tools.isArray()).isTrue();
-        });
+        }
     }
 
     @Test
@@ -71,15 +70,14 @@ class McpContractIntegrationTest {
     @Tag("integration")
     @Tag("case-MCP-006")
     void shouldExposeExpectedToolNames(McpClient client) {
-        Allure.step("Проверка состава инструментов", () -> {
-            JsonNode tools = getStatelessTools(client);
+        {            JsonNode tools = getStatelessTools(client);
             Set<String> actualNames = new HashSet<>();
             for (JsonNode tool : tools) {
                 actualNames.add(tool.path("name").asText());
             }
             assertThat(tools.size()).isEqualTo(EXPECTED_TOOLS.size());
             assertThat(actualNames).containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
-        });
+        }
     }
 
     @Test
@@ -91,14 +89,13 @@ class McpContractIntegrationTest {
     @Tag("integration")
     @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
-        Allure.step("Проверка описаний инструментов", () -> {
-            JsonNode tools = getStatelessTools(client);
+        {            JsonNode tools = getStatelessTools(client);
             for (JsonNode tool : tools) {
                 assertThat(tool.path("description").asText())
                         .as("description of %s", tool.path("name").asText())
                         .isNotBlank();
             }
-        });
+        }
     }
 
     @Test
@@ -112,8 +109,7 @@ class McpContractIntegrationTest {
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
-        Allure.step("Проверка JSON Schema и annotations инструментов", () -> {
-            JsonNode tools = getStatelessTools(client);
+        {            JsonNode tools = getStatelessTools(client);
             for (JsonNode tool : tools) {
                 String name = tool.path("name").asText();
                 ToolContract expected = EXPECTED_TOOLS.get(name);
@@ -156,7 +152,7 @@ class McpContractIntegrationTest {
                 }
                 assertAnnotations(tool.path("annotations"), expected);
             }
-        });
+        }
     }
 
     @Test
@@ -168,27 +164,26 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
-        Allure.step("Проверка обязательных stateless metadata", () -> {
-            JsonNode missingMetadata = client.request("server/discover", null, REQUEST_TIMEOUT);
+        {            JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
             assertThat(missingMetadata.path("error").path("code").asInt()).isEqualTo(-32602);
 
             ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
             missingCapabilitiesParams.putObject("_meta")
                     .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
-            JsonNode missingCapabilities = client.request(
+            JsonNode missingCapabilities = sendRequest(client, 
                     "tools/list", missingCapabilitiesParams, REQUEST_TIMEOUT);
             assertThat(missingCapabilities.path("error").path("code").asInt()).isEqualTo(-32602);
 
             ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
             missingVersionParams.putObject("_meta")
                     .putObject("io.modelcontextprotocol/clientCapabilities");
-            JsonNode missingVersion = client.request(
+            JsonNode missingVersion = sendRequest(client, 
                     "tools/list", missingVersionParams, REQUEST_TIMEOUT);
             assertThat(missingVersion.path("error").path("code").asInt()).isEqualTo(-32602);
 
             assertSuccessfulJsonRpc(client.listToolsStateless(
                     McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
-        });
+        }
     }
 
     @Test
@@ -201,8 +196,7 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-021")
     @Tag("confluence")
     void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {
-        Allure.step("Вызов tools/call в stateless-режиме", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
             arguments.put("limit", 1);
 
             JsonNode response = callTool(client, "confluence_list_spaces", arguments);
@@ -218,7 +212,7 @@ class McpContractIntegrationTest {
             assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
                     .path("name").asText()).isEqualTo("atlassian-lite");
         
-        });
+        }
     }
 
     @Test
@@ -230,13 +224,12 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
-        Allure.step("Отклонение неподдерживаемой stateless protocolVersion", () -> {
-            ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode params = OBJECT_MAPPER.createObjectNode();
             ObjectNode metadata = params.putObject("_meta");
             metadata.put("io.modelcontextprotocol/protocolVersion", "2099-01-01");
             metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
-            JsonNode response = client.request(
+            JsonNode response = sendRequest(client, 
                     "server/discover",
                     params,
                     REQUEST_TIMEOUT
@@ -246,7 +239,7 @@ class McpContractIntegrationTest {
             assertThat(textValues(response.path("error").path("data").path("supportedVersions")))
                     .containsExactly("2026-07-28");
         
-        });
+        }
     }
 
     @Test
@@ -258,12 +251,11 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-010")
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
-        Allure.step("Вызов неизвестного инструмента", () -> {
-            JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
+        {            JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
 
             assertToolError(response);
         
-        });
+        }
     }
 
     @Test
@@ -276,12 +268,11 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-011")
     @Tag("jira")
     void shouldRejectMissingRequiredToolArgument(McpClient client) {
-        Allure.step("Вызов инструмента без обязательного аргумента", () -> {
-            JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
+        {            JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
             assertToolError(response);
         
-        });
+        }
     }
 
     @Test
@@ -294,8 +285,7 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-034")
     @Tag("jira")
     void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
-        Allure.step("Проверка null, пустого и пробельного значения обязательного аргумента", () -> {
-            ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
             nullArgument.putNull("issue_key");
             assertToolError(callTool(client, "jira_get_issue", nullArgument));
 
@@ -310,7 +300,7 @@ class McpContractIntegrationTest {
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
             validArguments.put("issue_key", "AQA-1");
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        });
+        }
     }
 
     @Test
@@ -323,15 +313,14 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-012")
     @Tag("jira")
     void shouldRejectWrongToolArgumentType(McpClient client) {
-        Allure.step("Вызов инструмента с неверным типом аргумента", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
             arguments.put("issue_key", 42);
             assertToolError(callTool(client, "jira_get_issue", arguments));
 
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
             validArguments.put("issue_key", "AQA-1");
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        });
+        }
     }
 
     @Test
@@ -344,8 +333,7 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-013")
     @Tag("jira")
     void shouldRejectUnknownToolArgument(McpClient client) {
-        Allure.step("Вызов инструмента с неизвестным аргументом", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
             arguments.put("issue_key", "AQA-1");
             arguments.put("unexpected", "value");
             assertToolError(callTool(client, "jira_get_issue", arguments));
@@ -353,7 +341,7 @@ class McpContractIntegrationTest {
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
             validArguments.put("issue_key", "AQA-1");
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        });
+        }
     }
 
     @Test
@@ -366,15 +354,14 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-034")
     @Tag("jira")
     void shouldRejectBlankStringToolArgument(McpClient client) {
-        Allure.step("Отклонение строки из пробелов в обязательном аргументе", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
             arguments.put("issue_key", "   ");
 
             assertToolError(callTool(client, "jira_get_issue", arguments));
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
             validArguments.put("issue_key", "AQA-1");
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-        });
+        }
     }
 
     @Test
@@ -388,8 +375,7 @@ class McpContractIntegrationTest {
     @Tag("jira")
     @Tag("confluence")
     void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
-        Allure.step("Проверка границ параметра limit", () -> {
-            ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
             zeroLimit.put("jql", "project = AQA");
             zeroLimit.put("limit", 0);
             assertToolError(callTool(client, "jira_search", zeroLimit));
@@ -429,7 +415,7 @@ class McpContractIntegrationTest {
                 assertThat(response.path("result").path("isError").asBoolean()).isFalse();
             }
         
-        });
+        }
     }
 
     @Test
@@ -442,34 +428,38 @@ class McpContractIntegrationTest {
     @Tag("case-CONF-019")
     @Tag("confluence")
     void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {
-        Allure.step("Обновление страницы без полей для изменения", () -> {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
             arguments.put("page_id", "1");
 
             assertToolError(callTool(client, "confluence_update_page", arguments));
         
-        });
+        }
+    }
+
+    private static JsonNode sendRequest(McpClient client, String method, JsonNode params) {
+        return Allure.step("Отправить MCP-запрос " + method,
+                () -> client.request(method, params, REQUEST_TIMEOUT));
     }
 
     private static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", name);
         params.set("arguments", arguments);
-        return client.requestStateless(
+        return Allure.step("Вызвать MCP-инструмент " + name, () -> client.requestStateless(
                 "tools/call",
                 params,
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 OBJECT_MAPPER.createObjectNode(),
                 null,
                 REQUEST_TIMEOUT
-        );
+        ));
     }
 
     private static JsonNode getStatelessTools(McpClient client) {
-        JsonNode response = client.listToolsStateless(
+        JsonNode response = Allure.step("Получить список MCP-инструментов", () -> client.listToolsStateless(
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 REQUEST_TIMEOUT
-        );
+        ));
         assertSuccessfulJsonRpc(response);
         JsonNode tools = response.path("result").path("tools");
         assertThat(tools.isArray()).isTrue();

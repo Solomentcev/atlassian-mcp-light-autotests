@@ -45,13 +45,12 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-029")
     void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
-        Allure.step("Игнорирование пустых строк STDIO", () -> {
-            client.sendRawLine("");
+        {            sendRawLine(client, "");
             client.sendRawLine("   ");
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
-        });
+        }
     }
 
     @Test
@@ -63,15 +62,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-030")
     void shouldRejectTrailingJsonTokens(McpClient client) {
-        Allure.step("Отклонение trailing tokens", () -> {
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
-            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+        {            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
+            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32700);
             assertThat(error.get("id").isNull()).isTrue();
 
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
-        });
+        }
     }
 
     @Test
@@ -83,15 +81,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-015")
     void shouldRecoverAfterMalformedJson(McpClient client) {
-        Allure.step("Восстановление после некорректного JSON", () -> {
-            client.sendRawLine("{invalid-json");
+        {            client.sendRawLine("{invalid-json");
             var error = client.awaitRawResponse(REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32700);
             assertThat(error.get("id").isNull()).isTrue();
 
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
-        });
+        }
     }
 
     @Test
@@ -103,15 +100,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-031")
     void shouldRejectNonObjectJsonRoot(McpClient client) {
-        Allure.step("Отклонение JSON-корня не-объекта", () -> {
-            client.sendRawLine("[]");
+        {            client.sendRawLine("[]");
             var error = client.awaitRawResponse(REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
             assertThat(error.get("id").isNull()).isTrue();
 
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
-        });
+        }
     }
 
     @Test
@@ -123,14 +119,13 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-016")
     void shouldRejectRequestWithMissingMethod(McpClient client) {
-        Allure.step("Отклонение JSON-RPC запроса без method", () -> {
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":1}");
+        {            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":1}");
             var error = client.awaitRawResponse(REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
 
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
-        });
+        }
     }
 
     @Test
@@ -142,15 +137,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-032")
     void shouldRejectRequestWithoutId(McpClient client) {
-        Allure.step("Отклонение request без id", () -> {
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
+        {            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
             var error = client.awaitRawResponse(REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
 
             var tools = client.request("tools/list", null, REQUEST_TIMEOUT);
             assertThat(tools.has("error")).isFalse();
             assertThat(tools.path("result").path("tools").isArray()).isTrue();
-        });
+        }
     }
 
     @Test
@@ -162,15 +156,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-014")
     void shouldReturnMethodNotFoundForUnknownMethod(McpClient client) {
-        Allure.step("Вызов неизвестного JSON-RPC метода", () -> {
-            var response = client.request("aqa/unknown-method", null, REQUEST_TIMEOUT);
+        {            var response = client.request("aqa/unknown-method", null, REQUEST_TIMEOUT);
             assertJsonRpcError(response, -32601);
 
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
         
-        });
+        }
     }
 
     @Test
@@ -181,14 +174,13 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: Процесс запущен\nШаги: 1. Отправить запрос с неизвестным методом.\nОжидаемый результат: Возвращается JSON-RPC ошибка метода; идентификатор запроса сохранён; процесс продолжает работу.")
     @Tag("contract")
     void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {
-        Allure.step("Сохранение UTF-8 в JSON-RPC сообщениях", () -> {
-            var response = client.request("aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
+        {            var response = client.request("aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
 
             assertJsonRpcError(response, -32601);
             assertThat(response.path("error").path("message").asText())
                     .contains("неизвестный-метод");
         
-        });
+        }
     }
 
     @Test
@@ -200,15 +192,14 @@ class McpTransportContractIntegrationTest {
     @Tag("protocol")
     @Tag("case-MCP-004")
     void shouldNotRespondToNotifications(McpClient client) {
-        Allure.step("Отправка notifications/initialized без response", () -> {
-            client.notification("notifications/initialized", null);
+        {            client.notification("notifications/initialized", null);
 
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
 
             assertThat(ping.has("error")).isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
         
-        });
+        }
     }
 
     @Test
@@ -220,8 +211,7 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-025")
     void shouldRejectSecondClassicInitialize(McpClient client) {
-        Allure.step("Повторный initialize", () -> {
-            ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        {            ObjectNode params = OBJECT_MAPPER.createObjectNode();
             params.put("protocolVersion", "2025-11-25");
             params.putObject("capabilities");
             params.putObject("clientInfo")
@@ -235,7 +225,22 @@ class McpTransportContractIntegrationTest {
             assertThat(tools.has("error")).isFalse();
             assertThat(tools.path("result").path("tools").isArray()).isTrue();
         
-        });
+        }
+    }
+
+    private static void sendRawLine(McpClient client, String line) {
+        Allure.step("Отправить строку STDIO", () -> client.sendRawLine(line));
+    }
+
+    private static com.fasterxml.jackson.databind.JsonNode awaitRawResponse(
+            McpClient client, Duration timeout) {
+        return Allure.step("Получить ответ STDIO", () -> client.awaitRawResponse(timeout));
+    }
+
+    private static com.fasterxml.jackson.databind.JsonNode sendRequest(
+            McpClient client, String method, ObjectNode params) {
+        return Allure.step("Отправить MCP-запрос " + method,
+                () -> client.request(method, params, REQUEST_TIMEOUT));
     }
 
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,
