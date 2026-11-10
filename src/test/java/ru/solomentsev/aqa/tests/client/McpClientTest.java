@@ -233,7 +233,7 @@ class McpClientTest {
         assertThat(response.path("result").path("resultType").asText())
                 .as("Stateless MCP-ответ должен иметь resultType=complete")
                 .isEqualTo("complete");
-        assertThat(requestReceived.await(3, TimeUnit.SECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
+        assertThat(requestReceived.await(McpTestData.ASYNC_EVENT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
         assertThat(received.get().path("params").path("filter").asText())
                 .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo("all");
         assertThat(received.get().path("params").path("_meta")

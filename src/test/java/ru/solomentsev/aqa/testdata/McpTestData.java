@@ -27,7 +27,8 @@ public final class McpTestData {
     public static final Duration SHORT_REQUEST_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration ASYNC_EVENT_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration INVALID_REQUEST_TIMEOUT = Duration.ofSeconds(1);
-    public static final Duration PROCESS_STARTUP_TIMEOUT = Duration.ofSeconds(5);
+    public static final Duration JAVA_VERSION_PROCESS_TIMEOUT = Duration.ofSeconds(15);
+    public static final Duration STDERR_COLLECTION_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration PROCESS_SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
     private McpTestData() {

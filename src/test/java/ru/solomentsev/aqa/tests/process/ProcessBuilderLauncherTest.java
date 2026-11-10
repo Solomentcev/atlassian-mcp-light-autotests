@@ -3,6 +3,7 @@ package ru.solomentsev.aqa.tests.process;
 import ru.solomentsev.aqa.process.ManagedProcess;
 import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
 import ru.solomentsev.aqa.process.StderrCollector;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -49,11 +50,11 @@ class ProcessBuilderLauncherTest {
         StderrCollector stderrCollector = new StderrCollector(process.stderr(), 8_192);
 
         try {
-            assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(Duration.ofSeconds(15))))
+            assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(McpTestData.JAVA_VERSION_PROCESS_TIMEOUT)))
                     .as("Процесс java -version должен завершиться в пределах 15 секунд")
                     .isTrue();
             assertThat(process.exitCode()).as("Процесс java -version должен завершиться с кодом 0").isZero();
-            assertThat(Allure.step("Дождаться сбора STDERR", () -> stderrCollector.await(Duration.ofSeconds(3))))
+            assertThat(Allure.step("Дождаться сбора STDERR", () -> stderrCollector.await(McpTestData.STDERR_COLLECTION_TIMEOUT)))
                     .as("STDERR collector должен завершить чтение потока")
                     .isTrue();
             assertThat(stderrCollector.content()).as("STDERR должен содержать сведения о версии Java").contains("version");

@@ -19,6 +19,7 @@ import java.util.UUID;
 public final class McpServerConfiguration {
 
     private static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofSeconds(15);
+    private static final int DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS = 10;
 
     private final String mode;
     private final Path serverJar;
@@ -55,10 +56,12 @@ public final class McpServerConfiguration {
         protocolVersion = value(environment, properties,
                 "aqa.mcp.protocolVersion", "AQA_MCP_PROTOCOL_VERSION", McpTestData.CLASSIC_PROTOCOL_VERSION);
         startupTimeout = Duration.ofSeconds(parsePositiveLong(value(environment, properties,
-                "aqa.server.startupTimeoutSeconds", "AQA_SERVER_STARTUP_TIMEOUT_SECONDS", "15"),
+                "aqa.server.startupTimeoutSeconds", "AQA_SERVER_STARTUP_TIMEOUT_SECONDS",
+                Long.toString(DEFAULT_STARTUP_TIMEOUT.toSeconds())),
                 "startup timeout"));
         dockerStopTimeoutSeconds = Math.toIntExact(parsePositiveLong(value(environment, properties,
-                "aqa.docker.stopTimeoutSeconds", "AQA_DOCKER_STOP_TIMEOUT_SECONDS", "10"),
+                "aqa.docker.stopTimeoutSeconds", "AQA_DOCKER_STOP_TIMEOUT_SECONDS",
+                Integer.toString(DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS)),
                 "Docker stop timeout"));
 
         if (!mode.equals("local") && !mode.equals("docker")) {
