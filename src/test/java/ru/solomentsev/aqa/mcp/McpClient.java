@@ -334,7 +334,7 @@ public final class McpClient implements AutoCloseable {
 
     private static void runStep(String name, Runnable action) {
         if (isAllureTestCaseRunning()) {
-            Allure.step(name, action);
+            Allure.step(name, () -> action.run());
         } else {
             action.run();
         }
