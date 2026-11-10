@@ -158,6 +158,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
+        Allure.parameter("Stateless metadata scenarios", "без _meta; без clientCapabilities; без protocolVersion");
+        Allure.parameter("Ожидаемый JSON-RPC error code", -32602);
         JsonNode missingMetadata = sendRequest(client, "server/discover", null);
         assertThat(missingMetadata.path("error").path("code").asInt()).as("Запрос без stateless metadata должен завершаться ошибкой -32602").isEqualTo(-32602);
 
@@ -189,6 +191,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
+        Allure.parameter("Переданный protocolVersion", McpTestData.UNSUPPORTED_PROTOCOL_VERSION);
+        Allure.parameter("Поддерживаемый protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         ObjectNode metadata = params.putObject("_meta");
         metadata.put("io.modelcontextprotocol/protocolVersion", McpTestData.UNSUPPORTED_PROTOCOL_VERSION);
@@ -215,6 +219,8 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-010")
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
+        Allure.parameter("MCP method", "tools/call");
+        Allure.parameter("Tool name", "aqa_unknown_tool");
         JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
 
         assertToolError(response);
@@ -232,6 +238,9 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-011")
     @Tag("jira")
     void shouldRejectMissingRequiredToolArgument(McpClient client) {
+        Allure.parameter("MCP tool", "jira_get_issue");
+        Allure.parameter("Обязательный аргумент", "issue_key");
+        Allure.parameter("Переданные arguments", "{}");
         JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
         assertToolError(response);
@@ -249,6 +258,10 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-034")
     @Tag("jira")
     void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
+        Allure.parameter("MCP tool", "jira_get_issue");
+        Allure.parameter("Аргумент", "issue_key");
+        Allure.parameter("Проверяемые значения", "null; пустая строка; пробельная строка");
+        Allure.parameter("Контрольное валидное значение", JiraTestData.ISSUE_KEY);
         ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
         nullArgument.putNull("issue_key");
         JsonNode nullResponse = Allure.step(
@@ -289,6 +302,9 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-012")
     @Tag("jira")
     void shouldRejectWrongToolArgumentType(McpClient client) {
+        Allure.parameter("MCP tool", "jira_get_issue");
+        Allure.parameter("Аргумент issue_key", "42 (число вместо строки)");
+        Allure.parameter("Ожидаемый тип issue_key", "string");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", 42);
         assertToolError(callTool(client, "jira_get_issue", arguments));
@@ -309,6 +325,8 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-013")
     @Tag("jira")
     void shouldRejectUnknownToolArgument(McpClient client) {
+        Allure.parameter("MCP tool", "jira_get_issue");
+        Allure.parameter("Неизвестный аргумент", "unexpected=value");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", JiraTestData.ISSUE_KEY);
         arguments.put("unexpected", "value");
@@ -333,6 +351,10 @@ class McpContractIntegrationTest {
     @Tag("jira")
     @Tag("confluence")
     void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
+        Allure.parameter("Минимальный допустимый limit", McpTestData.MIN_LIMIT);
+        Allure.parameter("Максимальный допустимый limit", McpTestData.MAX_LIMIT);
+        Allure.parameter("Проверяемые значения limit", McpTestData.INVALID_LIMIT_BELOW_MIN + "; " + McpTestData.INVALID_LIMIT_ABOVE_MAX);
+        Allure.parameter("Контрольный допустимый limit", McpTestData.DEFAULT_LIMIT);
         assertLimitRejected(client, "jira_search", "jql", JiraTestData.SEARCH_JQL,
                 McpTestData.INVALID_LIMIT_BELOW_MIN);
         assertLimitRejected(client, "jira_search", "jql", JiraTestData.SEARCH_JQL,
@@ -380,6 +402,9 @@ class McpContractIntegrationTest {
     @Tag("case-CONF-019")
     @Tag("confluence")
     void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {
+        Allure.parameter("MCP tool", "confluence_update_page");
+        Allure.parameter("Переданные поля", "page_id");
+        Allure.parameter("Отсутствующие поля", "title; content");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("page_id", ConfluenceTestData.PAGE_ID);
 
