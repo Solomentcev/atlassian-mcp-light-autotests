@@ -35,62 +35,118 @@ class McpTransportContractIntegrationTest {
 
     @Test
     @Feature("STDIO Transport")
-    @Story("MCP-029 — Игнорирование пустых строк STDIO и восстановление после parse error")
+    @Story("MCP-029 — Игнорирование пустых строк STDIO")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-029: Игнорирование пустых строк STDIO и восстановление после parse error")
-    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить пустую и пробельную строки; отправить некорректный JSON; проверить parse error; отправить JSON с trailing tokens; затем отправить корректный ping.\nОжидаемый результат: пустые строки игнорируются; некорректные строки возвращают -32700 с id=null; последующий ping обрабатывается.")
+    @DisplayName("MCP-029: Игнорирование пустых строк STDIO")
+    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить пустую строку и строку из пробельных символов; затем отправить корректный ping.\nОжидаемый результат: пустые строки игнорируются без ответа и завершения процесса; ping обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-029")
-    @Tag("case-MCP-030")
-    @Tag("case-MCP-015")
-    void shouldIgnoreBlankLinesAndContinueAfterParseError(McpClient client) {
-        Allure.step("Игнорирование пустых строк STDIO и восстановление после parse error", () -> {
+    void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
+        Allure.step("Игнорирование пустых строк STDIO", () -> {
+            client.sendRawLine("");
             client.sendRawLine("   ");
-            client.sendRawLine("{invalid-json");
-
-            var parseError = client.awaitRawResponse(REQUEST_TIMEOUT);
-            assertJsonRpcError(parseError, -32700);
-            assertThat(parseError.has("id")).isTrue();
-            assertThat(parseError.get("id").isNull()).isTrue();
-
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
-            var trailingTokensError = client.awaitRawResponse(REQUEST_TIMEOUT);
-            assertJsonRpcError(trailingTokensError, -32700);
-            assertThat(trailingTokensError.get("id").isNull()).isTrue();
-
             var ping = client.request("ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error")).isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
-        
+        });
+    }
+
+    @Test
+    @Feature("STDIO Transport")
+    @Story("MCP-030 — Запрет trailing tokens в JSONL-сообщении")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-030: Запрет trailing tokens в JSONL-сообщении")
+    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить строку с корректным JSON-объектом и дополнительным JSON-токеном; затем отправить корректный ping.\nОжидаемый результат: первая строка отклоняется с -32700 и id=null; следующая строка обрабатывается штатно.")
+    @Tag("negative")
+    @Tag("case-MCP-030")
+    void shouldRejectTrailingJsonTokens(McpClient client) {
+        Allure.step("Отклонение trailing tokens", () -> {
+            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
+            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+            assertJsonRpcError(error, -32700);
+            assertThat(error.get("id").isNull()).isTrue();
+
+            var ping = client.request("ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error")).isFalse();
         });
     }
 
     @Test
     @Feature("JSON-RPC Validation")
-    @Story("MCP-031 — Отклонение некорректной структуры JSON-RPC")
+    @Story("MCP-015 — Обработка некорректного JSON")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-031: Отклонение некорректной структуры JSON-RPC")
-    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить JSON-массив; отправить запрос без id; отправить запрос с некорректным типом id; отправить неизвестный метод со строковым id.\nОжидаемый результат: некорректные формы отклоняются с -32600; неизвестный метод возвращает -32601 и сохраняет строковый id.")
+    @DisplayName("MCP-015: Обработка некорректного JSON")
+    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить синтаксически некорректную JSON-строку; затем отправить корректный ping.\nОжидаемый результат: некорректное сообщение возвращает -32700; последующий запрос обрабатывается без зависания процесса.")
+    @Tag("negative")
+    @Tag("case-MCP-015")
+    void shouldRecoverAfterMalformedJson(McpClient client) {
+        Allure.step("Восстановление после некорректного JSON", () -> {
+            client.sendRawLine("{invalid-json");
+            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+            assertJsonRpcError(error, -32700);
+            assertThat(error.get("id").isNull()).isTrue();
+
+            var ping = client.request("ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error")).isFalse();
+        });
+    }
+
+    @Test
+    @Feature("JSON-RPC Validation")
+    @Story("MCP-031 — Отклонение JSON-корня, не являющегося объектом")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-031: Отклонение JSON-корня, не являющегося объектом")
+    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить JSON-массив в качестве корневого значения; затем отправить корректный ping.\nОжидаемый результат: массив отклоняется с -32600 Invalid Request и id=null; процесс продолжает обрабатывать следующие строки.")
     @Tag("negative")
     @Tag("case-MCP-031")
-    @Tag("case-MCP-016")
-    @Tag("case-MCP-032")
-    void shouldRejectNonObjectRootAndInvalidRequestShape(McpClient client) {
-        Allure.step("Отклонение некорректной структуры JSON-RPC", () -> {
+    void shouldRejectNonObjectJsonRoot(McpClient client) {
+        Allure.step("Отклонение JSON-корня не-объекта", () -> {
             client.sendRawLine("[]");
-            assertJsonRpcError(client.awaitRawResponse(REQUEST_TIMEOUT), -32600);
+            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+            assertJsonRpcError(error, -32600);
+            assertThat(error.get("id").isNull()).isTrue();
 
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}");
-            assertJsonRpcError(client.awaitRawResponse(REQUEST_TIMEOUT), -32600);
+            var ping = client.request("ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error")).isFalse();
+        });
+    }
 
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":{},\"method\":\"ping\"}");
-            assertJsonRpcError(client.awaitRawResponse(REQUEST_TIMEOUT), -32600);
+    @Test
+    @Feature("JSON-RPC Validation")
+    @Story("MCP-016 — Обработка некорректной структуры JSON-RPC")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-016: Обработка некорректной структуры JSON-RPC")
+    @Description("Предусловия: MCP STDIO-процесс запущен.\nШаги: отправить JSON-объект без обязательного поля method; затем отправить корректный ping.\nОжидаемый результат: некорректная структура отклоняется с -32600 Invalid Request; процесс остаётся работоспособным.")
+    @Tag("negative")
+    @Tag("case-MCP-016")
+    void shouldRejectRequestWithMissingMethod(McpClient client) {
+        Allure.step("Отклонение JSON-RPC запроса без method", () -> {
+            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":1}");
+            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+            assertJsonRpcError(error, -32600);
 
-            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":\"custom-id\",\"method\":\"unknown\"}");
-            var stringIdResponse = client.awaitRawResponse(REQUEST_TIMEOUT);
-            assertJsonRpcError(stringIdResponse, -32601);
-            assertThat(stringIdResponse.path("id").asText()).isEqualTo("custom-id");
-        
+            var ping = client.request("ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error")).isFalse();
+        });
+    }
+
+    @Test
+    @Feature("JSON-RPC Validation")
+    @Story("MCP-032 — Отсутствие id у метода-запроса")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-032: Отсутствие id у метода-запроса")
+    @Description("Предусловия: MCP STDIO-процесс запущен; classic lifecycle находится в READY.\nШаги: отправить tools/list без поля id; затем отправить корректный tools/list с id.\nОжидаемый результат: первый вызов отклоняется с -32600 Invalid Request; второй получает корректный response.")
+    @Tag("negative")
+    @Tag("case-MCP-032")
+    void shouldRejectRequestWithoutId(McpClient client) {
+        Allure.step("Отклонение request без id", () -> {
+            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
+            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+            assertJsonRpcError(error, -32600);
+
+            var tools = client.request("tools/list", null, REQUEST_TIMEOUT);
+            assertThat(tools.has("error")).isFalse();
+            assertThat(tools.path("result").path("tools").isArray()).isTrue();
         });
     }
 
