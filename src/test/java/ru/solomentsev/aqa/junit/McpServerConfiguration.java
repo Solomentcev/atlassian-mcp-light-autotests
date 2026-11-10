@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -43,7 +44,7 @@ public final class McpServerConfiguration {
         Objects.requireNonNull(properties, "properties");
 
         mode = value(environment, properties, "aqa.server.mode", "AQA_SERVER_MODE", "local")
-                .toLowerCase();
+                .toLowerCase(Locale.ROOT);
         serverJar = optionalPath(value(environment, properties,
                 "aqa.server.jar", "AQA_SERVER_JAR", null));
         javaExecutable = value(environment, properties,
@@ -160,7 +161,7 @@ public final class McpServerConfiguration {
     }
 
     private static String defaultJavaExecutable() {
-        String executable = System.getProperty("os.name").toLowerCase().contains("win")
+        String executable = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")
                 ? "java.exe" : "java";
         return Path.of(System.getProperty("java.home"), "bin", executable).toString();
     }
