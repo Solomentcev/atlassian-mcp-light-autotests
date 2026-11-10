@@ -58,7 +58,7 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-005")
     void shouldReturnToolsList(McpClient client) {
         JsonNode tools = getStatelessTools(client);
-        assertThat(tools.isArray()).as("Проверка tools.isArray(): ожидалось isTrue").isTrue();
+        assertThat(tools.isArray()).as("tools/list должен вернуть массив tools").isTrue();
     
     }
 
@@ -76,8 +76,8 @@ class McpContractIntegrationTest {
         for (JsonNode tool : tools) {
             actualNames.add(tool.path("name").asText());
         }
-        assertThat(tools.size()).as("Проверка tools.size(): ожидалось isEqualTo(EXPECTED_TOOLS.size())").isEqualTo(EXPECTED_TOOLS.size());
-        assertThat(actualNames).as("Проверка actualNames: ожидалось containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet())").containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
+        assertThat(tools.size()).as("Количество инструментов должно совпадать с опубликованным контрактом").isEqualTo(EXPECTED_TOOLS.size());
+        assertThat(actualNames).as("Состав tools должен точно соответствовать опубликованному контракту").containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
     
     }
 
@@ -117,16 +117,16 @@ class McpContractIntegrationTest {
             assertThat(expected).as("Unexpected tool: %s", name).isNotNull();
 
             JsonNode schema = tool.path("inputSchema");
-            assertThat(schema.path("type").asText()).as("Проверка schema.path('type').asText(): ожидалось isEqualTo('object')").isEqualTo("object");
-            assertThat(schema.path("additionalProperties").asBoolean()).as("Проверка schema.path('additionalProperties').asBoolean(): ожидалось isFalse").isFalse();
-            assertThat(schema.path("properties").isObject()).as("Проверка schema.path('properties').isObject(): ожидалось isTrue").isTrue();
-            assertThat(fieldNames(schema.path("properties"))).as("Проверка fieldNames(schema.path('properties')): ожидалось containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet())")
+            assertThat(schema.path("type").asText()).as("Корень inputSchema инструмента должен иметь type=object").isEqualTo("object");
+            assertThat(schema.path("additionalProperties").asBoolean()).as("Схема инструмента не должна разрешать неизвестные аргументы").isFalse();
+            assertThat(schema.path("properties").isObject()).as("Схема инструмента должна содержать объект properties").isTrue();
+            assertThat(fieldNames(schema.path("properties"))).as("Набор аргументов инструмента должен соответствовать опубликованному контракту")
                     .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
 
             if (expected.required().isEmpty()) {
-                assertThat(schema.has("required")).as("Проверка schema.has('required'): ожидалось isFalse").isFalse();
+                assertThat(schema.has("required")).as("Если обязательные аргументы не заданы, схема не должна содержать required").isFalse();
             } else {
-                assertThat(textValues(schema.path("required"))).as("Проверка textValues(schema.path('required')): ожидалось containsExactlyInAnyOrderElementsOf(expected.required())")
+                assertThat(textValues(schema.path("required"))).as("Список обязательных аргументов должен соответствовать опубликованному контракту")
                         .containsExactlyInAnyOrderElementsOf(expected.required());
             }
 
@@ -166,21 +166,21 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
         JsonNode missingMetadata = sendRequest(client, "server/discover", null, REQUEST_TIMEOUT);
-        assertThat(missingMetadata.path("error").path("code").asInt()).as("Проверка missingMetadata.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
+        assertThat(missingMetadata.path("error").path("code").asInt()).as("Запрос без stateless metadata должен завершаться ошибкой -32602").isEqualTo(-32602);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
         missingCapabilitiesParams.putObject("_meta")
                 .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         JsonNode missingCapabilities = sendRequest(client, 
                 "tools/list", missingCapabilitiesParams, REQUEST_TIMEOUT);
-        assertThat(missingCapabilities.path("error").path("code").asInt()).as("Проверка missingCapabilities.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
+        assertThat(missingCapabilities.path("error").path("code").asInt()).as("Stateless-запрос без clientCapabilities должен завершаться ошибкой -32602").isEqualTo(-32602);
 
         ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
         missingVersionParams.putObject("_meta")
                 .putObject("io.modelcontextprotocol/clientCapabilities");
         JsonNode missingVersion = sendRequest(client, 
                 "tools/list", missingVersionParams, REQUEST_TIMEOUT);
-        assertThat(missingVersion.path("error").path("code").asInt()).as("Проверка missingVersion.path('error').path('code').asInt(): ожидалось isEqualTo(-32602)").isEqualTo(-32602);
+        assertThat(missingVersion.path("error").path("code").asInt()).as("Stateless-запрос без protocolVersion должен завершаться ошибкой -32602").isEqualTo(-32602);
 
         assertSuccessfulJsonRpc(client.listToolsStateless(
                 McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
@@ -204,18 +204,18 @@ class McpContractIntegrationTest {
 
         assertSuccessfulJsonRpc(response);
         JsonNode result = response.path("result");
-        assertThat(result.path("isError").asBoolean()).as("Проверка result.path('isError').asBoolean(): ожидалось isFalse").isFalse();
+        assertThat(result.path("isError").asBoolean()).as("Корректный вызов MCP-инструмента не должен возвращать isError=true").isFalse();
         assertThat(result.path("content").isArray())
             .as("Ошибка MCP-инструмента должна содержать массив content")
             .isTrue();
         assertThat(result.path("content").size())
             .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
             .isGreaterThan(0);
-        assertThat(result.path("content").get(0).path("type").asText()).as("Проверка result.path('content').get(0).path('type').asText(): ожидалось isEqualTo('text')").isEqualTo("text");
-        assertThat(result.path("content").get(0).path("text").isTextual()).as("Проверка result.path('content').get(0).path('text').isTextual(): ожидалось isTrue").isTrue();
-        assertThat(result.path("resultType").asText()).as("Проверка result.path('resultType').asText(): ожидалось isEqualTo('complete')").isEqualTo("complete");
+        assertThat(result.path("content").get(0).path("type").asText()).as("Элемент MCP tool result должен иметь тип text").isEqualTo("text");
+        assertThat(result.path("content").get(0).path("text").isTextual()).as("Текстовый элемент MCP tool result должен содержать строку").isTrue();
+        assertThat(result.path("resultType").asText()).as("Успешный вызов MCP-инструмента должен иметь resultType=complete").isEqualTo("complete");
         assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
-                .path("name").asText()).as("Проверка result.path('_meta').path('io.modelcontextprotocol/serverInfo') .path('name').asText(): ожидалось isEqualTo('atlassian-lite')").isEqualTo("atlassian-lite");
+                .path("name").asText()).as("Ответ MCP-инструмента должен содержать serverInfo с именем atlassian-lite").isEqualTo("atlassian-lite");
     
     
     }
@@ -240,8 +240,8 @@ class McpContractIntegrationTest {
                 REQUEST_TIMEOUT
         );
 
-        assertThat(response.path("error").path("code").asInt()).as("Проверка response.path('error').path('code').asInt(): ожидалось isEqualTo(-32022)").isEqualTo(-32022);
-        assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("Проверка textValues(response.path('error').path('data').path('supportedVersions')): ожидалось containsExactly('2026-07-28')")
+        assertThat(response.path("error").path("code").asInt()).as("Неподдерживаемая protocolVersion должна завершаться ошибкой -32022").isEqualTo(-32022);
+        assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
                 .containsExactly("2026-07-28");
     
     
@@ -407,7 +407,7 @@ class McpContractIntegrationTest {
         validJiraLimit.put("limit", McpTestData.DEFAULT_LIMIT);
         JsonNode jiraResponse = callTool(client, "jira_search", validJiraLimit);
         assertSuccessfulJsonRpc(jiraResponse);
-        assertThat(jiraResponse.path("result").path("isError").asBoolean()).as("Проверка jiraResponse.path('result').path('isError').asBoolean(): ожидалось isFalse").isFalse();
+        assertThat(jiraResponse.path("result").path("isError").asBoolean()).as("Валидный Jira-вызов не должен возвращать MCP tool error").isFalse();
 
         for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
             ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
@@ -417,7 +417,7 @@ class McpContractIntegrationTest {
             arguments.put("limit", McpTestData.DEFAULT_LIMIT);
             JsonNode response = callTool(client, toolName, arguments);
             assertSuccessfulJsonRpc(response);
-            assertThat(response.path("result").path("isError").asBoolean()).as("Проверка response.path('result').path('isError').asBoolean(): ожидалось isFalse").isFalse();
+            assertThat(response.path("result").path("isError").asBoolean()).as("Валидный вызов MCP-инструмента не должен возвращать isError=true").isFalse();
         }
     
     
@@ -497,8 +497,8 @@ class McpContractIntegrationTest {
         assertThat(result.path("content").size())
                 .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
                 .isGreaterThan(0);
-        assertThat(result.path("content").get(0).path("type").asText()).as("Проверка result.path('content').get(0).path('type').asText(): ожидалось isEqualTo('text')").isEqualTo("text");
-        assertThat(result.path("content").get(0).path("text").asText()).as("Проверка result.path('content').get(0).path('text').asText(): ожидалось startsWith('Ошибка: ')")
+        assertThat(result.path("content").get(0).path("type").asText()).as("Элемент MCP tool result должен иметь тип text").isEqualTo("text");
+        assertThat(result.path("content").get(0).path("text").asText()).as("Текст ошибки MCP-инструмента должен начинаться с диагностического префикса")
                 .startsWith("Ошибка: ");
         assertThat(result.has("error"))
                 .as("Ошибка выполнения инструмента должна быть представлена в result, а не JSON-RPC error")
@@ -506,17 +506,17 @@ class McpContractIntegrationTest {
     }
 
     private static void assertAnnotations(JsonNode annotations, ToolContract expected) {
-        assertThat(annotations.path("readOnlyHint").isBoolean()).as("Проверка annotations.path('readOnlyHint').isBoolean(): ожидалось isTrue").isTrue();
-        assertThat(annotations.path("destructiveHint").isBoolean()).as("Проверка annotations.path('destructiveHint').isBoolean(): ожидалось isTrue").isTrue();
-        assertThat(annotations.path("idempotentHint").isBoolean()).as("Проверка annotations.path('idempotentHint').isBoolean(): ожидалось isTrue").isTrue();
-        assertThat(annotations.path("openWorldHint").isBoolean()).as("Проверка annotations.path('openWorldHint').isBoolean(): ожидалось isTrue").isTrue();
-        assertThat(annotations.path("readOnlyHint").asBoolean()).as("Проверка annotations.path('readOnlyHint').asBoolean(): ожидалось isEqualTo(expected.readOnly())")
+        assertThat(annotations.path("readOnlyHint").isBoolean()).as("Инструмент должен содержать boolean readOnlyHint").isTrue();
+        assertThat(annotations.path("destructiveHint").isBoolean()).as("Инструмент должен содержать boolean destructiveHint").isTrue();
+        assertThat(annotations.path("idempotentHint").isBoolean()).as("Инструмент должен содержать boolean idempotentHint").isTrue();
+        assertThat(annotations.path("openWorldHint").isBoolean()).as("Инструмент должен содержать boolean openWorldHint").isTrue();
+        assertThat(annotations.path("readOnlyHint").asBoolean()).as("readOnlyHint должен соответствовать опубликованному контракту")
                 .isEqualTo(expected.readOnly());
-        assertThat(annotations.path("destructiveHint").asBoolean()).as("Проверка annotations.path('destructiveHint').asBoolean(): ожидалось isEqualTo(expected.destructive())")
+        assertThat(annotations.path("destructiveHint").asBoolean()).as("destructiveHint должен соответствовать опубликованному контракту")
                 .isEqualTo(expected.destructive());
-        assertThat(annotations.path("idempotentHint").asBoolean()).as("Проверка annotations.path('idempotentHint').asBoolean(): ожидалось isEqualTo(expected.idempotent())")
+        assertThat(annotations.path("idempotentHint").asBoolean()).as("idempotentHint должен соответствовать опубликованному контракту")
                 .isEqualTo(expected.idempotent());
-        assertThat(annotations.path("openWorldHint").asBoolean()).as("Проверка annotations.path('openWorldHint').asBoolean(): ожидалось isTrue").isTrue();
+        assertThat(annotations.path("openWorldHint").asBoolean()).as("openWorldHint должен соответствовать опубликованному контракту").isTrue();
     }
 
     private static List<String> textValues(JsonNode array) {
