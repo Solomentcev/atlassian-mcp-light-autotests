@@ -73,8 +73,8 @@ class McpContractIntegrationTest {
         for (JsonNode tool : tools) {
             actualNames.add(tool.path("name").asText());
         }
-        assertThat(tools.size()).as("Количество инструментов должно совпадать с опубликованным контрактом").isEqualTo(EXPECTED_TOOLS.size());
-        assertThat(actualNames).as("Состав tools должен точно соответствовать опубликованному контракту").containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
+        assertThat(tools.size()).as("Ожидалось %d инструментов по контракту, фактически получено %d", EXPECTED_TOOLS.size(), tools.size()).isEqualTo(EXPECTED_TOOLS.size());
+        assertThat(actualNames).as("Имена tools должны совпадать с контрактом; фактически получены: %s", actualNames).containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
     
     }
 
@@ -126,25 +126,25 @@ class McpContractIntegrationTest {
             for (Map.Entry<String, String> property : expected.propertyTypes().entrySet()) {
                 JsonNode definition = schema.path("properties").path(property.getKey());
                 assertThat(definition.path("type").asText())
-                        .as("%s.%s type", name, property.getKey())
+                        .as("%s.%s: ожидаемый type=%s", name, property.getKey(), property.getValue())
                         .isEqualTo(property.getValue());
                 if ("string".equals(property.getValue())) {
                     assertThat(definition.path("minLength").asInt())
-                            .as("%s.%s minLength", name, property.getKey())
+                            .as("%s.%s: ожидаемый minLength=%d", name, property.getKey(), McpTestData.MIN_LIMIT)
                             .isEqualTo(McpTestData.MIN_LIMIT);
                 }
                 if ("integer".equals(property.getValue())) {
                     assertThat(definition.path("minimum").asInt())
-                            .as("%s.%s minimum", name, property.getKey())
+                            .as("%s.%s: ожидаемый minimum=%d", name, property.getKey(), McpTestData.MIN_LIMIT)
                             .isEqualTo(1);
                     if ("limit".equals(property.getKey())) {
                         assertThat(definition.path("maximum").asInt())
-                                .as("%s.%s maximum", name, property.getKey())
+                                .as("%s.%s: ожидаемый maximum=%d", name, property.getKey(), McpTestData.MAX_LIMIT)
                                 .isEqualTo(McpTestData.MAX_LIMIT);
                     }
                 }
             }
-            assertAnnotations(tool.path("annotations"), expected);
+            assertAnnotations(name, tool.path("annotations"), expected);
         }
     
     }
@@ -470,18 +470,18 @@ class McpContractIntegrationTest {
                 .isFalse();
     }
 
-    private static void assertAnnotations(JsonNode annotations, ToolContract expected) {
+    private static void assertAnnotations(String toolName, JsonNode annotations, ToolContract expected) {
         assertThat(annotations.path("readOnlyHint").isBoolean()).as("Инструмент должен содержать boolean readOnlyHint").isTrue();
         assertThat(annotations.path("destructiveHint").isBoolean()).as("Инструмент должен содержать boolean destructiveHint").isTrue();
         assertThat(annotations.path("idempotentHint").isBoolean()).as("Инструмент должен содержать boolean idempotentHint").isTrue();
         assertThat(annotations.path("openWorldHint").isBoolean()).as("Инструмент должен содержать boolean openWorldHint").isTrue();
-        assertThat(annotations.path("readOnlyHint").asBoolean()).as("readOnlyHint должен соответствовать опубликованному контракту")
+        assertThat(annotations.path("readOnlyHint").asBoolean()).as("%s: readOnlyHint должен быть %s", toolName, expected.readOnly())
                 .isEqualTo(expected.readOnly());
-        assertThat(annotations.path("destructiveHint").asBoolean()).as("destructiveHint должен соответствовать опубликованному контракту")
+        assertThat(annotations.path("destructiveHint").asBoolean()).as("%s: destructiveHint должен быть %s", toolName, expected.destructive())
                 .isEqualTo(expected.destructive());
-        assertThat(annotations.path("idempotentHint").asBoolean()).as("idempotentHint должен соответствовать опубликованному контракту")
+        assertThat(annotations.path("idempotentHint").asBoolean()).as("%s: idempotentHint должен быть %s", toolName, expected.idempotent())
                 .isEqualTo(expected.idempotent());
-        assertThat(annotations.path("openWorldHint").asBoolean()).as("openWorldHint должен соответствовать опубликованному контракту").isTrue();
+        assertThat(annotations.path("openWorldHint").asBoolean()).as("%s: openWorldHint должен быть true", toolName).isTrue();
     }
 
     private static List<String> textValues(JsonNode array) {
