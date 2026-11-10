@@ -193,6 +193,40 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 Локальная разработка может использовать локальный env-файл, исключённый из git. В Jenkins env-файл формируется из credentials или переменные environment передаются напрямую.
 
+### Реализация конфигурации и JUnit lifecycle
+
+Реализация первой версии использует `McpServerConfiguration`, которая читает system properties `aqa.*` (приоритет) и environment variables `AQA_*`.
+
+- `AQA_SERVER_MODE=local`: обязателен `AQA_SERVER_JAR`; запускается `<java> -jar <jar>`.
+- `AQA_SERVER_MODE=docker`: обязательны `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`; запускается отдельный контейнер через Docker launcher.
+- `AQA_SERVER_STARTUP_TIMEOUT_SECONDS` задаёт таймаут MCP readiness handshake (по умолчанию 15 секунд).
+- `AQA_DOCKER_STOP_TIMEOUT_SECONDS` задаёт время штатной остановки контейнера (по умолчанию 10 секунд).
+- `AQA_RUN_ID` задаёт базовый ID Jenkins-прогона; launcher добавляет уникальный суффикс для контейнера каждого тестового класса.
+- `AQA_MCP_PROTOCOL_VERSION` задаёт версию классического MCP lifecycle (по умолчанию `2025-11-25`).
+
+Аннотация `@McpServerTest` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, выполняет classic initialize handshake, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер. Для stateless lifecycle `McpServerConfiguration.startStatelessSession()` создаёт отдельный процесс без classic initialize; готовность подтверждается первым stateless-запросом.
+### Stateless client и интеграционные проверки
+
+`McpClient.requestStateless` добавляет в `params._meta` обязательные поля `io.modelcontextprotocol/protocolVersion` и `io.modelcontextprotocol/clientCapabilities`, а также необязательное `io.modelcontextprotocol/clientInfo`. Исходный объект params не изменяется; повторное поле `_meta` отклоняется до отправки запроса.
+
+Для типовых запросов доступны `discoverStateless` и `listToolsStateless`. Версия stateless-протокола задаётся вызывающим тестом отдельно от версии классического initialize lifecycle.
+
+Интеграционные классы помечены условием `AQA_RUN_INTEGRATION=true` и запускаются Maven-профилем `integration`.
+
+`McpContractIntegrationTest` проверяет:
+- discovery и опубликованные сервером stateless protocol versions;
+- все 13 имён инструментов, точный набор свойств, required, типы, строковые minLength и числовые границы inputSchema;
+- annotations readOnlyHint, destructiveHint, idempotentHint и openWorldHint;
+- отклонение неподдерживаемой версии с JSON-RPC кодом `-32022`;
+- ошибки отсутствующих обязательных, лишних и пустых аргументов, границы limit и условие title/content для Confluence update;
+- отличие MCP tool error от JSON-RPC error.
+
+`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что classic `tools/list` до READY возвращает `-32001`, `ping` доступен до READY, а stateless `tools/list` и `tools/call` работают ещё до `server/discover`.
+
+`McpTransportContractIntegrationTest` проверяет STDIO framing и JSON-RPC поведение реального процесса: пропуск пустых строк, parse error с продолжением обработки следующих сообщений, некорректную форму запроса, неизвестный метод, notification без ответа и повторный initialize.
+
+Интеграционный прогон запускает реальный сервер и поэтому требует тестовой конфигурации Jira/Confluence. Проверки discovery/list и неизвестного инструмента не создают и не изменяют Atlassian-объекты. Обычный `mvn test` пропускает интеграционный класс и не требует серверного JAR или Docker image.
+
 ## 10. Jenkins Pipeline
 
 Рекомендуемые логические этапы:

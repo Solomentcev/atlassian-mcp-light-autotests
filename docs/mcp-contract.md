@@ -123,7 +123,7 @@ Stateless-запросы не переводят классический lifecy
 - корневой тип схемы — object;
 - `additionalProperties: false`;
 - строковые поля имеют `minLength: 1`;
-- обязательные поля перечислены в `required`;
+- обязательные поля перечислены в `required`; если обязательных полей нет, `required` в схеме не публикуется (например, `confluence_list_spaces`);
 - поддерживаются типы string и integer;
 - integer может иметь minimum/maximum;
 - серверная валидация отклоняет отсутствующие обязательные поля, null, пустые/пробельные строки, неверный тип, неизвестные аргументы и значения за границами integer.
@@ -161,7 +161,7 @@ Stateless-запросы не переводят классический lifecy
 
 Внутренняя реализация сервисов сама обходит страницы Atlassian API, пока не наберёт `limit` результатов или API не вернёт пустую страницу/отсутствие следующего токена: Jira использует `nextPageToken`, Confluence — `_links.next` и локально формируемый `start`. Это внутренняя деталь сервера, а не публичный MCP-параметр.
 
-AQA проверяет диапазон и default `limit`, а также то, что возвращаемое число элементов не превышает лимит. Отдельное управление страницами со стороны MCP-клиента контрактом не предусмотрено; тесты не должны ожидать или передавать токены продолжения.
+AQA проверяет диапазон `limit` для всех трёх инструментов. Значения по умолчанию (`jira_search`/`confluence_search` — 5, `confluence_list_spaces` — 25) подтверждаются реализацией providers; отдельная проверка количества результатов при default limit зависит от содержимого тестового Atlassian instance. Отдельное управление страницами со стороны MCP-клиента контрактом не предусмотрено; тесты не должны ожидать или передавать токены продолжения.
 
 ## 7. tools/call и формат ошибок
 
@@ -210,11 +210,11 @@ Confluence URL необязателен: при отсутствии испол�
 
 ## 10. Обязательные группы AQA-проверок
 
-1. STDIO framing, UTF-8, пустые строки, parse error и продолжение обработки.
+1. STDIO framing, UTF-8, пустые строки, parse error и продолжение обработки (часть проверок реализована в `McpTransportContractIntegrationTest`).
 2. JSON-RPC validation, request IDs, неизвестные методы и notification semantics.
 3. Классический lifecycle: initialize, согласование версии, notifications/initialized, повторный initialize, запросы до READY.
 4. Stateless lifecycle: discovery, metadata validation, версия, stateless tools/list и tools/call без initialize.
-5. tools/list: 13 уникальных имён, описания, inputSchema, required, additionalProperties, типы, границы и annotations.
+5. tools/list: 13 уникальных имён, описания, inputSchema, required (включая отсутствие поля у инструментов без обязательных аргументов), additionalProperties, типы, границы и annotations.
 6. tools/call: успех, неизвестный инструмент, отсутствующие/null/лишние аргументы, неверные типы и значения за границами; различение JSON-RPC error и isError.
 7. Конфигурация и запуск процесса.
 8. Интеграция с реальными тестовыми Jira и Confluence ресурсами.
