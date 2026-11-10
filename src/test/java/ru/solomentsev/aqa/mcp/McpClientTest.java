@@ -134,6 +134,97 @@ class McpClientTest {
         }
     }
 
+    @Test
+    void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(8_192);
+        PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
+        PipedInputStream serverStdin = new PipedInputStream(8_192);
+        PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
+        AtomicReference<JsonNode> received = new AtomicReference<>();
+        CountDownLatch requestReceived = new CountDownLatch(1);
+
+        Thread server = new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(serverStdin, StandardCharsets.UTF_8));
+                 BufferedWriter writer = new BufferedWriter(
+                         new OutputStreamWriter(serverStdout, StandardCharsets.UTF_8))) {
+                received.set(OBJECT_MAPPER.readTree(reader.readLine()));
+                requestReceived.countDown();
+
+                var response = OBJECT_MAPPER.createObjectNode();
+                response.put("jsonrpc", "2.0");
+                response.set("id", received.get().get("id"));
+                response.putObject("result").put("resultType", "complete");
+                writer.write(OBJECT_MAPPER.writeValueAsString(response));
+                writer.newLine();
+                writer.flush();
+            } catch (Exception ignored) {
+                // The assertions below report a failed exchange.
+            }
+        });
+        server.setDaemon(true);
+        server.start();
+
+        var originalParams = OBJECT_MAPPER.createObjectNode().put("filter", "all");
+        var capabilities = OBJECT_MAPPER.createObjectNode().put("experimental", true);
+        var clientInfo = OBJECT_MAPPER.createObjectNode()
+                .put("name", "aqa-tests")
+                .put("version", "1.0");
+
+        try (McpClient client = new McpClient(clientStdout, clientStdin)) {
+            JsonNode response = client.requestStateless(
+                    "tools/list",
+                    originalParams,
+                    "2026-07-28",
+                    capabilities,
+                    clientInfo,
+                    Duration.ofSeconds(3)
+            );
+
+            assertThat(response.path("result").path("resultType").asText())
+                    .isEqualTo("complete");
+            assertThat(requestReceived.await(3, TimeUnit.SECONDS)).isTrue();
+            assertThat(received.get().path("params").path("filter").asText()).isEqualTo("all");
+            assertThat(received.get().path("params").path("_meta")
+                    .path("io.modelcontextprotocol/protocolVersion").asText())
+                    .isEqualTo("2026-07-28");
+            assertThat(received.get().path("params").path("_meta")
+                    .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean())
+                    .isTrue();
+            assertThat(received.get().path("params").path("_meta")
+                    .path("io.modelcontextprotocol/clientInfo").path("name").asText())
+                    .isEqualTo("aqa-tests");
+            assertThat(originalParams.has("_meta")).isFalse();
+        } finally {
+            serverStdin.close();
+            serverStdout.close();
+        }
+    }
+
+    @Test
+    void shouldRejectStatelessParamsContainingMetadata() throws Exception {
+        PipedInputStream clientStdout = new PipedInputStream(1_024);
+        PipedInputStream serverStdin = new PipedInputStream(1_024);
+        PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
+        var params = OBJECT_MAPPER.createObjectNode();
+        params.putObject("_meta");
+
+        try (McpClient client = new McpClient(clientStdout, clientStdin)) {
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> client.requestStateless(
+                    "tools/list",
+                    params,
+                    "2026-07-28",
+                    OBJECT_MAPPER.createObjectNode(),
+                    null,
+                    Duration.ofSeconds(1)
+            )).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("_meta");
+        } finally {
+            clientStdout.close();
+            serverStdin.close();
+        }
+    }
+
     private static void respondToSingleRequest(PipedInputStream serverStdin,
                                                PipedOutputStream serverStdout) {
         try (BufferedReader reader = new BufferedReader(
