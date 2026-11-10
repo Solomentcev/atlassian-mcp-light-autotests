@@ -46,8 +46,8 @@ class McpProcessSessionTest {
                     Map.of(),
                     null,
                     McpTestData.CLASSIC_PROTOCOL_VERSION,
-                    "atlassian-mcp-light-autotests",
-                    "1.0",
+                    McpTestData.CLIENT_NAME,
+                    McpTestData.CLIENT_VERSION,
                     McpTestData.PROCESS_STARTUP_TIMEOUT
             );
             ManagedProcess process = session.process();

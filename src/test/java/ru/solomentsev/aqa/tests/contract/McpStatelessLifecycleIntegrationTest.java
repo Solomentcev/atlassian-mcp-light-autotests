@@ -17,6 +17,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import ru.solomentsev.aqa.testdata.ConfluenceTestData;
 
 import java.time.Duration;
 
@@ -116,8 +117,8 @@ class McpStatelessLifecycleIntegrationTest {
         {            try (McpProcessSession session =
                          McpServerConfiguration.fromEnvironment().startStatelessSession()) {
                 ObjectNode params = OBJECT_MAPPER.createObjectNode();
-                params.put("name", "confluence_list_spaces");
-                params.putObject("arguments").put("limit", 1);
+                params.put("name", ConfluenceTestData.LIST_SPACES_TOOL);
+                params.putObject("arguments").put("limit", McpTestData.DEFAULT_LIMIT);
                 JsonNode response = Allure.step("Вызвать read-инструмент в stateless-режиме", () -> session.client().requestStateless(
                         "tools/call",
                         params,
@@ -157,8 +158,8 @@ class McpStatelessLifecycleIntegrationTest {
                 initializeParams.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
                 initializeParams.putObject("capabilities");
                 initializeParams.putObject("clientInfo")
-                        .put("name", "atlassian-mcp-light-autotests")
-                        .put("version", "1.0");
+                        .put("name", McpTestData.CLIENT_NAME)
+                        .put("version", McpTestData.CLIENT_VERSION);
                 JsonNode initialize = sendRequest(session.client(), 
                         "initialize", initializeParams, REQUEST_TIMEOUT);
                 assertThat(initialize.has("error"))

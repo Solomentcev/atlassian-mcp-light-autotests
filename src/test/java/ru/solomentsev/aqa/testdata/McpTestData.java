@@ -15,6 +15,12 @@ public final class McpTestData {
     public static final String CLIENT_NAME = "atlassian-mcp-light-autotests";
     public static final String CLIENT_VERSION = "1.0";
 
+    public static final int DEFAULT_LIMIT = 1;
+    public static final int MIN_LIMIT = 1;
+    public static final int MAX_LIMIT = 100;
+    public static final int INVALID_LIMIT_BELOW_MIN = 0;
+    public static final int INVALID_LIMIT_ABOVE_MAX = 101;
+
     public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     public static final Duration SHORT_REQUEST_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration PROCESS_STARTUP_TIMEOUT = Duration.ofSeconds(5);

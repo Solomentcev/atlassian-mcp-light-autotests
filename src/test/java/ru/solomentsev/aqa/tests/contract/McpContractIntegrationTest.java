@@ -17,6 +17,8 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import ru.solomentsev.aqa.testdata.JiraTestData;
+import ru.solomentsev.aqa.testdata.ConfluenceTestData;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -197,7 +199,7 @@ class McpContractIntegrationTest {
     @Tag("confluence")
     void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {
         {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("limit", 1);
+            arguments.put("limit", McpTestData.DEFAULT_LIMIT);
 
             JsonNode response = callTool(client, "confluence_list_spaces", arguments);
 
@@ -302,7 +304,7 @@ class McpContractIntegrationTest {
             assertToolError(callTool(client, "jira_get_issue", blankArgument));
 
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", "AQA-1");
+            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
         }
     }
@@ -322,7 +324,7 @@ class McpContractIntegrationTest {
             assertToolError(callTool(client, "jira_get_issue", arguments));
 
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", "AQA-1");
+            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
         }
     }
@@ -338,12 +340,12 @@ class McpContractIntegrationTest {
     @Tag("jira")
     void shouldRejectUnknownToolArgument(McpClient client) {
         {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("issue_key", "AQA-1");
+            arguments.put("issue_key", JiraTestData.ISSUE_KEY);
             arguments.put("unexpected", "value");
             assertToolError(callTool(client, "jira_get_issue", arguments));
 
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", "AQA-1");
+            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
         }
     }
@@ -363,7 +365,7 @@ class McpContractIntegrationTest {
 
             assertToolError(callTool(client, "jira_get_issue", arguments));
             ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-            validArguments.put("issue_key", "AQA-1");
+            validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
             assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
         }
     }
@@ -380,13 +382,13 @@ class McpContractIntegrationTest {
     @Tag("confluence")
     void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
         {            ObjectNode zeroLimit = OBJECT_MAPPER.createObjectNode();
-            zeroLimit.put("jql", "project = AQA");
-            zeroLimit.put("limit", 0);
+            zeroLimit.put("jql", JiraTestData.SEARCH_JQL);
+            zeroLimit.put("limit", McpTestData.INVALID_LIMIT_BELOW_MIN);
             assertToolError(callTool(client, "jira_search", zeroLimit));
 
             ObjectNode excessiveLimit = OBJECT_MAPPER.createObjectNode();
-            excessiveLimit.put("jql", "project = AQA");
-            excessiveLimit.put("limit", 101);
+            excessiveLimit.put("jql", JiraTestData.SEARCH_JQL);
+            excessiveLimit.put("limit", McpTestData.INVALID_LIMIT_ABOVE_MAX);
             assertToolError(callTool(client, "jira_search", excessiveLimit));
 
             for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
@@ -394,7 +396,7 @@ class McpContractIntegrationTest {
                 for (int limit : new int[]{0, 101}) {
                     ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
                     if (queryField != null) {
-                        arguments.put(queryField, "type = page");
+                        arguments.put(queryField, ConfluenceTestData.SEARCH_CQL);
                     }
                     arguments.put("limit", limit);
                     assertToolError(callTool(client, toolName, arguments));
@@ -402,8 +404,8 @@ class McpContractIntegrationTest {
             }
 
             ObjectNode validJiraLimit = OBJECT_MAPPER.createObjectNode();
-            validJiraLimit.put("jql", "project = AQA");
-            validJiraLimit.put("limit", 1);
+            validJiraLimit.put("jql", JiraTestData.SEARCH_JQL);
+            validJiraLimit.put("limit", McpTestData.DEFAULT_LIMIT);
             JsonNode jiraResponse = callTool(client, "jira_search", validJiraLimit);
             assertSuccessfulJsonRpc(jiraResponse);
             assertThat(jiraResponse.path("result").path("isError").asBoolean()).isFalse();
@@ -411,9 +413,9 @@ class McpContractIntegrationTest {
             for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
                 ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
                 if ("confluence_search".equals(toolName)) {
-                    arguments.put("cql", "type = page");
+                    arguments.put("cql", ConfluenceTestData.SEARCH_CQL);
                 }
-                arguments.put("limit", 1);
+                arguments.put("limit", McpTestData.DEFAULT_LIMIT);
                 JsonNode response = callTool(client, toolName, arguments);
                 assertSuccessfulJsonRpc(response);
                 assertThat(response.path("result").path("isError").asBoolean()).isFalse();
@@ -433,7 +435,7 @@ class McpContractIntegrationTest {
     @Tag("confluence")
     void shouldRequireTitleOrContentForConfluenceUpdate(McpClient client) {
         {            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            arguments.put("page_id", "1");
+            arguments.put("page_id", ConfluenceTestData.PAGE_ID);
 
             assertToolError(callTool(client, "confluence_update_page", arguments));
         

@@ -231,8 +231,8 @@ class McpTransportContractIntegrationTest {
             params.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
             params.putObject("capabilities");
             params.putObject("clientInfo")
-                    .put("name", "atlassian-mcp-light-autotests")
-                    .put("version", "1.0");
+                    .put("name", McpTestData.CLIENT_NAME)
+                    .put("version", McpTestData.CLIENT_VERSION);
 
             var response = sendRequest(client, "initialize", params, REQUEST_TIMEOUT);
             assertJsonRpcError(response, -32600);
