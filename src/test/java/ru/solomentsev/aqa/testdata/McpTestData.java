@@ -13,6 +13,7 @@ public final class McpTestData {
     public static final String CLASSIC_PROTOCOL_VERSION = "2025-11-25";
     public static final String STATELESS_PROTOCOL_VERSION = "2026-07-28";
     public static final String LEGACY_PROTOCOL_VERSION = "2024-11-05";
+    public static final String UNSUPPORTED_PROTOCOL_VERSION = "2099-01-01";
     public static final String CLIENT_NAME = "atlassian-mcp-light-autotests";
     public static final String CLIENT_VERSION = "1.0";
     public static final String MOCK_CLIENT_NAME = "aqa-tests";
