@@ -95,14 +95,14 @@ mvn test
 
 В локальном режиме процесс наследует environment Jenkins agent. В Docker-режиме переменные тестируемого приложения передаются через указанный env-файл. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
 
-JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata и валидацию конфигурации. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
+JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata, запуск stateless-сессии без initialize и валидацию конфигурации. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
 
 Stateless API клиента:
 - `discoverStateless(...)` — `server/discover`;
 - `listToolsStateless(...)` — `tools/list`;
 - `requestStateless(...)` — произвольный stateless request с обязательной metadata в `params._meta`.
 
-Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, точные свойства/required/type/ограничения схем 13 инструментов, annotations, ошибки валидации аргументов и различение MCP tool error и JSON-RPC error. `McpStatelessLifecycleIntegrationTest` отдельно проверяет discovery и tools/list на новом процессе без предварительного classic initialize. Интеграционные тесты не запускаются обычной командой `mvn test`.
+Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, точные свойства/required/type/ограничения схем 13 инструментов, annotations, ошибки валидации аргументов и различение MCP tool error и JSON-RPC error. `McpStatelessLifecycleIntegrationTest` отдельно проверяет tools/list до discovery на новом процессе без предварительного classic initialize. `McpTransportContractIntegrationTest` проверяет пустые строки, parse error с продолжением STDIO-цикла, некорректную форму запроса, неизвестный метод, отсутствие ответа на notification и повторный initialize. Интеграционные тесты не запускаются обычной командой `mvn test`.
 
 Для запуска интеграционных проверок требуется собранный JAR или Docker image тестируемого сервера и тестовая конфигурация Jira/Confluence (обязательные `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` передаются серверному процессу):
 
