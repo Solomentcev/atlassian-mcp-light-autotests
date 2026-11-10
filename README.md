@@ -130,12 +130,19 @@ Allure JUnit 5 формирует результаты в `target/allure-results
 - `Allure.step` фиксирует выполнение сценария, подготовку stateless metadata, отправку JSON-RPC request/notification/raw STDIO line, получение и проверку response, запуск и завершение процесса.
 - Для JSON-RPC к Allure прикладываются только безопасные summaries: method/request id, поля верхнего уровня, error code, resultType и количество элементов; params и текстовый content не сохраняются. При падении интеграционного теста дополнительно прикладывается STDERR после маскирования Authorization headers и значений переменных TOKEN/PASSWORD/SECRET. Сырые JSON-RPC payload и содержимое ответов Atlassian не прикладываются.
 
-Allure HTML формируется средствами Allure CLI или Jenkins Allure plugin; Maven-тесты создают исходные результаты, а не HTML-отчёт. Локально отчёт можно собрать так:
+Для локального просмотра добавлен Allure Maven Plugin 3.1.0. Сначала выполни тесты, затем запусти:
 
 ```bash
-allure generate target/allure-results --clean -o target/allure-report
-allure open target/allure-report
+mvn allure:serve
 ```
+
+Команда сформирует отчёт из `target/allure-results`, запустит локальный web-сервер и откроет отчёт в браузере. Для генерации статического отчёта без запуска web-сервера:
+
+```bash
+mvn allure:report
+```
+
+HTML будет доступен в `target/site/allure-maven/index.html`. В CI Allure results можно публиковать через Jenkins Allure plugin.
 
 ## Jenkins Pipeline
 
