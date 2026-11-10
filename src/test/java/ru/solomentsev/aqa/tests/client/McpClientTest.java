@@ -98,7 +98,7 @@ class McpClientTest {
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
         sendNotification(client, "notifications/initialized", null);
 
-        assertThat(notificationReceived.await(3, TimeUnit.SECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
+        assertThat(notificationReceived.await(McpTestData.ASYNC_EVENT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
         assertThat(received.get().path("method").asText())
                 .as("Fake MCP server должен получить notifications/initialized")
                 .isEqualTo("notifications/initialized");
@@ -163,10 +163,12 @@ class McpClientTest {
         assertThat(response.path("result").path("protocolVersion").asText())
                 .as("Initialize должен согласовать ожидаемую версию MCP-протокола")
                 .isEqualTo(McpTestData.CLASSIC_PROTOCOL_VERSION);
-        assertThat(initializedNotificationReceived.await(3, TimeUnit.SECONDS)).as("После initialize клиент должен отправить notifications/initialized").isTrue();
-        assertThat(initializedNotification.get().path("method").asText()).as("Проверка initializedNotification.get().path('method').asText(): ожидалось isEqualTo('notifications/initialized')")
+        assertThat(initializedNotificationReceived.await(McpTestData.ASYNC_EVENT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)).as("После initialize клиент должен отправить notifications/initialized").isTrue();
+        assertThat(initializedNotification.get().path("method").asText())
+                .as("После initialize клиент должен отправить notifications/initialized")
                 .isEqualTo("notifications/initialized");
-        assertThat(initializedNotification.get().has("id")).as("Проверка initializedNotification.get().has('id'): ожидалось isFalse").isFalse();
+        assertThat(initializedNotification.get().has("id"))
+                .as("Notification initialized не должен содержать request id").isFalse();
     } finally {
         serverStdin.close();
         serverStdout.close();
@@ -215,8 +217,8 @@ class McpClientTest {
     var originalParams = OBJECT_MAPPER.createObjectNode().put("filter", "all");
     var capabilities = OBJECT_MAPPER.createObjectNode().put("experimental", true);
     var clientInfo = OBJECT_MAPPER.createObjectNode()
-            .put("name", "aqa-tests")
-            .put("version", "1.0");
+            .put("name", McpTestData.MOCK_CLIENT_NAME)
+            .put("version", McpTestData.MOCK_CLIENT_VERSION);
 
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
         JsonNode response = requestStateless(client, 
@@ -232,15 +234,19 @@ class McpClientTest {
                 .as("Stateless MCP-ответ должен иметь resultType=complete")
                 .isEqualTo("complete");
         assertThat(requestReceived.await(3, TimeUnit.SECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
-        assertThat(received.get().path("params").path("filter").asText()).as("Проверка received.get().path('params').path('filter').asText(): ожидалось isEqualTo('all')").isEqualTo("all");
+        assertThat(received.get().path("params").path("filter").asText())
+                .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo("all");
         assertThat(received.get().path("params").path("_meta")
-                .path("io.modelcontextprotocol/protocolVersion").asText()).as("Проверка received.get().path('params').path('_meta') .path('io.modelcontextprotocol/protocolVersion').asText(: ожидалось isEqualTo(McpTestData.STATELESS_PROTOCOL_VERSION)")
+                .path("io.modelcontextprotocol/protocolVersion").asText())
+                .as("В stateless metadata должна передаваться согласованная версия MCP-протокола")
                 .isEqualTo(McpTestData.STATELESS_PROTOCOL_VERSION);
         assertThat(received.get().path("params").path("_meta")
-                .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean()).as("Проверка received.get().path('params').path('_meta') .path('io.modelcontextprotocol/clientCapabilities').path: ожидалось isTrue")
+                .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean())
+                .as("В stateless metadata должны передаваться client capabilities")
                 .isTrue();
         assertThat(received.get().path("params").path("_meta")
-                .path("io.modelcontextprotocol/clientInfo").path("name").asText()).as("Проверка received.get().path('params').path('_meta') .path('io.modelcontextprotocol/clientInfo').path('name'): ожидалось isEqualTo('aqa-tests')")
+                .path("io.modelcontextprotocol/clientInfo").path("name").asText())
+                .as("В stateless metadata должно передаваться имя MCP-клиента")
                 .isEqualTo("aqa-tests");
         assertThat(originalParams.has("_meta")).as("MCP Client не должен изменять исходный params при добавлении metadata").isFalse();
     } finally {
@@ -272,7 +278,7 @@ class McpClientTest {
                     McpTestData.STATELESS_PROTOCOL_VERSION,
                     OBJECT_MAPPER.createObjectNode(),
                     null,
-                    Duration.ofSeconds(1)
+                    McpTestData.INVALID_REQUEST_TIMEOUT
              )).as("Stateless request с уже существующим _meta должен быть отклонён до отправки")
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("_meta");
