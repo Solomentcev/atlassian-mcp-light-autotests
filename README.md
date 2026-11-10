@@ -109,12 +109,33 @@ Stateless API клиента:
 ```bash
 AQA_SERVER_MODE=local \
 AQA_SERVER_JAR=../atlassian-mcp-light/atlassian-mcp-app/target/atlassian-mcp-light-1.0-SNAPSHOT.jar \
-mvn -Pintegration test
+mvn clean -Pintegration test
 ```
 
 Для Docker-режима дополнительно задаются `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`. Обычная команда `mvn test` выполняет только unit-тесты и не требует запуска Atlassian MCP Light.
 
-Локальная проверка выполнена 10.11.2026: `mvn clean test` и `mvn -Pintegration test` завершились успешно; во втором прогоне выполнены все 37 тестов без ошибок и пропусков. Docker runtime и Jenkins Pipeline пока не проверены.
+В текущей ветке — 41 JUnit test method. Последняя подтверждённая локальная проверка до текущего расширения Allure: `mvn clean test` и `mvn -Pintegration test` завершились успешно; интеграционный прогон выполнил 37 тестов без ошибок и пропусков. После добавления Allure-разметки, четырёх тестов и диагностики требуется повторно выполнить обе команды. Docker runtime и Jenkins Pipeline пока не проверены.
+
+
+### Allure-разметка и результаты
+
+Allure JUnit 5 формирует результаты в `target/allure-results`; JUnit XML остаётся в `target/surefire-reports`.
+
+- `@Epic` — крупная область ответственности (MCP Server или AQA Test Infrastructure).
+- `@Feature` — проверяемая функция.
+- `@Story` — сценарий; для тест-кейсов из `docs/test-cases.md` в названии сохраняется исходный ID.
+- `@Severity` — P0 → BLOCKER, P1 → CRITICAL, P2 → NORMAL.
+- JUnit `@Tag` — фильтры по типу теста и области; связь с каталогом дополнительно отмечается тегом `case-<ID>`.
+- `@DisplayName` и `@Description` показывают название, предусловия, шаги и ожидаемый результат.
+- `Allure.step` фиксирует выполнение сценария, подготовку stateless metadata, отправку JSON-RPC request/notification/raw STDIO line, получение и проверку response, запуск и завершение процесса.
+- Для JSON-RPC к Allure прикладываются только безопасные summaries: method/request id, поля верхнего уровня, error code, resultType и количество элементов; params и текстовый content не сохраняются. При падении интеграционного теста дополнительно прикладывается STDERR после маскирования Authorization headers и значений переменных TOKEN/PASSWORD/SECRET. Сырые JSON-RPC payload и содержимое ответов Atlassian не прикладываются.
+
+Allure HTML формируется средствами Allure CLI или Jenkins Allure plugin; Maven-тесты создают исходные результаты, а не HTML-отчёт. Локально отчёт можно собрать так:
+
+```bash
+allure generate target/allure-results --clean -o target/allure-report
+allure open target/allure-report
+```
 
 ## Jenkins Pipeline
 
@@ -131,7 +152,7 @@ mvn -Pintegration test
 ## Конфигурация и безопасность
 
 - Jira/Confluence credentials хранятся в Jenkins Credentials и передаются только тестируемому серверу через environment.
-- Секреты не хранятся в репозитории, не передаются MCP Client без необходимости и не прикладываются к Allure.
+- Секреты не хранятся в репозитории и не передаются MCP Client без необходимости. В Allure не прикладываются исходные credentials или Authorization headers; STDERR перед вложением проходит маскирование.
 - STDOUT процесса зарезервирован под MCP/JSON-RPC. Диагностика читается отдельно из STDERR.
 - Не использовать production-проекты, пространства и данные.
 - Автоматические повторы неидемпотентных write-операций запрещены. При потере ответа после отправки запроса фиксируется UNKNOWN_OUTCOME.

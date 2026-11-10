@@ -1,5 +1,6 @@
 package ru.solomentsev.aqa.mcp;
 
+import io.qameta.allure.Allure;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,6 +15,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -93,48 +95,60 @@ public final class McpClient implements AutoCloseable {
             request.set("params", params);
         }
 
-        writeMessage(request);
-        ReadEvent event;
-        try {
-            event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            failed = true;
-            throw new McpClientException("Interrupted while waiting for MCP response", exception);
-        }
+        Allure.step("Отправить JSON-RPC request: " + method, () -> writeMessage(request));
+        Allure.addAttachment(
+                "JSON-RPC request metadata",
+                "text/plain",
+                "method=" + method + "; id=" + requestId
+        );
+        return Allure.step("Получить и проверить JSON-RPC response", () -> {
+            ReadEvent event;
+            try {
+                event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                failed = true;
+                throw new McpClientException("Interrupted while waiting for MCP response", exception);
+            }
 
-        if (event == null) {
-            failed = true;
-            throw new McpClientException("Timed out waiting for MCP response to request " + requestId);
-        }
-        if (event.error() != null) {
-            failed = true;
-            throw new McpClientException("Failed to read MCP STDOUT", event.error());
-        }
-        if (event.eof()) {
-            failed = true;
-            throw new McpClientException("MCP process closed STDOUT before sending a response");
-        }
+            if (event == null) {
+                failed = true;
+                throw new McpClientException("Timed out waiting for MCP response to request " + requestId);
+            }
+            if (event.error() != null) {
+                failed = true;
+                throw new McpClientException("Failed to read MCP STDOUT", event.error());
+            }
+            if (event.eof()) {
+                failed = true;
+                throw new McpClientException("MCP process closed STDOUT before sending a response");
+            }
 
-        JsonNode response;
-        try {
-            response = OBJECT_MAPPER.readTree(event.line());
-        } catch (IOException exception) {
-            failed = true;
-            throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
-        }
+            JsonNode response;
+            try {
+                response = OBJECT_MAPPER.readTree(event.line());
+            } catch (IOException exception) {
+                failed = true;
+                throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
+            }
 
-        if (response == null || !response.isObject()
-                || !"2.0".equals(response.path("jsonrpc").asText())
-                || !response.has("id")
-                || !response.get("id").isIntegralNumber()
-                || response.get("id").longValue() != requestId) {
-            failed = true;
-            throw new McpClientException("MCP response does not match request id " + requestId
-                    + ": " + response);
-        }
+            if (response == null || !response.isObject()
+                    || !"2.0".equals(response.path("jsonrpc").asText())
+                    || !response.has("id")
+                    || !response.get("id").isIntegralNumber()
+                    || response.get("id").longValue() != requestId) {
+                failed = true;
+                throw new McpClientException("MCP response does not match request id " + requestId
+                        + ": " + response);
+            }
 
-        return response;
+            Allure.addAttachment(
+                    "JSON-RPC response summary",
+                    "text/plain",
+                    summarizeResponse(response)
+            );
+            return response;
+        });
     }
 
     /**
@@ -153,7 +167,7 @@ public final class McpClient implements AutoCloseable {
         if (params != null) {
             notification.set("params", params);
         }
-        writeMessage(notification);
+        Allure.step("Отправить JSON-RPC notification: " + method, () -> writeMessage(notification));
     }
 
     /**
@@ -212,24 +226,26 @@ public final class McpClient implements AutoCloseable {
                                      ObjectNode clientCapabilities,
                                      ObjectNode clientInfo,
                                      Duration timeout) {
-        requireText(protocolVersion, "protocolVersion");
-        Objects.requireNonNull(clientCapabilities, "clientCapabilities");
+        return Allure.step("Подготовить stateless metadata и отправить " + method, () -> {
+            requireText(protocolVersion, "protocolVersion");
+            Objects.requireNonNull(clientCapabilities, "clientCapabilities");
 
-        ObjectNode statelessParams = params == null
-                ? OBJECT_MAPPER.createObjectNode()
-                : params.deepCopy();
-        if (statelessParams.has("_meta")) {
-            throw new IllegalArgumentException("params must not already contain _meta");
-        }
+            ObjectNode statelessParams = params == null
+                    ? OBJECT_MAPPER.createObjectNode()
+                    : params.deepCopy();
+            if (statelessParams.has("_meta")) {
+                throw new IllegalArgumentException("params must not already contain _meta");
+            }
 
-        ObjectNode metadata = statelessParams.putObject("_meta");
-        metadata.put("io.modelcontextprotocol/protocolVersion", protocolVersion);
-        metadata.set("io.modelcontextprotocol/clientCapabilities", clientCapabilities.deepCopy());
-        if (clientInfo != null) {
-            metadata.set("io.modelcontextprotocol/clientInfo", clientInfo.deepCopy());
-        }
+            ObjectNode metadata = statelessParams.putObject("_meta");
+            metadata.put("io.modelcontextprotocol/protocolVersion", protocolVersion);
+            metadata.set("io.modelcontextprotocol/clientCapabilities", clientCapabilities.deepCopy());
+            if (clientInfo != null) {
+                metadata.set("io.modelcontextprotocol/clientInfo", clientInfo.deepCopy());
+            }
 
-        return request(method, statelessParams, timeout);
+            return request(method, statelessParams, timeout);
+        });
     }
 
     /**
@@ -275,45 +291,82 @@ public final class McpClient implements AutoCloseable {
     synchronized void sendRawLine(String line) {
         ensureUsable();
         Objects.requireNonNull(line, "line");
-        try {
-            writer.write(line);
-            writer.newLine();
-            writer.flush();
-        } catch (IOException exception) {
-            failed = true;
-            throw new McpClientException("Failed to write raw MCP line to STDIN", exception);
-        }
+        Allure.step("Отправить raw STDIO line", () -> {
+            try {
+                writer.write(line);
+                writer.newLine();
+                writer.flush();
+            } catch (IOException exception) {
+                failed = true;
+                throw new McpClientException("Failed to write raw MCP line to STDIN", exception);
+            }
+        });
     }
 
     synchronized JsonNode awaitRawResponse(Duration timeout) {
         ensureUsable();
         validateTimeout(timeout);
-        ReadEvent event;
-        try {
-            event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            failed = true;
-            throw new McpClientException("Interrupted while waiting for raw MCP response", exception);
+        return Allure.step("Получить и разобрать raw STDIO response", () -> {
+            ReadEvent event;
+            try {
+                event = responses.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                failed = true;
+                throw new McpClientException("Interrupted while waiting for raw MCP response", exception);
+            }
+            if (event == null) {
+                failed = true;
+                throw new McpClientException("Timed out waiting for raw MCP response");
+            }
+            if (event.error() != null) {
+                failed = true;
+                throw new McpClientException("Failed to read MCP STDOUT", event.error());
+            }
+            if (event.eof()) {
+                failed = true;
+                throw new McpClientException("MCP process closed STDOUT before sending a response");
+            }
+            try {
+                return OBJECT_MAPPER.readTree(event.line());
+            } catch (IOException exception) {
+                failed = true;
+                throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
+            }
+        });
+    }
+
+
+    private static String summarizeResponse(JsonNode response) {
+        StringBuilder summary = new StringBuilder()
+                .append("jsonrpc=").append(response.path("jsonrpc").asText())
+                .append("; id=").append(response.path("id").asText())
+                .append("; hasError=").append(response.has("error"));
+
+        if (response.has("error")) {
+            summary.append("; errorCode=").append(response.path("error").path("code").asInt());
         }
-        if (event == null) {
-            failed = true;
-            throw new McpClientException("Timed out waiting for raw MCP response");
+
+        JsonNode result = response.path("result");
+        if (result.isObject()) {
+            summary.append("; resultFields=");
+            List<String> fields = new java.util.ArrayList<>();
+            result.fieldNames().forEachRemaining(fields::add);
+            summary.append(String.join(",", fields));
+            if (result.has("resultType")) {
+                summary.append("; resultType=").append(result.path("resultType").asText());
+            }
+            if (result.has("isError")) {
+                summary.append("; isError=").append(result.path("isError").asBoolean());
+            }
+            if (result.path("content").isArray()) {
+                summary.append("; contentItems=").append(result.path("content").size());
+            }
+            if (result.path("tools").isArray()) {
+                summary.append("; tools=").append(result.path("tools").size());
+            }
         }
-        if (event.error() != null) {
-            failed = true;
-            throw new McpClientException("Failed to read MCP STDOUT", event.error());
-        }
-        if (event.eof()) {
-            failed = true;
-            throw new McpClientException("MCP process closed STDOUT before sending a response");
-        }
-        try {
-            return OBJECT_MAPPER.readTree(event.line());
-        } catch (IOException exception) {
-            failed = true;
-            throw new McpClientException("MCP process returned invalid JSON: " + event.line(), exception);
-        }
+        return summary.toString();
     }
 
     private void writeMessage(ObjectNode message) {

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.TestWatcher;
 import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 
@@ -18,7 +19,7 @@ import java.io.IOException;
  * через parameter injection в тестовые методы и lifecycle-методы JUnit.</p>
  */
 public final class McpServerExtension
-        implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
+        implements BeforeAllCallback, AfterAllCallback, ParameterResolver, TestWatcher {
 
     private static final ExtensionContext.Namespace NAMESPACE =
             ExtensionContext.Namespace.create(McpServerExtension.class);
@@ -38,10 +39,19 @@ public final class McpServerExtension
             try {
                 session.close();
             } catch (IOException exception) {
+                AllureDiagnostics.attachStderr(session.stderr());
                 throw new IOException("Failed to close MCP session after "
                         + context.getRequiredTestClass().getName(), exception);
             }
         }
+    }
+
+
+    @Override
+    public void testFailed(ExtensionContext context, Throwable cause) {
+        context.getParent()
+                .map(parent -> parent.getStore(NAMESPACE).get(SESSION_KEY, McpProcessSession.class))
+                .ifPresent(session -> AllureDiagnostics.attachStderr(session.stderr()));
     }
 
     @Override

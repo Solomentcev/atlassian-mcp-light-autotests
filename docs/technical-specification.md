@@ -273,14 +273,28 @@ TestDataManager ведёт append-only JSONL event log. Каждая запис�
 Сохраняются:
 
 - JUnit XML;
-- Allure results/report с категориями Protocol, Process, Configuration, Jira, Confluence, Negative, Integration и Test Data;
+- Allure results/report с labels/tags Protocol, Process, Configuration, Jira, Confluence, Negative, Integration и Test Data;
 - commit SHA основного проекта;
 - выбранный launcher mode;
 - stdout/stderr diagnostics тестируемого процесса;
 - логи Jenkins stage;
 - реестр WRITE_INTENT/WRITE_CONFIRMED/WRITE_REJECTED/UNKNOWN_OUTCOME.
 
-STDOUT тестируемого процесса является MCP data stream и не должен загрязняться диагностикой. STDERR сохраняется отдельно. Секреты маскируются до записи в логи и attachments.
+Allure labels и структура сценария:
+
+- `@Epic` — крупная область ответственности;
+- `@Feature` — функциональная область внутри эпика;
+- `@Story` — конкретный сценарий; для кейсов из `docs/test-cases.md` сохраняется ID кейса;
+- `@Severity` — P0 → BLOCKER, P1 → CRITICAL, P2 → NORMAL;
+- JUnit `@Tag` — тип/область теста и тег `case-<ID>` для связи с каталогом;
+- `@DisplayName` и `@Description` — читаемое название, предусловия, шаги и ожидаемый результат;
+- `Allure.step` — фактические действия сценария, обмен JSON-RPC и lifecycle процесса.
+
+Результаты Allure сохраняются в `target/allure-results`, JUnit XML — в `target/surefire-reports`. HTML-отчёт формируется Allure CLI или Jenkins Allure plugin.
+
+Для JSON-RPC обмена к Allure прикладываются только безопасные summaries: method/request id, поля верхнего уровня, error code, resultType и количество элементов; params и текстовый content не сохраняются. При падении интеграционного теста STDERR тестируемого процесса может прикладываться к Allure после маскирования Authorization headers и значений TOKEN/PASSWORD/SECRET. Сырые JSON-RPC payload и текстовые данные ответов Atlassian не прикладываются. Credentials, Authorization headers и другие секреты запрещено записывать в реестр, логи или attachments.
+
+STDOUT тестируемого процесса является MCP data stream и не должен загрязняться диагностикой. STDERR собирается отдельно; маскирование выполняется до публикации диагностических вложений.
 
 ## 13. Таймауты и отказоустойчивость
 

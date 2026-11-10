@@ -1,6 +1,15 @@
 package ru.solomentsev.aqa.process;
 
+import io.qameta.allure.Allure;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Story;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.DisplayName;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,21 +21,33 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@Epic("AQA Test Infrastructure")
+    @Tag("unit")
+    @Tag("process")
 class ManagedProcessTest {
 
     @Test
+    @Feature("Managed Process")
+    @Story("Диагностика процесса, не завершившегося после принудительной остановки")
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("Диагностика процесса, не завершившегося после принудительной остановки")
+    @Description("Предусловия: Используется имитация процесса, который остаётся жив после destroyForcibly.\nШаги: вызвать close; проверить результат принудительной остановки; затем смоделировать завершение процесса и повторить close.\nОжидаемый результат: первая попытка сообщает IOException о незавершённом процессе; после фактического завершения повторный close проходит успешно.")
+    @Tag("process")
     void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
-        NonTerminatingProcess process = new NonTerminatingProcess();
-        ManagedProcess managedProcess = new ManagedProcess(process);
+        Allure.step("Диагностика процесса, не завершившегося после принудительной остановки", () -> {
+            NonTerminatingProcess process = new NonTerminatingProcess();
+            ManagedProcess managedProcess = new ManagedProcess(process);
 
-        assertThatThrownBy(managedProcess::close)
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining("did not terminate after destroyForcibly");
-        assertThat(process.destroyForciblyCalled).isTrue();
+            assertThatThrownBy(managedProcess::close)
+                    .isInstanceOf(IOException.class)
+                    .hasMessageContaining("did not terminate after destroyForcibly");
+            assertThat(process.destroyForciblyCalled).isTrue();
 
-        process.alive = false;
-        managedProcess.close();
-        assertThat(managedProcess.isAlive()).isFalse();
+            process.alive = false;
+            managedProcess.close();
+            assertThat(managedProcess.isAlive()).isFalse();
+        
+        });
     }
 
     private static final class NonTerminatingProcess extends Process {

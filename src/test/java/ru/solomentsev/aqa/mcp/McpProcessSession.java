@@ -1,5 +1,7 @@
 package ru.solomentsev.aqa.mcp;
 
+import io.qameta.allure.Allure;
+
 import ru.solomentsev.aqa.process.ManagedProcess;
 import ru.solomentsev.aqa.process.McpServerLauncher;
 import ru.solomentsev.aqa.process.StderrCollector;
@@ -83,7 +85,8 @@ public final class McpProcessSession implements AutoCloseable {
             Objects.requireNonNull(startupTimeout, "startupTimeout");
         }
 
-        ManagedProcess process = launcher.launch(environment, workingDirectory);
+        ManagedProcess process = Allure.step("Запустить тестовый MCP-процесс", () ->
+                launcher.launch(environment, workingDirectory));
         StderrCollector stderrCollector = new StderrCollector(process.stderr(), DEFAULT_STDERR_LIMIT);
         McpClient client = new McpClient(process.stdout(), process.stdin());
 
@@ -92,7 +95,8 @@ public final class McpProcessSession implements AutoCloseable {
                 throw new McpClientException("MCP process terminated before readiness handshake");
             }
             if (initialize) {
-                client.initialize(protocolVersion, clientName, clientVersion, startupTimeout);
+                Allure.step("Проверить MCP readiness через initialize", () ->
+                        client.initialize(protocolVersion, clientName, clientVersion, startupTimeout));
             }
             if (!process.isAlive()) {
                 throw new McpClientException("MCP process terminated during readiness handshake");
@@ -101,7 +105,7 @@ public final class McpProcessSession implements AutoCloseable {
         } catch (RuntimeException | Error exception) {
             client.close();
             try {
-                process.close();
+                Allure.step("Очистить процесс после ошибки запуска", process::close);
             } catch (IOException cleanupException) {
                 exception.addSuppressed(cleanupException);
             }
@@ -151,7 +155,7 @@ public final class McpProcessSession implements AutoCloseable {
 
         IOException closeException = null;
         try {
-            process.close();
+            Allure.step("Завершить тестовый MCP-процесс", process::close);
         } catch (IOException exception) {
             closeException = exception;
         }
