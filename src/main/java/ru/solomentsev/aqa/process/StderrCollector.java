@@ -91,10 +91,10 @@ public final class StderrCollector implements AutoCloseable {
      */
     public boolean await(Duration timeout) throws InterruptedException {
         Objects.requireNonNull(timeout, "timeout");
-        if (timeout.isNegative()) {
-            throw new IllegalArgumentException("timeout must not be negative");
+        if (timeout.isZero() || timeout.isNegative()) {
+            throw new IllegalArgumentException("timeout must be positive");
         }
-        readerThread.join(timeout.toMillis());
+        readerThread.join(Math.max(1, timeout.toMillis()));
         return !readerThread.isAlive();
     }
 
