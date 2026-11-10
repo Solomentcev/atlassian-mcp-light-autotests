@@ -94,6 +94,24 @@ class McpContractIntegrationTest {
     }
 
     @Test
+    void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
+        ObjectNode params = OBJECT_MAPPER.createObjectNode();
+        ObjectNode metadata = params.putObject("_meta");
+        metadata.put("io.modelcontextprotocol/protocolVersion", "2099-01-01");
+        metadata.putObject("io.modelcontextprotocol/clientCapabilities");
+
+        JsonNode response = client.request(
+                "server/discover",
+                params,
+                REQUEST_TIMEOUT
+        );
+
+        assertThat(response.path("error").path("code").asInt()).isEqualTo(-32022);
+        assertThat(response.path("error").path("data").path("supportedVersions").toString())
+                .contains(STATELESS_PROTOCOL_VERSION);
+    }
+
+    @Test
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", "aqa_unknown_tool");
