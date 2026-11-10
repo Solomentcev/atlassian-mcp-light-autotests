@@ -325,7 +325,9 @@ class McpContractIntegrationTest {
     @Story("MCP-028 — Проверка границ параметра limit")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-028: Проверка limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + ", limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; допустимый диапазон " + McpTestData.MIN_LIMIT + "–" + McpTestData.MAX_LIMIT)
-    @Description("Предусловия: MCP lifecycle завершён; доступны `jira_search`, `confluence_search`, `confluence_list_spaces`\nШаги: передать limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX; 3. Выполнить вызов с допустимым limit=" + McpTestData.DEFAULT_LIMIT + ".\nОжидаемый результат: значения вне диапазона [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "] отклоняются как MCP tool error (`result.isError=true`); допустимое значение обрабатывается штатно.")
+    @Description("Предусловия: MCP lifecycle завершён; доступны jira_search, confluence_search и confluence_list_spaces.\n" +
+            "Шаги: передать limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; затем выполнить вызов с допустимым limit=" + McpTestData.DEFAULT_LIMIT + ".\n" +
+            "Ожидаемый результат: значения за пределами диапазона " + McpTestData.MIN_LIMIT + "–" + McpTestData.MAX_LIMIT + " отклоняются с result.isError=true; допустимое значение обрабатывается штатно.")
     @Tag("negative")
     @Tag("case-MCP-028")
     @Tag("jira")
