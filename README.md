@@ -42,6 +42,17 @@ Jenkins собирает тестируемый сервер из исходни
 
 Основной проект не является Maven-зависимостью AQA. Между проектами сохраняется black-box граница: AQA использует только собранный исполняемый артефакт и публичный STDIO/MCP контракт.
 
+## Текущая реализация
+
+В ветке `feature/mcp-client` начата реализация базового STDIO-слоя:
+
+- `DefaultProcessLauncher` запускает команду через `ProcessBuilder`, не объединяя STDOUT и STDERR.
+- `ManagedProcess` предоставляет потоки процесса и выполняет штатное/принудительное завершение.
+- `StderrCollector` независимо читает STDERR и хранит ограниченный хвост диагностики.
+- `McpClient` отправляет JSON-RPC сообщения по STDIN, читает ответы из STDOUT, проверяет request id и поддерживает классический `initialize → notifications/initialized`.
+
+Проверки запуска процесса, JSON-RPC request/response, notification и классического handshake добавлены в JUnit. Локальную сборку и выполнение тестов необходимо подтвердить командой `mvn test`; до этого реализация не считается проверенной. Docker launcher, stateless handshake, JUnit lifecycle extension и интеграционные тесты будут добавлены следующими этапами.
+
 ## Jenkins Pipeline
 
 1. Checkout AQA-репозитория.
