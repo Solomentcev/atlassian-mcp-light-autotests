@@ -84,10 +84,16 @@ class McpContractIntegrationTest {
             JsonNode schema = tool.path("inputSchema");
             assertThat(schema.path("type").asText()).isEqualTo("object");
             assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
+            assertThat(schema.path("properties").isObject()).isTrue();
             assertThat(fieldNames(schema.path("properties")))
                     .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
-            assertThat(textValues(schema.path("required")))
-                    .containsExactlyInAnyOrderElementsOf(expected.required());
+            if (expected.required().isEmpty()) {
+                assertThat(schema.has("required")).isFalse();
+            } else {
+                assertThat(schema.path("required").isArray()).isTrue();
+                assertThat(textValues(schema.path("required")))
+                        .containsExactlyInAnyOrderElementsOf(expected.required());
+            }
 
             for (Map.Entry<String, String> property : expected.propertyTypes().entrySet()) {
                 JsonNode definition = schema.path("properties").path(property.getKey());
