@@ -271,6 +271,7 @@ public final class McpClient implements AutoCloseable {
         );
     }
 
+    // Package-private raw transport hooks are used only by STDIO contract tests.
     synchronized void sendRawLine(String line) {
         ensureUsable();
         Objects.requireNonNull(line, "line");
