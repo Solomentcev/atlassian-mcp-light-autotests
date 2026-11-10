@@ -114,7 +114,7 @@ mvn -Pintegration test
 
 Для Docker-режима дополнительно задаются `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`. Обычная команда `mvn test` выполняет только unit-тесты и не требует запуска Atlassian MCP Light.
 
-Локальную сборку и выполнение тестов ещё необходимо подтвердить; до этого реализация не считается проверенной.
+Локальная проверка выполнена 10.11.2026: `mvn clean test` и `mvn -Pintegration test` завершились успешно; во втором прогоне выполнены все 37 тестов без ошибок и пропусков. Docker runtime и Jenkins Pipeline пока не проверены.
 
 ## Jenkins Pipeline
 
