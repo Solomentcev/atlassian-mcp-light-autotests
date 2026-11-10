@@ -43,6 +43,9 @@ public final class McpServerConfiguration {
 
         mode = value(environment, properties, "aqa.server.mode", "AQA_SERVER_MODE", "local")
                 .toLowerCase(Locale.ROOT);
+        if (!mode.equals("local") && !mode.equals("docker")) {
+            throw new IllegalArgumentException("AQA_SERVER_MODE must be 'local' or 'docker'");
+        }
         serverJar = optionalPath(value(environment, properties,
                 "aqa.server.jar", "AQA_SERVER_JAR", null));
         javaExecutable = value(environment, properties,
@@ -76,10 +79,6 @@ public final class McpServerConfiguration {
         } else {
             LOG.info("Docker MCP-сервер: executable={}, image={}, envFile={}, stopTimeout={}s",
                     dockerExecutable, dockerImage, dockerEnvFile, dockerStopTimeoutSeconds);
-        }
-
-        if (!mode.equals("local") && !mode.equals("docker")) {
-            throw new IllegalArgumentException("AQA_SERVER_MODE must be 'local' or 'docker'");
         }
         if (mode.equals("local") && serverJar == null) {
             throw new IllegalArgumentException("AQA_SERVER_JAR is required in local mode");
