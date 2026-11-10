@@ -155,8 +155,8 @@ class McpClientTest {
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
         JsonNode response = initialize(client, 
                 McpTestData.CLASSIC_PROTOCOL_VERSION,
-                "atlassian-mcp-light-autotests",
-                "1.0",
+                McpTestData.CLIENT_NAME,
+                McpTestData.CLIENT_VERSION,
                 McpTestData.SHORT_REQUEST_TIMEOUT
         );
 
