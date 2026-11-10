@@ -28,14 +28,6 @@ public final class DefaultProcessLauncher implements ProcessLauncher {
             throw new IllegalArgumentException("command must not contain null arguments");
         }
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.redirectErrorStream(false);
-        processBuilder.environment().putAll(environment);
-
-        if (workingDirectory != null) {
-            processBuilder.directory(workingDirectory.toFile());
-        }
-
         return launch(command, environment, workingDirectory, null);
     }
 
