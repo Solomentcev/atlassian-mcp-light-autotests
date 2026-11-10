@@ -26,6 +26,7 @@ public final class McpTestData {
     public static final String DISCOVERY_CACHE_SCOPE = "public";
 
     public static final int DEFAULT_LIMIT = 1;
+    public static final int MIN_STRING_LENGTH = 1;
     public static final int MIN_LIMIT = 1;
     public static final int MAX_LIMIT = 100;
     public static final int INVALID_LIMIT_BELOW_MIN = 0;
