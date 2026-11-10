@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ManagedProcessTest {
 
     @Test
-    void shouldReportFailureWhenProcessSurvivesForcedTermination() {
+    void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
         NonTerminatingProcess process = new NonTerminatingProcess();
         ManagedProcess managedProcess = new ManagedProcess(process);
 
