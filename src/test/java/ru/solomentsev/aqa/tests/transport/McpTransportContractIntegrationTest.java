@@ -4,7 +4,6 @@ import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
-import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -245,18 +244,16 @@ class McpTransportContractIntegrationTest {
     }
 
     private static void sendRawLine(McpClient client, String line) {
-        Allure.step("Отправить строку STDIO", () -> client.sendRawLine(line));
+        client.sendRawLine(line);
     }
 
-    private static JsonNode awaitRawResponse(
-            McpClient client, Duration timeout) {
-        return Allure.step("Получить ответ STDIO", () -> client.awaitRawResponse(timeout));
+    private static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
+        return client.awaitRawResponse(timeout);
     }
 
     private static JsonNode sendRequest(
             McpClient client, String method, ObjectNode params, Duration timeout) {
-        return Allure.step("Отправить MCP-запрос " + method,
-                () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,

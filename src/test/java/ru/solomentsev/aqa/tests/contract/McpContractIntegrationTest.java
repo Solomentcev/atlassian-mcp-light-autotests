@@ -1,6 +1,5 @@
 package ru.solomentsev.aqa.tests.contract;
 
-import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -443,32 +442,31 @@ class McpContractIntegrationTest {
     }
 
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return Allure.step("Отправить MCP-запрос " + method,
-                () -> client.request(method, params, REQUEST_TIMEOUT));
+        return client.request(method, params, REQUEST_TIMEOUT);
     }
 
     private static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", name);
         params.set("arguments", arguments);
-        return Allure.step("Вызвать MCP-инструмент " + name, () -> client.requestStateless(
+        return client.requestStateless(
                 "tools/call",
                 params,
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 OBJECT_MAPPER.createObjectNode(),
                 null,
                 REQUEST_TIMEOUT
-        ));
+        );
     }
 
     private static JsonNode getStatelessTools(McpClient client) {
-        JsonNode response = Allure.step("Получить список MCP-инструментов", () -> client.listToolsStateless(
+        JsonNode response = client.listToolsStateless(
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 REQUEST_TIMEOUT
-        ));
+        );
         assertSuccessfulJsonRpc(response);
         JsonNode tools = response.path("result").path("tools");
-        assertThat(tools.isArray()).as("Проверка tools.isArray(): ожидалось isTrue").isTrue();
+        assertThat(tools.isArray()).as("tools/list должен вернуть массив инструментов").isTrue();
         return tools;
     }
 

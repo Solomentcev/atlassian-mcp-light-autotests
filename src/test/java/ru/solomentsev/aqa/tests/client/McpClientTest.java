@@ -3,7 +3,6 @@ package ru.solomentsev.aqa.tests.client;
 import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
-import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -286,25 +285,22 @@ class McpClientTest {
     }
 
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params, Duration timeout) {
-        return Allure.step("Отправить MCP-запрос " + method,
-                () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
     private static void sendNotification(McpClient client, String method, ObjectNode params) {
-        Allure.step("Отправить MCP-уведомление " + method, () -> client.notification(method, params));
+        client.notification(method, params);
     }
 
     private static JsonNode initialize(McpClient client, String version, String clientName,
                                         String clientVersion, Duration timeout) {
-        return Allure.step("Выполнить MCP initialize", () ->
-                client.initialize(version, clientName, clientVersion, timeout));
+        return client.initialize(version, clientName, clientVersion, timeout);
     }
 
     private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
                                              String version, ObjectNode capabilities,
                                              ObjectNode clientInfo, Duration timeout) {
-        return Allure.step("Отправить stateless MCP-запрос " + method, () ->
-                client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
+        return client.requestStateless(method, params, version, capabilities, clientInfo, timeout);
     }
 
     private static void respondToSingleRequest(PipedInputStream serverStdin,

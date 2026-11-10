@@ -1,6 +1,5 @@
 package ru.solomentsev.aqa.tests.contract;
 
-import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -64,8 +63,8 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = Allure.step("Обнаружить stateless-возможности сервера", () -> session.client().discoverStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+            JsonNode response = session.client().discoverStateless(
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT);
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
@@ -94,8 +93,8 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = Allure.step("Получить список инструментов в stateless-режиме", () -> session.client().listToolsStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+            JsonNode response = session.client().listToolsStateless(
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT);
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
@@ -122,14 +121,14 @@ class McpStatelessLifecycleIntegrationTest {
             ObjectNode params = OBJECT_MAPPER.createObjectNode();
             params.put("name", ConfluenceTestData.LIST_SPACES_TOOL);
             params.putObject("arguments").put("limit", McpTestData.DEFAULT_LIMIT);
-            JsonNode response = Allure.step("Вызвать read-инструмент в stateless-режиме", () -> session.client().requestStateless(
+            JsonNode response = session.client().requestStateless(
                     "tools/call",
                     params,
                     McpTestData.STATELESS_PROTOCOL_VERSION,
                     OBJECT_MAPPER.createObjectNode(),
                     null,
                     REQUEST_TIMEOUT
-            ));
+            );
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
@@ -179,7 +178,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
                     .isEqualTo(-32001);
 
-            Allure.step("Отправить notifications/initialized", () -> session.client().notification("notifications/initialized", null));
+            session.client().notification("notifications/initialized", null);
 
             JsonNode pingAfterReady =
                     sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
@@ -201,13 +200,12 @@ class McpStatelessLifecycleIntegrationTest {
                                         String method,
                                         ObjectNode params,
                                         Duration timeout) {
-        return Allure.step("Отправить MCP-запрос " + method,
-                () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
     private static void assertEmptyPingResult(JsonNode response) {
         assertThat(response.has("error"))
-                        .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
+                        .as("Ping должен завершаться без JSON-RPC error")
                         .isFalse();
         assertThat(response.path("result").isObject())
                 .as("Ping должен возвращать объект result")

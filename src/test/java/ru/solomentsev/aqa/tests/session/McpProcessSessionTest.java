@@ -116,11 +116,11 @@ class McpProcessSessionTest {
     }
 
     private static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
-        return Allure.step("Вызвать server/discover", () -> client.discoverStateless(version, timeout));
+        return client.discoverStateless(version, timeout);
     }
 
     private static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
-        return Allure.step("Вызвать stateless tools/list", () -> client.listToolsStateless(version, timeout));
+        return client.listToolsStateless(version, timeout);
     }
 
     private static McpProcessSession startSession(McpServerLauncher launcher,
@@ -130,16 +130,14 @@ class McpProcessSessionTest {
                                                    String clientName,
                                                    String clientVersion,
                                                    Duration timeout) throws Exception {
-        return Allure.step("Запустить MCP-сессию и выполнить readiness handshake", () ->
-                McpProcessSession.start(launcher, environment, workingDirectory,
-                        protocolVersion, clientName, clientVersion, timeout));
+        return McpProcessSession.start(launcher, environment, workingDirectory,
+                protocolVersion, clientName, clientVersion, timeout);
     }
 
     private static McpProcessSession startStatelessSession(McpServerLauncher launcher,
                                                            Map<String, String> environment,
                                                            Path workingDirectory) throws Exception {
-        return Allure.step("Запустить MCP-сессию без classic handshake", () ->
-                McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory));
+        return McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory);
     }
 
     private static McpServerLauncher launcherFor(Class<?> serverClass) {
