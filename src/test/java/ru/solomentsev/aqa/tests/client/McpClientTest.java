@@ -266,7 +266,7 @@ class McpClientTest {
         params.putObject("_meta");
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> requestStateless(client, 
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> client.requestStateless( 
                     "tools/list",
                     params,
                     McpTestData.STATELESS_PROTOCOL_VERSION,

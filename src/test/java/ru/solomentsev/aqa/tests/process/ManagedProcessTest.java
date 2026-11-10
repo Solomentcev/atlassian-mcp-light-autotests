@@ -39,7 +39,7 @@ class ManagedProcessTest {
         NonTerminatingProcess process = new NonTerminatingProcess();
         ManagedProcess managedProcess = new ManagedProcess(process);
 
-        assertThatThrownBy(() -> Allure.step("Закрыть управляемый процесс", managedProcess::close))
+        assertThatThrownBy(managedProcess::close)
                 .as("Если процесс не завершился после destroyForcibly, close должен сообщить об ошибке")
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("did not terminate after destroyForcibly");
