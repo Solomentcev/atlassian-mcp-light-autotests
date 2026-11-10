@@ -234,6 +234,18 @@ class McpContractIntegrationTest {
         excessiveLimit.put("jql", "project = AQA");
         excessiveLimit.put("limit", 101);
         assertToolError(callTool(client, "jira_search", excessiveLimit));
+
+        for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
+            String queryField = "confluence_search".equals(toolName) ? "cql" : null;
+            for (int limit : new int[]{0, 101}) {
+                ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+                if (queryField != null) {
+                    arguments.put(queryField, "type = page");
+                }
+                arguments.put("limit", limit);
+                assertToolError(callTool(client, toolName, arguments));
+            }
+        }
     }
 
     @Test
