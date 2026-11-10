@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.mcp;
 
 import io.qameta.allure.Allure;
+import ru.solomentsev.aqa.testdata.McpTestData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -245,8 +246,8 @@ public final class McpClient implements AutoCloseable {
      */
     public JsonNode discoverStateless(String protocolVersion, Duration timeout) {
         ObjectNode clientInfo = OBJECT_MAPPER.createObjectNode()
-                .put("name", "atlassian-mcp-light-autotests")
-                .put("version", "1.0");
+                .put("name", McpTestData.CLIENT_NAME)
+                .put("version", McpTestData.CLIENT_VERSION);
         return requestStateless(
                 "server/discover",
                 null,
