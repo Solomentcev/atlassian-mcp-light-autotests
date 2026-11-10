@@ -82,7 +82,7 @@ class McpServerConfigurationTest {
     void shouldRequireJarInLocalMode() {
         Allure.parameter("AQA_SERVER_MODE", "local");
         Allure.parameter("AQA_SERVER_JAR", "отсутствует");
-        assertThatThrownBy(() => McpServerConfiguration.from(
+        assertThatThrownBy(() -> McpServerConfiguration.from(
                 Map.of("AQA_SERVER_MODE", "local"),
                 new Properties()
         )).as("Local mode без AQA_SERVER_JAR должен отклоняться с понятной ошибкой")
@@ -103,7 +103,7 @@ class McpServerConfigurationTest {
         Allure.parameter("AQA_SERVER_MODE", "docker");
         Allure.parameter("AQA_DOCKER_IMAGE", "atlassian-mcp-light:test");
         Allure.parameter("AQA_DOCKER_ENV_FILE", "отсутствует");
-        assertThatThrownBy(() => McpServerConfiguration.from(
+        assertThatThrownBy(() -> McpServerConfiguration.from(
                 Map.of(
                         "AQA_SERVER_MODE", "docker",
                         "AQA_DOCKER_IMAGE", "atlassian-mcp-light:test"
@@ -125,7 +125,7 @@ class McpServerConfigurationTest {
     @Tag("negative")
     void shouldRejectUnknownMode() {
         Allure.parameter("AQA_SERVER_MODE", "remote");
-        assertThatThrownBy(() => McpServerConfiguration.from(
+        assertThatThrownBy(() -> McpServerConfiguration.from(
                 Map.of("AQA_SERVER_MODE", "remote"),
                 new Properties()
         )).as("Неизвестный режим запуска должен отклоняться")
