@@ -10,8 +10,10 @@ import ru.solomentsev.aqa.junit.McpServerTest;
 import ru.solomentsev.aqa.mcp.McpClient;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -82,8 +84,8 @@ class McpContractIntegrationTest {
             JsonNode schema = tool.path("inputSchema");
             assertThat(schema.path("type").asText()).isEqualTo("object");
             assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
-            assertThat(schema.path("properties").fieldNames())
-                    .toIterable().containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
+            assertThat(fieldNames(schema.path("properties")))
+                    .containsExactlyInAnyElementsOf(expected.propertyTypes().keySet());
             assertThat(textValues(schema.path("required")))
                     .containsExactlyInAnyOrderElementsOf(expected.required());
 
@@ -231,12 +233,18 @@ class McpContractIntegrationTest {
         assertThat(annotations.path("openWorldHint").asBoolean()).isTrue();
     }
 
-    private static Set<String> textValues(JsonNode array) {
-        Set<String> values = new HashSet<>();
+    private static List<String> textValues(JsonNode array) {
+        List<String> values = new ArrayList<>();
         if (array.isArray()) {
             array.forEach(value -> values.add(value.asText()));
         }
         return values;
+    }
+
+    private static Set<String> fieldNames(JsonNode object) {
+        Set<String> names = new HashSet<>();
+        object.fieldNames().forEachRemaining(names::add);
+        return names;
     }
 
     private static Map<String, ToolContract> expectedTools() {
