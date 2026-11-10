@@ -16,6 +16,7 @@
         <assertj.version>3.27.3</assertj.version>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.5.2</maven.surefire.plugin.version>
+        <allure.maven.plugin.version>3.1.0</allure.maven.plugin.version>
     </properties>
     <dependencies>
         <dependency>
@@ -52,6 +53,11 @@
                 <configuration>
                     <release>${maven.compiler.release}</release>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>${allure.maven.plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
