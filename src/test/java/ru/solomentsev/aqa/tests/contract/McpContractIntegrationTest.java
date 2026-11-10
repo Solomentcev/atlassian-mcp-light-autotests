@@ -110,16 +110,16 @@ class McpContractIntegrationTest {
             assertThat(expected).as("Unexpected tool: %s", name).isNotNull();
 
             JsonNode schema = tool.path("inputSchema");
-            assertThat(schema.path("type").asText()).as("Корень inputSchema инструмента должен иметь type=object").isEqualTo("object");
-            assertThat(schema.path("additionalProperties").asBoolean()).as("Схема инструмента не должна разрешать неизвестные аргументы").isFalse();
-            assertThat(schema.path("properties").isObject()).as("Схема инструмента должна содержать объект properties").isTrue();
-            assertThat(fieldNames(schema.path("properties"))).as("Набор аргументов инструмента должен соответствовать опубликованному контракту")
+            assertThat(schema.path("type").asText()).as("%s: корень inputSchema должен иметь type=object", name).isEqualTo("object");
+            assertThat(schema.path("additionalProperties").asBoolean()).as("%s: additionalProperties должен быть false", name).isFalse();
+            assertThat(schema.path("properties").isObject()).as("%s: inputSchema должен содержать объект properties", name).isTrue();
+            assertThat(fieldNames(schema.path("properties"))).as("%s: набор аргументов должен совпадать с контрактом", name)
                     .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
 
             if (expected.required().isEmpty()) {
-                assertThat(schema.has("required")).as("Если обязательные аргументы не заданы, схема не должна содержать required").isFalse();
+                assertThat(schema.has("required")).as("%s: поле required не должно присутствовать при пустом ожидаемом списке", name).isFalse();
             } else {
-                assertThat(textValues(schema.path("required"))).as("Список обязательных аргументов должен соответствовать опубликованному контракту")
+                assertThat(textValues(schema.path("required"))).as("%s: список required должен совпадать с контрактом", name)
                         .containsExactlyInAnyOrderElementsOf(expected.required());
             }
 
@@ -136,7 +136,7 @@ class McpContractIntegrationTest {
                 if ("integer".equals(property.getValue())) {
                     assertThat(definition.path("minimum").asInt())
                             .as("%s.%s: ожидаемый minimum=%d", name, property.getKey(), McpTestData.MIN_LIMIT)
-                            .isEqualTo(1);
+                            .isEqualTo(McpTestData.MIN_LIMIT);
                     if ("limit".equals(property.getKey())) {
                         assertThat(definition.path("maximum").asInt())
                                 .as("%s.%s: ожидаемый maximum=%d", name, property.getKey(), McpTestData.MAX_LIMIT)
@@ -471,10 +471,10 @@ class McpContractIntegrationTest {
     }
 
     private static void assertAnnotations(String toolName, JsonNode annotations, ToolContract expected) {
-        assertThat(annotations.path("readOnlyHint").isBoolean()).as("Инструмент должен содержать boolean readOnlyHint").isTrue();
-        assertThat(annotations.path("destructiveHint").isBoolean()).as("Инструмент должен содержать boolean destructiveHint").isTrue();
-        assertThat(annotations.path("idempotentHint").isBoolean()).as("Инструмент должен содержать boolean idempotentHint").isTrue();
-        assertThat(annotations.path("openWorldHint").isBoolean()).as("Инструмент должен содержать boolean openWorldHint").isTrue();
+        assertThat(annotations.path("readOnlyHint").isBoolean()).as("%s: readOnlyHint должен быть boolean", toolName).isTrue();
+        assertThat(annotations.path("destructiveHint").isBoolean()).as("%s: destructiveHint должен быть boolean", toolName).isTrue();
+        assertThat(annotations.path("idempotentHint").isBoolean()).as("%s: idempotentHint должен быть boolean", toolName).isTrue();
+        assertThat(annotations.path("openWorldHint").isBoolean()).as("%s: openWorldHint должен быть boolean", toolName).isTrue();
         assertThat(annotations.path("readOnlyHint").asBoolean()).as("%s: readOnlyHint должен быть %s", toolName, expected.readOnly())
                 .isEqualTo(expected.readOnly());
         assertThat(annotations.path("destructiveHint").asBoolean()).as("%s: destructiveHint должен быть %s", toolName, expected.destructive())
