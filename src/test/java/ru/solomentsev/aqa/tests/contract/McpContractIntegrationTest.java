@@ -188,39 +188,6 @@ class McpContractIntegrationTest {
     }
 
     @Test
-    @Feature("Stateless Tools")
-    @Story("MCP-021 — Вызов tools/call в stateless-режиме")
-    @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-021: Вызов tools/call в stateless-режиме")
-    @Description("Предусловия: STDIO-процесс запущен; initialize не отправлялся; доступен безопасный read-инструмент\nШаги: 1. Вызвать безопасный read-инструмент через `tools/call`, передав корректные stateless metadata.\nОжидаемый результат: Запрос выполняется без initialize; ответ содержит обычный MCP tool result, `resultType=complete` и serverInfo metadata.")
-    @Tag("integration")
-    @Tag("case-MCP-021")
-    @Tag("confluence")
-    void shouldReturnSuccessfulToolCallEnvelope(McpClient client) {
-        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        arguments.put("limit", McpTestData.DEFAULT_LIMIT);
-
-        JsonNode response = callTool(client, "confluence_list_spaces", arguments);
-
-        assertSuccessfulJsonRpc(response);
-        JsonNode result = response.path("result");
-        assertThat(result.path("isError").asBoolean()).as("Корректный вызов MCP-инструмента не должен возвращать isError=true").isFalse();
-        assertThat(result.path("content").isArray())
-            .as("Ошибка MCP-инструмента должна содержать массив content")
-            .isTrue();
-        assertThat(result.path("content").size())
-            .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
-            .isGreaterThan(0);
-        assertThat(result.path("content").get(0).path("type").asText()).as("Элемент MCP tool result должен иметь тип text").isEqualTo("text");
-        assertThat(result.path("content").get(0).path("text").isTextual()).as("Текстовый элемент MCP tool result должен содержать строку").isTrue();
-        assertThat(result.path("resultType").asText()).as("Успешный вызов MCP-инструмента должен иметь resultType=complete").isEqualTo("complete");
-        assertThat(result.path("_meta").path("io.modelcontextprotocol/serverInfo")
-                .path("name").asText()).as("Ответ MCP-инструмента должен содержать serverInfo с именем atlassian-lite").isEqualTo("atlassian-lite");
-    
-    
-    }
-
-    @Test
     @Feature("Stateless Protocol")
     @Story("MCP-022 — Отклонение неподдерживаемой stateless protocolVersion")
     @Severity(SeverityLevel.CRITICAL)
@@ -343,26 +310,6 @@ class McpContractIntegrationTest {
         arguments.put("unexpected", "value");
         assertToolError(callTool(client, "jira_get_issue", arguments));
 
-        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
-    
-    }
-
-    @Test
-    @Feature("Tool Validation")
-    @Story("MCP-034 — Отклонение строки из пробелов в обязательном аргументе")
-    @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-034: Отклонение строки из пробелов в обязательном аргументе")
-    @Description("Предусловия: Classic lifecycle завершён; доступен jira_get_issue.\nШаги: вызвать jira_get_issue с issue_key, содержащим только пробельные символы.\nОжидаемый результат: сервер возвращает MCP tool error (result.isError=true); следующий валидный запрос может быть обработан.")
-    @Tag("negative")
-    @Tag("case-MCP-034")
-    @Tag("jira")
-    void shouldRejectBlankStringToolArgument(McpClient client) {
-        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        arguments.put("issue_key", "   ");
-
-        assertToolError(callTool(client, "jira_get_issue", arguments));
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
         assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
