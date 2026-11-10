@@ -95,7 +95,26 @@ mvn test
 
 В локальном режиме процесс наследует environment Jenkins agent. В Docker-режиме переменные тестируемого приложения передаются через указанный env-файл. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
 
-JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notification, классический handshake, lifecycle дочернего процесса и валидацию конфигурации. Добавлены Docker launcher и JUnit lifecycle extension. Локальную сборку и выполнение тестов необходимо подтвердить командой `mvn test`; до этого реализация не считается проверенной. Stateless handshake и интеграционные проверки фактических MCP tools остаются следующими этапами.
+JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata и валидацию конфигурации. Добавлены Docker launcher и JUnit lifecycle extension.
+
+Stateless API клиента:
+- `discoverStateless(...)` — `server/discover`;
+- `listToolsStateless(...)` — `tools/list`;
+- `requestStateless(...)` — произвольный stateless request с обязательной metadata в `params._meta`.
+
+Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, все 13 инструментов и их JSON Schema, отклонение неподдерживаемой версии, формат ошибки неизвестного инструмента. Они не запускаются обычной командой `mvn test`.
+
+Для запуска интеграционных проверок требуется собранный JAR или Docker image тестируемого сервера и тестовая конфигурация Jira/Confluence (обязательные `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` передаются серверному процессу):
+
+```bash
+AQA_SERVER_MODE=local \
+AQA_SERVER_JAR=../atlassian-mcp-light/atlassian-mcp-app/target/atlassian-mcp-light-1.0-SNAPSHOT.jar \
+mvn -Pintegration test
+```
+
+Для Docker-режима дополнительно задаются `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`. Обычная команда `mvn test` выполняет только unit-тесты и не требует запуска Atlassian MCP Light.
+
+Локальную сборку и выполнение тестов ещё необходимо подтвердить; до этого реализация не считается проверенной.
 
 ## Jenkins Pipeline
 
