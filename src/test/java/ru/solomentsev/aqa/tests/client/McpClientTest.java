@@ -181,7 +181,7 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Добавление stateless metadata без изменения исходных params")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Stateless metadata, protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; исходные params не изменяются)
+    @DisplayName("Stateless metadata, protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; исходные params не изменяются")
     @Description("Предусловия: Созданы тестовые STDIO-потоки; подготовлены исходные params и client capabilities.\nШаги: выполнить stateless request; проверить переданные серверу metadata и исходный объект params.\nОжидаемый результат: protocolVersion, clientCapabilities и clientInfo добавлены в копию params; исходный объект не изменён.")
     @Tag("protocol")
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
