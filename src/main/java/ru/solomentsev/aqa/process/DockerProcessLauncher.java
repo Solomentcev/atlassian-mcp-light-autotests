@@ -66,6 +66,8 @@ public final class DockerProcessLauncher implements ProcessLauncher {
     /**
      * Запускает контейнер и возвращает Docker CLI как управляемый процесс.
      *
+     * @param containerCommand необязательная команда внутри контейнера;
+     *                         пустой список использует ENTRYPOINT/CMD образа
      * @param environment переменные окружения процесса Docker CLI
      * @param workingDirectory рабочий каталог Docker CLI
      * @return управление потоками Docker CLI
@@ -94,6 +96,7 @@ public final class DockerProcessLauncher implements ProcessLauncher {
      * @param containerName уникальное имя контейнера
      * @param envFile файл окружения
      * @param image Docker image
+     * @param containerCommand необязательная команда контейнера
      * @return аргументы Docker CLI
      */
     static List<String> buildRunCommand(String dockerExecutable,
