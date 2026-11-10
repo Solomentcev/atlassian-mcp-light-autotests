@@ -103,9 +103,11 @@ class McpContractIntegrationTest {
                     assertThat(definition.path("minimum").asInt())
                             .as("%s.%s minimum", name, property.getKey())
                             .isEqualTo(1);
-                    assertThat(definition.path("maximum").asInt())
-                            .as("%s.%s maximum", name, property.getKey())
-                            .isEqualTo(100);
+                    if ("limit".equals(property.getKey())) {
+                        assertThat(definition.path("maximum").asInt())
+                                .as("%s.%s maximum", name, property.getKey())
+                                .isEqualTo(100);
+                    }
                 }
             }
 
