@@ -36,6 +36,24 @@ public final class DefaultProcessLauncher implements ProcessLauncher {
             processBuilder.directory(workingDirectory.toFile());
         }
 
-        return new ManagedProcess(processBuilder.start());
+        return launch(command, environment, workingDirectory, null);
+    }
+
+    ManagedProcess launch(List<String> command,
+                          Map<String, String> environment,
+                          Path workingDirectory,
+                          ProcessCleanup cleanup) throws IOException {
+        Objects.requireNonNull(command, "command");
+        Objects.requireNonNull(environment, "environment");
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.redirectErrorStream(false);
+        processBuilder.environment().putAll(environment);
+
+        if (workingDirectory != null) {
+            processBuilder.directory(workingDirectory.toFile());
+        }
+
+        return new ManagedProcess(processBuilder.start(), cleanup);
     }
 }
