@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.junit;
+package ru.solomentsev.aqa.support.junit;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;

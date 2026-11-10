@@ -1,6 +1,7 @@
-package ru.solomentsev.aqa.junit;
+package ru.solomentsev.aqa.tests.config;
 
 import io.qameta.allure.Allure;
+import ru.solomentsev.aqa.config.McpServerConfiguration;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;

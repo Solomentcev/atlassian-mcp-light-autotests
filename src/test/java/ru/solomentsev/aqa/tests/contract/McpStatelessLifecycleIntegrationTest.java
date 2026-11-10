@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.contract;
+package ru.solomentsev.aqa.tests.contract;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import ru.solomentsev.aqa.junit.McpServerConfiguration;
+import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 
 import java.time.Duration;

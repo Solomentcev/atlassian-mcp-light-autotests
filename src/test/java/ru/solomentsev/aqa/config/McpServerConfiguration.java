@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.junit;
+package ru.solomentsev.aqa.config;
 
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.process.DockerMcpServerLauncher;
@@ -78,7 +78,7 @@ public final class McpServerConfiguration {
         return new McpServerConfiguration(System.getenv(), System.getProperties());
     }
 
-    static McpServerConfiguration from(Map<String, String> environment, Properties properties) {
+    public static McpServerConfiguration from(Map<String, String> environment, Properties properties) {
         return new McpServerConfiguration(environment, properties);
     }
 

@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.junit;
+package ru.solomentsev.aqa.support.junit;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -7,7 +7,9 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestWatcher;
+import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.support.diagnostics.AllureDiagnostics;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 
 import java.io.IOException;
