@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.contract;
+package ru.solomentsev.aqa.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.junit.McpServerTest;
-import ru.solomentsev.aqa.mcp.McpClient;
 
 import java.time.Duration;
 
