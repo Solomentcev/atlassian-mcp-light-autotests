@@ -16,6 +16,8 @@ public final class McpTestData {
     public static final String CLIENT_VERSION = "1.0";
     public static final String MOCK_CLIENT_NAME = "aqa-tests";
     public static final String MOCK_CLIENT_VERSION = "1.0";
+    public static final String SERVER_NAME = "atlassian-lite";
+    public static final String SERVER_VERSION = "1.0.0";
 
     public static final int DEFAULT_LIMIT = 1;
     public static final int MIN_LIMIT = 1;

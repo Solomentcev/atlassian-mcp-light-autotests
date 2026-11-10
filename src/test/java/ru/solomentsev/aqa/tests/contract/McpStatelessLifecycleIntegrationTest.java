@@ -71,6 +71,13 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
+            assertThat(response.path("result").path("content").isArray())
+                    .as("Успешный MCP tool result должен содержать массив content")
+                    .isTrue();
+            assertThat(response.path("result").path("_meta")
+                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
+                    .as("Stateless MCP tool result должен содержать serverInfo с именем сервера")
+                    .isEqualTo(McpTestData.SERVER_NAME);
             assertThat(response.path("result").path("supportedVersions").isArray())
                     .as("server/discover должен вернуть массив поддерживаемых версий протокола").isTrue();
             assertThat(response.path("result").path("capabilities").path("tools").isObject())
@@ -113,7 +120,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Story("MCP-021 — Вызов tools/call в stateless-режиме")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-021: Вызов tools/call в stateless-режиме")
-    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся; доступен безопасный read-инструмент.\nШаги: вызвать confluence_list_spaces через stateless tools/call с limit=1.\nОжидаемый результат: запрос выполняется без initialize и возвращает MCP tool result с resultType=complete.")
+    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся; доступен безопасный read-инструмент.\nШаги: вызвать confluence_list_spaces через stateless tools/call с limit=1.\nОжидаемый результат: запрос выполняется без initialize; ответ содержит MCP tool result с resultType=complete и serverInfo metadata.")
     @Tag("case-MCP-021")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
         try (McpProcessSession session =

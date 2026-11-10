@@ -138,7 +138,7 @@ class McpClientTest {
                 var result = response.putObject("result");
                 result.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
                 result.putObject("capabilities").putObject("tools");
-                result.putObject("serverInfo").put("name", "atlassian-lite").put("version", "1.0.0");
+                result.putObject("serverInfo").put("name", McpTestData.SERVER_NAME).put("version", McpTestData.SERVER_VERSION);
                 writer.write(OBJECT_MAPPER.writeValueAsString(response));
                 writer.newLine();
                 writer.flush();
