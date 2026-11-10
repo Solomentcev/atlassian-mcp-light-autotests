@@ -204,7 +204,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - `AQA_RUN_ID` задаёт базовый ID Jenkins-прогона; launcher добавляет уникальный суффикс для контейнера каждого тестового класса.
 - `AQA_MCP_PROTOCOL_VERSION` задаёт версию классического MCP lifecycle (по умолчанию `2025-11-25`).
 
-Аннотация `@McpServerTest` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер.
+Аннотация `@McpServerTest` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, выполняет classic initialize handshake, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер. Для stateless lifecycle `McpServerConfiguration.startStatelessSession()` создаёт отдельный процесс без classic initialize; готовность подтверждается первым stateless-запросом.
 ### Stateless client и интеграционные проверки
 
 `McpClient.requestStateless` добавляет в `params._meta` обязательные поля `io.modelcontextprotocol/protocolVersion` и `io.modelcontextprotocol/clientCapabilities`, а также необязательное `io.modelcontextprotocol/clientInfo`. Исходный объект params не изменяется; повторное поле `_meta` отклоняется до отправки запроса.
@@ -221,7 +221,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - ошибки отсутствующих обязательных, лишних и пустых аргументов, границы limit и условие title/content для Confluence update;
 - отличие MCP tool error от JSON-RPC error.
 
-`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что stateless tools/list доступен до discovery, а discovery работает независимо от состояния классического lifecycle.
+`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что classic `tools/list` до READY возвращает `-32001`, `ping` доступен до READY, а stateless `tools/list` работает ещё до `server/discover`.
 
 `McpTransportContractIntegrationTest` проверяет STDIO framing и JSON-RPC поведение реального процесса: пропуск пустых строк, parse error с продолжением обработки следующих сообщений, некорректную форму запроса, неизвестный метод, notification без ответа и повторный initialize.
 
