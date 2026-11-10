@@ -69,6 +69,7 @@ class McpTransportContractIntegrationTest {
         assertThat(response.path("error").path("message").asText())
                 .contains("неизвестный-метод");
     }
+
     @Test
     void shouldNotRespondToNotifications(McpClient client) {
         client.notification("notifications/initialized", null);
