@@ -47,9 +47,11 @@ class McpTransportContractIntegrationTest {
     @Tag("case-MCP-029")
     void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
         {            sendRawLine(client, "");
-            client.sendRawLine("   ");
+            sendRawLine(client, "   ");
             var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error")).isFalse();
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
         }
     }
@@ -63,13 +65,15 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-030")
     void shouldRejectTrailingJsonTokens(McpClient client) {
-        {            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
+        {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
             var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32700);
             assertThat(error.get("id").isNull()).isTrue();
 
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error")).isFalse();
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
         }
     }
 
@@ -82,13 +86,15 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-015")
     void shouldRecoverAfterMalformedJson(McpClient client) {
-        {            client.sendRawLine("{invalid-json");
-            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+        {            sendRawLine(client, "{invalid-json");
+            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32700);
             assertThat(error.get("id").isNull()).isTrue();
 
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error")).isFalse();
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
         }
     }
 
@@ -101,13 +107,15 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-031")
     void shouldRejectNonObjectJsonRoot(McpClient client) {
-        {            client.sendRawLine("[]");
-            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+        {            sendRawLine(client, "[]");
+            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
             assertThat(error.get("id").isNull()).isTrue();
 
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error")).isFalse();
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
         }
     }
 
@@ -120,12 +128,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-016")
     void shouldRejectRequestWithMissingMethod(McpClient client) {
-        {            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"id\":1}");
-            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+        {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":1}");
+            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
 
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error")).isFalse();
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
         }
     }
 
@@ -138,11 +148,11 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-032")
     void shouldRejectRequestWithoutId(McpClient client) {
-        {            client.sendRawLine("{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
-            var error = client.awaitRawResponse(REQUEST_TIMEOUT);
+        {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
+            var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
 
-            var tools = client.request("tools/list", null, REQUEST_TIMEOUT);
+            var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
             assertThat(tools.has("error")).isFalse();
             assertThat(tools.path("result").path("tools").isArray()).isTrue();
         }
@@ -157,11 +167,13 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-014")
     void shouldReturnMethodNotFoundForUnknownMethod(McpClient client) {
-        {            var response = client.request("aqa/unknown-method", null, REQUEST_TIMEOUT);
+        {            var response = sendRequest(client, "aqa/unknown-method", null, REQUEST_TIMEOUT);
             assertJsonRpcError(response, -32601);
 
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
-            assertThat(ping.has("error")).isFalse();
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
         
         }
@@ -175,10 +187,11 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: Процесс запущен\nШаги: 1. Отправить запрос с неизвестным методом.\nОжидаемый результат: Возвращается JSON-RPC ошибка метода; идентификатор запроса сохранён; процесс продолжает работу.")
     @Tag("contract")
     void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {
-        {            var response = client.request("aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
+        {            var response = sendRequest(client, "aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
 
             assertJsonRpcError(response, -32601);
             assertThat(response.path("error").path("message").asText())
+                    .as("Сообщение ошибки должно содержать имя неизвестного метода")
                     .contains("неизвестный-метод");
         
         }
@@ -195,9 +208,11 @@ class McpTransportContractIntegrationTest {
     void shouldNotRespondToNotifications(McpClient client) {
         {            client.notification("notifications/initialized", null);
 
-            var ping = client.request("ping", null, REQUEST_TIMEOUT);
+            var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
 
-            assertThat(ping.has("error")).isFalse();
+            assertThat(ping.has("error"))
+                    .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
+                    .isFalse();
             assertThat(ping.path("result").isObject()).isTrue();
         
         }
@@ -219,10 +234,10 @@ class McpTransportContractIntegrationTest {
                     .put("name", "atlassian-mcp-light-autotests")
                     .put("version", "1.0");
 
-            var response = client.request("initialize", params, REQUEST_TIMEOUT);
+            var response = sendRequest(client, "initialize", params, REQUEST_TIMEOUT);
             assertJsonRpcError(response, -32600);
 
-            var tools = client.request("tools/list", null, REQUEST_TIMEOUT);
+            var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
             assertThat(tools.has("error")).isFalse();
             assertThat(tools.path("result").path("tools").isArray()).isTrue();
         
@@ -246,8 +261,14 @@ class McpTransportContractIntegrationTest {
 
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,
                                            int expectedCode) {
-        assertThat(response.path("jsonrpc").asText()).isEqualTo("2.0");
-        assertThat(response.has("error")).isTrue();
-        assertThat(response.path("error").path("code").asInt()).isEqualTo(expectedCode);
+        assertThat(response.path("jsonrpc").asText())
+                .as("Ответ должен соответствовать JSON-RPC версии 2.0")
+                .isEqualTo("2.0");
+        assertThat(response.has("error"))
+                .as("Некорректный JSON-RPC запрос должен вернуть объект error")
+                .isTrue();
+        assertThat(response.path("error").path("code").asInt())
+                .as("JSON-RPC ошибка должна иметь код %s", expectedCode)
+                .isEqualTo(expectedCode);
     }
 }

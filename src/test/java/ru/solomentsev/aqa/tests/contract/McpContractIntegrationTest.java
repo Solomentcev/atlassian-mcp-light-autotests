@@ -204,8 +204,12 @@ class McpContractIntegrationTest {
             assertSuccessfulJsonRpc(response);
             JsonNode result = response.path("result");
             assertThat(result.path("isError").asBoolean()).isFalse();
-            assertThat(result.path("content").isArray()).isTrue();
-            assertThat(result.path("content").size()).isGreaterThan(0);
+            assertThat(result.path("content").isArray())
+                .as("Ошибка MCP-инструмента должна содержать массив content")
+                .isTrue();
+            assertThat(result.path("content").size())
+                .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
+                .isGreaterThan(0);
             assertThat(result.path("content").get(0).path("type").asText()).isEqualTo("text");
             assertThat(result.path("content").get(0).path("text").isTextual()).isTrue();
             assertThat(result.path("resultType").asText()).isEqualTo("complete");
@@ -467,22 +471,38 @@ class McpContractIntegrationTest {
     }
 
     private static void assertSuccessfulJsonRpc(JsonNode response) {
-        assertThat(response.path("jsonrpc").asText()).isEqualTo("2.0");
-        assertThat(response.has("id")).isTrue();
-        assertThat(response.has("error")).isFalse();
-        assertThat(response.path("result").isObject()).isTrue();
+        assertThat(response.path("jsonrpc").asText())
+                .as("Ответ должен соответствовать JSON-RPC версии 2.0")
+                .isEqualTo("2.0");
+        assertThat(response.has("id"))
+                .as("Ответ на запрос должен содержать исходный request id")
+                .isTrue();
+        assertThat(response.has("error"))
+                .as("Успешный JSON-RPC ответ не должен содержать поле error")
+                .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Успешный JSON-RPC ответ должен содержать объект result")
+                .isTrue();
     }
 
     private static void assertToolError(JsonNode response) {
         assertSuccessfulJsonRpc(response);
         JsonNode result = response.path("result");
-        assertThat(result.path("isError").asBoolean()).isTrue();
-        assertThat(result.path("content").isArray()).isTrue();
-        assertThat(result.path("content").size()).isGreaterThan(0);
+        assertThat(result.path("isError").asBoolean())
+                .as("Ошибочный вызов MCP-инструмента должен иметь isError=true")
+                .isTrue();
+        assertThat(result.path("content").isArray())
+                .as("Ошибка MCP-инструмента должна содержать массив content")
+                .isTrue();
+        assertThat(result.path("content").size())
+                .as("Ошибка MCP-инструмента должна содержать диагностическое сообщение")
+                .isGreaterThan(0);
         assertThat(result.path("content").get(0).path("type").asText()).isEqualTo("text");
         assertThat(result.path("content").get(0).path("text").asText())
                 .startsWith("Ошибка: ");
-        assertThat(result.has("error")).isFalse();
+        assertThat(result.has("error"))
+                .as("Ошибка выполнения инструмента должна быть представлена в result, а не JSON-RPC error")
+                .isFalse();
     }
 
     private static void assertAnnotations(JsonNode annotations, ToolContract expected) {
