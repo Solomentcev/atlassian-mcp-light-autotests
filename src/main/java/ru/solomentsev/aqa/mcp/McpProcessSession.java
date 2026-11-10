@@ -15,7 +15,8 @@ import java.util.Objects;
  * Управляет жизненным циклом одного тестового экземпляра MCP-сервера.
  *
  * <p>Создаёт процесс, запускает независимый сбор STDERR, создаёт MCP Client
- * и подтверждает готовность классическим initialize handshake. При закрытии
+ * и при необходимости подтверждает готовность классическим initialize handshake.
+ * Stateless-сессия может быть создана без classic handshake. При закрытии
  * сначала закрывается MCP-соединение, затем завершается процесс.</p>
  */
 public final class McpProcessSession implements AutoCloseable {
@@ -72,17 +73,15 @@ public final class McpProcessSession implements AutoCloseable {
      * @param command команда и аргументы
      * @param environment дополнительные переменные окружения
      * @param workingDirectory рабочий каталог или {@code null}
-     * @param startupTimeout таймаут проверки запуска процесса
      * @return сессия с доступным MCP Client
      * @throws IOException если процесс не удалось запустить
      */
     public static McpProcessSession startWithoutHandshake(ProcessLauncher launcher,
                                                            List<String> command,
                                                            Map<String, String> environment,
-                                                           Path workingDirectory,
-                                                           Duration startupTimeout) throws IOException {
+                                                           Path workingDirectory) throws IOException {
         return start(launcher, command, environment, workingDirectory, null,
-                null, null, startupTimeout, false);
+                null, null, null, false);
     }
 
     private static McpProcessSession start(ProcessLauncher launcher,
@@ -95,7 +94,9 @@ public final class McpProcessSession implements AutoCloseable {
                                            Duration startupTimeout,
                                            boolean initialize) throws IOException {
         Objects.requireNonNull(launcher, "launcher");
-        Objects.requireNonNull(startupTimeout, "startupTimeout");
+        if (initialize) {
+            Objects.requireNonNull(startupTimeout, "startupTimeout");
+        }
 
         ManagedProcess process = launcher.launch(command, environment, workingDirectory);
         StderrCollector stderrCollector = new StderrCollector(process.stderr(), DEFAULT_STDERR_LIMIT);
