@@ -15,7 +15,7 @@ import java.io.IOException;
  * Создаёт одну отдельную MCP-сессию на тестовый класс и закрывает её после класса.
  *
  * <p>Расширение предоставляет {@link McpProcessSession} и {@link McpClient}
- * через parameter injection в тестовые методы и конструкторы.</p>
+ * через parameter injection в тестовые методы и lifecycle-методы JUnit.</p>
  */
 public final class McpServerExtension
         implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
