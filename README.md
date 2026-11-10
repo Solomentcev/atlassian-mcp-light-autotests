@@ -50,8 +50,9 @@ Jenkins собирает тестируемый сервер из исходни
 - `ManagedProcess` предоставляет потоки процесса и выполняет штатное/принудительное завершение.
 - `StderrCollector` независимо читает STDERR и хранит ограниченный хвост диагностики.
 - `McpClient` отправляет JSON-RPC сообщения по STDIN, читает ответы из STDOUT, проверяет request id и поддерживает классический `initialize → notifications/initialized`.
+- `McpProcessSession` объединяет запуск процесса, сбор STDERR, MCP handshake и последующее завершение процесса.
 
-Проверки запуска процесса, JSON-RPC request/response, notification и классического handshake добавлены в JUnit. Локальную сборку и выполнение тестов необходимо подтвердить командой `mvn test`; до этого реализация не считается проверенной. Docker launcher, stateless handshake, JUnit lifecycle extension и интеграционные тесты будут добавлены следующими этапами.
+JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notification, классический handshake и полный lifecycle дочернего процесса. Локальную сборку и выполнение тестов необходимо подтвердить командой `mvn test`; до этого реализация не считается проверенной. Docker launcher, stateless handshake, JUnit lifecycle extension и интеграционные тесты будут добавлены следующими этапами.
 
 ## Jenkins Pipeline
 
