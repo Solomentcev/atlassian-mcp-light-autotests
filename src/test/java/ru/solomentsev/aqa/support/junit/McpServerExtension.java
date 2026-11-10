@@ -1,5 +1,7 @@
 package ru.solomentsev.aqa.support.junit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -23,12 +25,16 @@ import java.io.IOException;
 public final class McpServerExtension
         implements BeforeAllCallback, AfterAllCallback, ParameterResolver, TestWatcher {
 
+    private static final Logger LOG = LoggerFactory.getLogger(McpServerExtension.class);
+
     private static final ExtensionContext.Namespace NAMESPACE =
             ExtensionContext.Namespace.create(McpServerExtension.class);
     private static final String SESSION_KEY = "mcp-process-session";
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
+        String testClass = context.getRequiredTestClass().getSimpleName();
+        LOG.info("Начало тестового класса: {}", testClass);
         McpProcessSession session = McpServerConfiguration.fromEnvironment().startSession();
         context.getStore(NAMESPACE).put(SESSION_KEY, session);
     }
@@ -40,6 +46,7 @@ public final class McpServerExtension
         if (session != null) {
             try {
                 session.close();
+                LOG.info("Завершение тестового класса: {}", context.getRequiredTestClass().getSimpleName());
             } catch (IOException exception) {
                 AllureDiagnostics.attachStderr(session.stderr());
                 throw new IOException("Failed to close MCP session after "
@@ -51,6 +58,8 @@ public final class McpServerExtension
 
     @Override
     public void testFailed(ExtensionContext context, Throwable cause) {
+        LOG.error("Тест завершился ошибкой: {} ({})",
+                context.getDisplayName(), cause.getClass().getSimpleName());
         context.getParent()
                 .map(parent -> parent.getStore(NAMESPACE).get(SESSION_KEY, McpProcessSession.class))
                 .ifPresent(session -> AllureDiagnostics.attachStderr(session.stderr()));

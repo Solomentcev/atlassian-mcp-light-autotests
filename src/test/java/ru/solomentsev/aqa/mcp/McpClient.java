@@ -1,6 +1,8 @@
 package ru.solomentsev.aqa.mcp;
 
 import io.qameta.allure.Allure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.solomentsev.aqa.testdata.McpTestData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class McpClient implements AutoCloseable {
 
+    private static final Logger LOG = LoggerFactory.getLogger(McpClient.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final BufferedWriter writer;
@@ -96,6 +99,8 @@ public final class McpClient implements AutoCloseable {
             request.set("params", params);
         }
 
+        long startedAt = System.nanoTime();
+        LOG.debug("Отправка JSON-RPC request: method={}, id={}", method, requestId);
         Allure.step("Отправить JSON-RPC request: " + method, () -> writeMessage(request));
         Allure.addAttachment(
                 "JSON-RPC request metadata",
@@ -105,14 +110,18 @@ public final class McpClient implements AutoCloseable {
         ReadEvent event = Allure.step("Ожидать JSON-RPC response", () -> pollResponse(timeout));
         if (event == null) {
             failed = true;
+            LOG.warn("Таймаут JSON-RPC response: method={}, id={}, timeoutMs={}",
+                    method, requestId, timeout.toMillis());
             throw new McpClientException("Timed out waiting for MCP response to request " + requestId);
         }
         if (event.error() != null) {
             failed = true;
+            LOG.error("Ошибка чтения MCP STDOUT: method={}, id={}", method, requestId, event.error());
             throw new McpClientException("Failed to read MCP STDOUT", event.error());
         }
         if (event.eof()) {
             failed = true;
+            LOG.error("MCP STDOUT закрыт до получения ответа: method={}, id={}", method, requestId);
             throw new McpClientException("MCP process closed STDOUT before sending a response");
         }
 
@@ -139,6 +148,10 @@ public final class McpClient implements AutoCloseable {
                 "text/plain",
                 summarizeResponse(response)
         );
+        LOG.debug("Получен JSON-RPC response: method={}, id={}, durationMs={}, hasError={}",
+                method, requestId,
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
+                response.has("error"));
         return response;
     }
 
@@ -158,6 +171,7 @@ public final class McpClient implements AutoCloseable {
         if (params != null) {
             notification.set("params", params);
         }
+        LOG.debug("Отправка JSON-RPC notification: method={}", method);
         Allure.step("Отправить JSON-RPC notification: " + method, () -> writeMessage(notification));
     }
 

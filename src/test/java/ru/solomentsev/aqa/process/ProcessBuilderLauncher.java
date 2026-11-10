@@ -1,5 +1,8 @@
 package ru.solomentsev.aqa.process;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.Objects;
  * STDOUT и STDERR остаются раздельными. Класс не знает о MCP и Docker lifecycle.</p>
  */
 public final class ProcessBuilderLauncher {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessBuilderLauncher.class);
 
     /**
      * Запускает процесс с указанной командой.
@@ -54,6 +59,10 @@ public final class ProcessBuilderLauncher {
             processBuilder.directory(workingDirectory.toFile());
         }
 
-        return new ManagedProcess(processBuilder.start(), cleanup);
+        LOG.debug("Запуск процесса: executable={}, argumentsCount={}, environmentKeys={}, workingDirectory={}",
+                command.get(0), command.size() - 1, environment.keySet(), workingDirectory);
+        Process process = processBuilder.start();
+        LOG.info("Процесс запущен: executable={}, pid={}", command.get(0), process.pid());
+        return new ManagedProcess(process, cleanup);
     }
 }

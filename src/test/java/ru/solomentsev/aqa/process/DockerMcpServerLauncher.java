@@ -1,5 +1,8 @@
 package ru.solomentsev.aqa.process;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -24,6 +27,7 @@ import java.util.regex.Pattern;
  */
 public final class DockerMcpServerLauncher implements McpServerLauncher {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DockerMcpServerLauncher.class);
     private static final Pattern SAFE_RUN_ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9_.-]{0,58}");
     private static final Duration DOCKER_COMMAND_TIMEOUT = Duration.ofSeconds(15);
 
@@ -59,6 +63,7 @@ public final class DockerMcpServerLauncher implements McpServerLauncher {
                                  Path workingDirectory) throws IOException {
         Objects.requireNonNull(environment, "environment");
         List<String> command = buildRunCommand(dockerExecutable, containerName, envFile, image);
+        LOG.info("Запуск Docker-контейнера: name={}, image={}", containerName, image);
         return new ProcessBuilderLauncher().launch(
                 command,
                 environment,
@@ -87,6 +92,7 @@ public final class DockerMcpServerLauncher implements McpServerLauncher {
     }
 
     private void cleanupContainer() throws IOException {
+        LOG.info("Очистка Docker-контейнера: name={}", containerName);
         CommandResult inspect = executeDocker(
                 "inspect",
                 "--format={{index .Config.Labels \"aqa.run-id\"}}|{{.State.Running}}",
@@ -110,6 +116,7 @@ public final class DockerMcpServerLauncher implements McpServerLauncher {
         }
 
         if ("true".equalsIgnoreCase(state[1])) {
+            LOG.debug("Остановка Docker-контейнера: name={}, timeout={}s", containerName, stopTimeoutSeconds);
             executeDocker("stop", "--time", Integer.toString(stopTimeoutSeconds), containerName);
         }
 
@@ -118,6 +125,7 @@ public final class DockerMcpServerLauncher implements McpServerLauncher {
             throw new IOException("Failed to remove Docker container " + containerName
                     + ": " + remove.output());
         }
+        LOG.info("Docker-контейнер очищен: name={}", containerName);
     }
 
     private CommandResult executeDocker(String... arguments) throws IOException {

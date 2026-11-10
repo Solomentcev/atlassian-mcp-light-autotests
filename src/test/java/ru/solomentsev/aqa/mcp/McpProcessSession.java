@@ -1,6 +1,8 @@
 package ru.solomentsev.aqa.mcp;
 
 import io.qameta.allure.Allure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ru.solomentsev.aqa.process.ManagedProcess;
 import ru.solomentsev.aqa.process.McpServerLauncher;
@@ -15,6 +17,8 @@ import java.util.Objects;
 
 /** Управляет жизненным циклом одного тестового экземпляра MCP-сервера. */
 public final class McpProcessSession implements AutoCloseable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(McpProcessSession.class);
 
     private static final int DEFAULT_STDERR_LIMIT = 64 * 1024;
     private static final Duration STDERR_SHUTDOWN_TIMEOUT = Duration.ofSeconds(2);
@@ -86,8 +90,11 @@ public final class McpProcessSession implements AutoCloseable {
             Objects.requireNonNull(startupTimeout, "startupTimeout");
         }
 
+        LOG.info("Запуск тестовой MCP-сессии: launcher={}, handshake={}",
+                launcher.getClass().getSimpleName(), initialize);
         ManagedProcess process = Allure.step("Запустить тестовый MCP-процесс", () ->
                 launcher.launch(environment, workingDirectory));
+        LOG.info("Тестовый MCP-процесс создан: pid={}", process.pid());
         StderrCollector stderrCollector = new StderrCollector(process.stderr(), DEFAULT_STDERR_LIMIT);
         McpClient client = new McpClient(process.stdout(), process.stdin());
 
@@ -101,8 +108,11 @@ public final class McpProcessSession implements AutoCloseable {
             if (!process.isAlive()) {
                 throw new McpClientException("MCP process terminated during readiness handshake");
             }
+            LOG.info("MCP-сессия готова: pid={}, mode={}",
+                    process.pid(), initialize ? "classic" : "stateless");
             return new McpProcessSession(process, stderrCollector, client);
         } catch (RuntimeException | Error exception) {
+            LOG.error("Не удалось запустить MCP-сессию: pid={}", process.pid(), exception);
             client.close();
             try {
                 closeProcessWithAllure(process);
@@ -165,6 +175,7 @@ public final class McpProcessSession implements AutoCloseable {
         if (closed) {
             return;
         }
+        LOG.info("Завершение MCP-сессии: pid={}", process.pid());
         client.close();
 
         IOException closeException = null;
@@ -203,8 +214,11 @@ public final class McpProcessSession implements AutoCloseable {
         }
 
         if (closeException != null) {
+            LOG.error("Ошибка при завершении MCP-сессии: pid={}", process.pid(), closeException);
             throw closeException;
         }
         closed = true;
+        LOG.info("MCP-сессия завершена: pid={}, stderrCharacters={}",
+                process.pid(), stderrCollector.content().length());
     }
 }

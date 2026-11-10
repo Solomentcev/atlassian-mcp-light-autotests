@@ -1,5 +1,7 @@
 package ru.solomentsev.aqa.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.process.DockerMcpServerLauncher;
@@ -17,6 +19,8 @@ import java.util.UUID;
 
 /** Читает настройки запуска MCP-сервера из system properties и environment. */
 public final class McpServerConfiguration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(McpServerConfiguration.class);
 
     public static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofSeconds(15);
     private static final int DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS = 10;
@@ -63,6 +67,16 @@ public final class McpServerConfiguration {
                 "aqa.docker.stopTimeoutSeconds", "AQA_DOCKER_STOP_TIMEOUT_SECONDS",
                 Integer.toString(DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS)),
                 "Docker stop timeout"));
+
+        LOG.info("Конфигурация AQA: mode={}, startupTimeout={}, protocolVersion={}",
+                mode, startupTimeout, protocolVersion);
+        if (mode.equals("local")) {
+            LOG.info("Локальный MCP-сервер: java={}, jar={}, workingDirectory={}",
+                    javaExecutable, serverJar, workingDirectory);
+        } else {
+            LOG.info("Docker MCP-сервер: executable={}, image={}, envFile={}, stopTimeout={}s",
+                    dockerExecutable, dockerImage, dockerEnvFile, dockerStopTimeoutSeconds);
+        }
 
         if (!mode.equals("local") && !mode.equals("docker")) {
             throw new IllegalArgumentException("AQA_SERVER_MODE must be 'local' or 'docker'");
