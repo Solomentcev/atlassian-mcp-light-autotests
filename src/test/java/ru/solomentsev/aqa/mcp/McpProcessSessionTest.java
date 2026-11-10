@@ -1,8 +1,9 @@
 package ru.solomentsev.aqa.mcp;
 
 import org.junit.jupiter.api.Test;
-import ru.solomentsev.aqa.process.DefaultProcessLauncher;
 import ru.solomentsev.aqa.process.ManagedProcess;
+import ru.solomentsev.aqa.process.McpServerLauncher;
+import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -15,24 +16,8 @@ class McpProcessSessionTest {
 
     @Test
     void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
-        String javaExecutable = Path.of(
-                System.getProperty("java.home"),
-                "bin",
-                isWindows() ? "java.exe" : "java"
-        ).toString();
-        String testClasspath = System.getProperty(
-                "surefire.test.class.path",
-                System.getProperty("java.class.path")
-        );
-
         McpProcessSession session = McpProcessSession.start(
-                new DefaultProcessLauncher(),
-                List.of(
-                        javaExecutable,
-                        "-cp",
-                        testClasspath,
-                        FakeMcpServer.class.getName()
-                ),
+                launcherFor(FakeMcpServer.class),
                 Map.of(),
                 null,
                 "2025-11-25",
@@ -55,28 +40,12 @@ class McpProcessSessionTest {
 
     @Test
     void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
-        String javaExecutable = Path.of(
-                System.getProperty("java.home"),
-                "bin",
-                isWindows() ? "java.exe" : "java"
-        ).toString();
-        String testClasspath = System.getProperty(
-                "surefire.test.class.path",
-                System.getProperty("java.class.path")
-        );
-
         McpProcessSession session = McpProcessSession.startWithoutHandshake(
-                new DefaultProcessLauncher(),
-                List.of(
-                        javaExecutable,
-                        "-cp",
-                        testClasspath,
-                        FakeStatelessMcpServer.class.getName()
-                ),
+                launcherFor(FakeStatelessMcpServer.class),
                 Map.of(),
                 null
         );
-        var process = session.process();
+        ManagedProcess process = session.process();
 
         try {
             assertThat(process.isAlive()).isTrue();
@@ -100,6 +69,26 @@ class McpProcessSessionTest {
 
         assertThat(process.waitFor(Duration.ofSeconds(3))).isTrue();
         assertThat(process.exitCode()).isZero();
+    }
+
+    private static McpServerLauncher launcherFor(Class<?> serverClass) {
+        String javaExecutable = Path.of(
+                System.getProperty("java.home"),
+                "bin",
+                isWindows() ? "java.exe" : "java"
+        ).toString();
+        String testClasspath = System.getProperty(
+                "surefire.test.class.path",
+                System.getProperty("java.class.path")
+        );
+        List<String> command = List.of(
+                javaExecutable,
+                "-cp",
+                testClasspath,
+                serverClass.getName()
+        );
+        return (environment, workingDirectory) ->
+                new ProcessBuilderLauncher().launch(command, environment, workingDirectory);
     }
 
     private static boolean isWindows() {

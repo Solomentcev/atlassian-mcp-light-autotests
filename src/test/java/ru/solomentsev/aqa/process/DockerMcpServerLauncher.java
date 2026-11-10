@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * останавливает его при необходимости и удаляет принудительно, если
  * автоматическое удаление через {@code --rm} не сработало.</p>
  */
-public final class DockerProcessLauncher implements ProcessLauncher {
+public final class DockerMcpServerLauncher implements McpServerLauncher {
 
     private static final Pattern SAFE_RUN_ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9_.-]{0,58}");
     private static final Duration DOCKER_COMMAND_TIMEOUT = Duration.ofSeconds(15);
@@ -33,16 +33,7 @@ public final class DockerProcessLauncher implements ProcessLauncher {
     private final String containerName;
     private final int stopTimeoutSeconds;
 
-    /**
-     * Создаёт Docker launcher.
-     *
-     * @param dockerExecutable путь или имя Docker CLI
-     * @param image имя уже собранного Docker image
-     * @param envFile файл переменных окружения контейнера
-     * @param runId уникальный идентификатор AQA-прогона
-     * @param stopTimeoutSeconds время штатной остановки контейнера
-     */
-    public DockerProcessLauncher(String dockerExecutable,
+    public DockerMcpServerLauncher(String dockerExecutable,
                                  String image,
                                  Path envFile,
                                  String runId,
@@ -63,25 +54,12 @@ public final class DockerProcessLauncher implements ProcessLauncher {
         this.stopTimeoutSeconds = stopTimeoutSeconds;
     }
 
-    /**
-     * Запускает контейнер и возвращает Docker CLI как управляемый процесс.
-     *
-     * @param containerCommand необязательная команда внутри контейнера;
-     *                         пустой список использует ENTRYPOINT/CMD образа
-     * @param environment переменные окружения процесса Docker CLI
-     * @param workingDirectory рабочий каталог Docker CLI
-     * @return управление потоками Docker CLI
-     * @throws IOException если Docker CLI не удалось запустить
-     */
     @Override
-    public ManagedProcess launch(List<String> containerCommand,
-                                 Map<String, String> environment,
+    public ManagedProcess launch(Map<String, String> environment,
                                  Path workingDirectory) throws IOException {
-        Objects.requireNonNull(containerCommand, "containerCommand");
         Objects.requireNonNull(environment, "environment");
-        List<String> command = buildRunCommand(
-                dockerExecutable, containerName, envFile, image, containerCommand);
-        return new DefaultProcessLauncher().launch(
+        List<String> command = buildRunCommand(dockerExecutable, containerName, envFile, image);
+        return new ProcessBuilderLauncher().launch(
                 command,
                 environment,
                 workingDirectory,
@@ -89,21 +67,10 @@ public final class DockerProcessLauncher implements ProcessLauncher {
         );
     }
 
-    /**
-     * Формирует команду запуска контейнера.
-     *
-     * @param dockerExecutable Docker CLI
-     * @param containerName уникальное имя контейнера
-     * @param envFile файл окружения
-     * @param image Docker image
-     * @param containerCommand необязательная команда контейнера
-     * @return аргументы Docker CLI
-     */
     static List<String> buildRunCommand(String dockerExecutable,
                                         String containerName,
                                         Path envFile,
-                                        String image,
-                                        List<String> containerCommand) {
+                                        String image) {
         List<String> command = new ArrayList<>();
         command.add(dockerExecutable);
         command.add("run");
@@ -116,7 +83,6 @@ public final class DockerProcessLauncher implements ProcessLauncher {
         command.add("--env-file");
         command.add(envFile.toAbsolutePath().normalize().toString());
         command.add(image);
-        command.addAll(containerCommand);
         return List.copyOf(command);
     }
 
@@ -147,7 +113,6 @@ public final class DockerProcessLauncher implements ProcessLauncher {
             executeDocker("stop", "--time", Integer.toString(stopTimeoutSeconds), containerName);
         }
 
-        // A stopped container is removed normally; a still-running one is force-removed.
         CommandResult remove = executeDocker("rm", "-f", containerName);
         if (remove.exitCode() != 0 && !remove.output().toLowerCase().contains("no such container")) {
             throw new IOException("Failed to remove Docker container " + containerName

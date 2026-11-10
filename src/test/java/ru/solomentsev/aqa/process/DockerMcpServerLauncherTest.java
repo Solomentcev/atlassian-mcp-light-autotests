@@ -8,16 +8,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class DockerProcessLauncherTest {
+class DockerMcpServerLauncherTest {
 
     @Test
     void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {
-        List<String> command = DockerProcessLauncher.buildRunCommand(
+        List<String> command = DockerMcpServerLauncher.buildRunCommand(
                 "docker",
                 "aml-build_123",
                 Path.of(".runtime.env"),
-                "atlassian-mcp-light:latest",
-                List.of("java", "-jar", "app.jar")
+                "atlassian-mcp-light:latest"
         );
 
         assertThat(command).containsSubsequence(
@@ -25,13 +24,12 @@ class DockerProcessLauncherTest {
                 "--label", "aqa.run-id=build_123", "-i", "--env-file"
         );
         assertThat(command).contains("atlassian-mcp-light:latest");
-        assertThat(command).containsSubsequence("java", "-jar", "app.jar");
         assertThat(command).doesNotContain("-t", "-p", "--publish");
     }
 
     @Test
     void shouldRejectUnsafeRunId() {
-        assertThatThrownBy(() -> new DockerProcessLauncher(
+        assertThatThrownBy(() -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
                 Path.of(".runtime.env"),
@@ -43,7 +41,7 @@ class DockerProcessLauncherTest {
 
     @Test
     void shouldRejectZeroStopTimeout() {
-        assertThatThrownBy(() -> new DockerProcessLauncher(
+        assertThatThrownBy(() -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
                 Path.of(".runtime.env"),

@@ -44,16 +44,16 @@ Jenkins собирает тестируемый сервер из исходни
 
 ## Текущая реализация
 
-В ветке `feature/mcp-client` начата реализация базового STDIO-слоя:
+Базовая инфраструктура STDIO-слоя реализована в `src/test/java`:
 
-- `DefaultProcessLauncher` запускает команду через `ProcessBuilder`, не объединяя STDOUT и STDERR.
-- `ManagedProcess` предоставляет потоки процесса и выполняет штатное/принудительное завершение.
+- `McpServerLauncher` скрывает способ запуска тестового сервера; `LocalMcpServerLauncher` запускает JAR, а `DockerMcpServerLauncher` создаёт контейнер.
+- `ProcessBuilderLauncher` запускает системные команды через `ProcessBuilder`, не объединяя STDOUT и STDERR.
+- `ManagedProcess` предоставляет потоки процесса и подтверждает штатное/принудительное завершение.
 - `StderrCollector` независимо читает STDERR и хранит ограниченный хвост диагностики.
 - `McpClient` отправляет JSON-RPC сообщения по STDIN, читает ответы из STDOUT, проверяет request id и поддерживает классический `initialize → notifications/initialized`.
 - `McpProcessSession` объединяет запуск процесса, сбор STDERR, при необходимости classic MCP handshake и последующее завершение процесса; stateless-сессия запускается без initialize.
-- `DockerProcessLauncher` запускает отдельный контейнер через `docker run --rm -i`, без TTY и опубликованных портов. Для контейнера назначаются уникальные имя и label AQA run; cleanup проверяет label, выполняет stop и при необходимости rm -f.
 
-Docker launcher использует тот же `ManagedProcess`, `McpProcessSession` и `McpClient`, что и локальный режим. Для Docker CLI нужны доступный Docker Engine, собранный image и env-файл; AQA не подключается к уже работающему контейнеру.
+`McpProcessSession` зависит только от `McpServerLauncher` и использует тот же `ManagedProcess` и `McpClient` для локального и Docker-режимов. Для Docker CLI нужны доступный Docker Engine, собранный image и env-файл; AQA не подключается к уже работающему контейнеру.
 
 ### Конфигурация запуска тестов
 
@@ -95,7 +95,7 @@ mvn test
 
 В локальном режиме процесс наследует environment Jenkins agent. В Docker-режиме переменные тестируемого приложения передаются через указанный env-файл. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
 
-JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata, запуск stateless-сессии без initialize и валидацию конфигурации. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
+Вся AQA-инфраструктура размещена в `src/test/java`; Jackson также подключён с `test` scope, production-код и отдельный runtime JAR не создаются. Проверяется в том числе ошибка cleanup, если процесс остаётся жив после `destroyForcibly()`. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
 
 Stateless API клиента:
 - `discoverStateless(...)` — `server/discover`;

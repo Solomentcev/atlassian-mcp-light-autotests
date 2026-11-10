@@ -100,11 +100,40 @@ public final class StderrCollector implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        inputStream.close();
+        IOException closeException = null;
+        try {
+            inputStream.close();
+        } catch (IOException exception) {
+            closeException = exception;
+        }
+
+        boolean interrupted = false;
         try {
             readerThread.join(TimeUnit.SECONDS.toMillis(2));
         } catch (InterruptedException exception) {
+            interrupted = true;
+            IOException interruptedException = new IOException(
+                    "Interrupted while stopping STDERR collector", exception);
+            if (closeException == null) {
+                closeException = interruptedException;
+            } else {
+                closeException.addSuppressed(interruptedException);
+            }
+        }
+
+        if (readerThread.isAlive()) {
+            IOException timeoutException = new IOException("STDERR collector thread did not terminate");
+            if (closeException == null) {
+                closeException = timeoutException;
+            } else {
+                closeException.addSuppressed(timeoutException);
+            }
+        }
+
+        if (interrupted) {
             Thread.currentThread().interrupt();
         }
-    }
-}
+        if (closeException != null) {
+            throw closeException;
+        }
+    }}

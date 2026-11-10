@@ -9,7 +9,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DefaultProcessLauncherTest {
+class ProcessBuilderLauncherTest {
 
     @Test
     void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
@@ -19,8 +19,7 @@ class DefaultProcessLauncherTest {
                 isWindows() ? "java.exe" : "java"
         ).toString();
 
-        ProcessLauncher launcher = new DefaultProcessLauncher();
-        ManagedProcess process = launcher.launch(
+        ManagedProcess process = new ProcessBuilderLauncher().launch(
                 List.of(executable, "-version"),
                 Map.of(),
                 null

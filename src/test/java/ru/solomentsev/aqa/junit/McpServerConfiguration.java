@@ -1,27 +1,20 @@
 package ru.solomentsev.aqa.junit;
 
 import ru.solomentsev.aqa.mcp.McpProcessSession;
-import ru.solomentsev.aqa.process.DefaultProcessLauncher;
-import ru.solomentsev.aqa.process.DockerProcessLauncher;
-import ru.solomentsev.aqa.process.ProcessLauncher;
+import ru.solomentsev.aqa.process.DockerMcpServerLauncher;
+import ru.solomentsev.aqa.process.LocalMcpServerLauncher;
+import ru.solomentsev.aqa.process.McpServerLauncher;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
-/**
- * Читает настройки запуска MCP-сервера из system properties и environment.
- *
- * <p>System properties имеют приоритет. Поддерживаются два режима:
- * {@code local} запускает JAR через Java, {@code docker} создаёт отдельный
- * контейнер из заранее собранного image.</p>
- */
+/** Читает настройки запуска MCP-сервера из system properties и environment. */
 public final class McpServerConfiguration {
 
     private static final String DEFAULT_PROTOCOL_VERSION = "2025-11-25";
@@ -80,11 +73,7 @@ public final class McpServerConfiguration {
         }
     }
 
-    /**
-     * Создаёт конфигурацию из текущего окружения JVM.
-     *
-     * @return проверенная конфигурация
-     */
+    /** @return конфигурация, прочитанная из environment и system properties */
     public static McpServerConfiguration fromEnvironment() {
         return new McpServerConfiguration(System.getenv(), System.getProperties());
     }
@@ -93,56 +82,36 @@ public final class McpServerConfiguration {
         return new McpServerConfiguration(environment, properties);
     }
 
-    /**
-     * Запускает тестовый экземпляр и выполняет MCP readiness handshake.
-     *
-     * @return готовая сессия
-     * @throws IOException если процесс не удалось запустить
-     */
+    /** @return запущенная сессия с классическим MCP handshake */
     public McpProcessSession startSession() throws IOException {
         return startSession(true);
     }
 
-    /**
-     * Запускает тестовый экземпляр без classic initialize handshake.
-     *
-     * @return сессия для stateless MCP-запросов
-     * @throws IOException если процесс не удалось запустить
-     */
+    /** @return запущенная сессия без классического initialize handshake */
     public McpProcessSession startStatelessSession() throws IOException {
         return startSession(false);
     }
 
     private McpProcessSession startSession(boolean initialize) throws IOException {
-        ProcessLauncher launcher;
-        List<String> command;
-
+        McpServerLauncher launcher;
         if (mode.equals("local")) {
-            launcher = new DefaultProcessLauncher();
-            command = List.of(javaExecutable, "-jar", serverJar.toString());
+            launcher = new LocalMcpServerLauncher(javaExecutable, serverJar);
         } else {
-            launcher = new DockerProcessLauncher(
+            launcher = new DockerMcpServerLauncher(
                     dockerExecutable,
                     dockerImage,
                     dockerEnvFile,
                     runId,
                     dockerStopTimeoutSeconds
             );
-            command = List.of();
         }
 
         if (!initialize) {
-            return McpProcessSession.startWithoutHandshake(
-                    launcher,
-                    command,
-                    Map.of(),
-                    workingDirectory
-            );
+            return McpProcessSession.startWithoutHandshake(launcher, Map.of(), workingDirectory);
         }
 
         return McpProcessSession.start(
                 launcher,
-                command,
                 Map.of(),
                 workingDirectory,
                 protocolVersion,
@@ -152,11 +121,7 @@ public final class McpServerConfiguration {
         );
     }
 
-    /**
-     * Возвращает выбранный режим запуска.
-     *
-     * @return {@code local} или {@code docker}
-     */
+    /** @return выбранный режим запуска: {@code local} или {@code docker} */
     public String mode() {
         return mode;
     }

@@ -42,7 +42,9 @@ AQA проверяет собранное приложение через пуб
 | Компонент | Ответственность |
 |---|---|
 | Jenkins Pipeline | Checkout двух репозиториев, выбор ревизии сервера, сборка, запуск тестов, публикация результатов и cleanup |
-| AQA launcher | Создание и завершение тестового процесса/контейнера |
+| `McpServerLauncher` | Запуск тестового экземпляра в выбранной среде; реализации — `LocalMcpServerLauncher` и `DockerMcpServerLauncher` |
+| `ProcessBuilderLauncher` | Запуск системной команды через Java `ProcessBuilder`, без MCP- или Docker-логики |
+| `ManagedProcess` | Доступ к STDIO-потокам, подтверждение завершения дочернего процесса и связанный cleanup |
 | MCP Client | Обмен JSON-RPC сообщениями через STDIN/STDOUT, сопоставление request/response и таймауты |
 | STDERR collector | Независимое чтение и сохранение диагностического потока |
 | JUnit 5 | Управление тестами и lifecycle extensions |
@@ -74,7 +76,7 @@ STDERR процесса читается отдельным collector и не с
 
 ### 5.1. Локальный JAR
 
-AQA launcher создаёт процесс Java через ProcessBuilder. Концептуальная команда:
+`LocalMcpServerLauncher` формирует команду Java и передаёт её `ProcessBuilderLauncher`. Концептуальная команда:
 
     java -jar path/to/atlassian-mcp-app.jar
 
@@ -88,7 +90,7 @@ MCP Client пишет в STDIN JSONL-сообщения и читает JSONL-о
 
 ### 5.2. Docker
 
-AQA launcher запускает Docker CLI как дочерний процесс. Концептуальная команда:
+`DockerMcpServerLauncher` формирует команду Docker CLI и запускает её через `ProcessBuilderLauncher`. Концептуальная команда:
 
     docker run --rm --name "aml-${AQA_RUN_ID}" -i --env-file .runtime.env atlassian-mcp-light:latest
 
@@ -107,7 +109,9 @@ Docker CLI не является MCP Bridge и не разбирает прот�
 
 ### 5.3. Единый интерфейс launcher
 
-Оба режима должны предоставлять MCP Client единый объект управления процессом с:
+`McpServerLauncher` скрывает выбор среды запуска от `McpProcessSession`. Оба режима возвращают одинаковый `ManagedProcess`; низкоуровневый `ProcessBuilderLauncher` не знает о MCP или Docker lifecycle.
+
+Оба режима предоставляют MCP Client единый объект управления процессом с:
 
 - input stream для отправки запросов;
 - output stream для чтения ответов;
@@ -131,12 +135,12 @@ Docker CLI не является MCP Bridge и не разбирает прот�
 6. Выполнить тесты.
 7. Закрыть STDIN и предоставить серверу возможность завершиться штатно.
 8. Дождаться завершения в пределах configured shutdown timeout.
-9. Если процесс не завершился, выполнить принудительную остановку.
+9. Если процесс не завершился после штатной остановки, выполнить `destroyForcibly()` и обязательно подтвердить завершение повторным ожиданием; если процесс остался жив, cleanup завершается явной ошибкой.
 10. Завершить collector, сохранить STDOUT/STDERR диагностику и освободить ресурсы.
 
 ProcessBuilder.start() подтверждает только создание OS-процесса, но не готовность MCP-сервера. Готовность подтверждается корректным протокольным ответом.
 
-Lifecycle должен быть реализован через JUnit extension или эквивалентный централизованный механизм. Cleanup обязателен в finally/after callbacks и должен выполняться при assertion failure, exception и timeout.
+Lifecycle реализован через JUnit extension. Cleanup обязателен в finally/after callbacks и должен выполняться при assertion failure, exception и timeout.
 
 ### Docker cleanup
 

@@ -7,14 +7,22 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Запускает дочерний процесс средствами {@link ProcessBuilder}.
+ * Запускает системную команду средствами {@link ProcessBuilder}.
  *
  * <p>Команда передаётся списком аргументов без промежуточной shell-интерпретации.
- * STDOUT и STDERR остаются раздельными.</p>
+ * STDOUT и STDERR остаются раздельными. Класс не знает о MCP и Docker lifecycle.</p>
  */
-public final class DefaultProcessLauncher implements ProcessLauncher {
+public final class ProcessBuilderLauncher {
 
-    @Override
+    /**
+     * Запускает процесс с указанной командой.
+     *
+     * @param command executable и аргументы процесса
+     * @param environment дополнительные или переопределяемые переменные окружения
+     * @param workingDirectory рабочий каталог; {@code null} означает каталог JVM
+     * @return управление запущенным процессом
+     * @throws IOException если процесс не удалось запустить
+     */
     public ManagedProcess launch(List<String> command,
                                  Map<String, String> environment,
                                  Path workingDirectory) throws IOException {
