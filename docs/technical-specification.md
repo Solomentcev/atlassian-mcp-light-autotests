@@ -211,11 +211,17 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 Для типовых запросов доступны `discoverStateless` и `listToolsStateless`. Версия stateless-протокола задаётся вызывающим тестом отдельно от версии классического initialize lifecycle.
 
-Интеграционный класс `McpContractIntegrationTest` помечен условием `AQA_RUN_INTEGRATION=true` и запускается Maven-профилем `integration`. Он проверяет:
+Интеграционные классы помечены условием `AQA_RUN_INTEGRATION=true` и запускаются Maven-профилем `integration`.
+
+`McpContractIntegrationTest` проверяет:
 - discovery и опубликованные сервером stateless protocol versions;
-- наличие всех 13 имён инструментов и базовую структуру их inputSchema;
+- все 13 имён инструментов, точный набор свойств, required, типы, строковые minLength и числовые границы inputSchema;
+- annotations readOnlyHint, destructiveHint, idempotentHint и openWorldHint;
 - отклонение неподдерживаемой версии с JSON-RPC кодом `-32022`;
-- отличие MCP tool error неизвестного инструмента от JSON-RPC error.
+- ошибки отсутствующих обязательных, лишних и пустых аргументов, границы limit и условие title/content для Confluence update;
+- отличие MCP tool error от JSON-RPC error.
+
+`McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что stateless discovery и tools/list доступны независимо от состояния классического lifecycle.
 
 Интеграционный прогон запускает реальный сервер и поэтому требует тестовой конфигурации Jira/Confluence. Проверки discovery/list и неизвестного инструмента не создают и не изменяют Atlassian-объекты. Обычный `mvn test` пропускает интеграционный класс и не требует серверного JAR или Docker image.
 
