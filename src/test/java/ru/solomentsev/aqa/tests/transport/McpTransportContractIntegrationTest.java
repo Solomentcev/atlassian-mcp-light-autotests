@@ -52,7 +52,7 @@ class McpTransportContractIntegrationTest {
             assertThat(ping.has("error"))
                     .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
                     .isFalse();
-            assertThat(ping.path("result").isObject()).isTrue();
+            assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
         }
     }
 
@@ -68,7 +68,7 @@ class McpTransportContractIntegrationTest {
         {            sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
             var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32700);
-            assertThat(error.get("id").isNull()).isTrue();
+            assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
 
             var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error"))
@@ -89,7 +89,7 @@ class McpTransportContractIntegrationTest {
         {            sendRawLine(client, "{invalid-json");
             var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32700);
-            assertThat(error.get("id").isNull()).isTrue();
+            assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
 
             var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error"))
@@ -110,7 +110,7 @@ class McpTransportContractIntegrationTest {
         {            sendRawLine(client, "[]");
             var error = awaitRawResponse(client, REQUEST_TIMEOUT);
             assertJsonRpcError(error, -32600);
-            assertThat(error.get("id").isNull()).isTrue();
+            assertThat(error.get("id").isNull()).as("Проверка error.get('id').isNull(): ожидалось isTrue").isTrue();
 
             var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
             assertThat(ping.has("error"))
@@ -153,8 +153,8 @@ class McpTransportContractIntegrationTest {
             assertJsonRpcError(error, -32600);
 
             var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
-            assertThat(tools.has("error")).isFalse();
-            assertThat(tools.path("result").path("tools").isArray()).isTrue();
+            assertThat(tools.has("error")).as("Проверка tools.has('error'): ожидалось isFalse").isFalse();
+            assertThat(tools.path("result").path("tools").isArray()).as("Проверка tools.path('result').path('tools').isArray(): ожидалось isTrue").isTrue();
         }
     }
 
@@ -174,7 +174,7 @@ class McpTransportContractIntegrationTest {
             assertThat(ping.has("error"))
                     .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
                     .isFalse();
-            assertThat(ping.path("result").isObject()).isTrue();
+            assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
         
         }
     }
@@ -213,7 +213,7 @@ class McpTransportContractIntegrationTest {
             assertThat(ping.has("error"))
                     .as("После обработки некорректной строки сервер должен продолжать принимать запросы")
                     .isFalse();
-            assertThat(ping.path("result").isObject()).isTrue();
+            assertThat(ping.path("result").isObject()).as("Проверка ping.path('result').isObject(): ожидалось isTrue").isTrue();
         
         }
     }
@@ -238,8 +238,8 @@ class McpTransportContractIntegrationTest {
             assertJsonRpcError(response, -32600);
 
             var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
-            assertThat(tools.has("error")).isFalse();
-            assertThat(tools.path("result").path("tools").isArray()).isTrue();
+            assertThat(tools.has("error")).as("Проверка tools.has('error'): ожидалось isFalse").isFalse();
+            assertThat(tools.path("result").path("tools").isArray()).as("Проверка tools.path('result').path('tools').isArray(): ожидалось isTrue").isTrue();
         
         }
     }

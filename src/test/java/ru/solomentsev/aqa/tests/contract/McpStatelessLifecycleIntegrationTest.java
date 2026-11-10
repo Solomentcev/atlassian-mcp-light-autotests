@@ -72,10 +72,10 @@ class McpStatelessLifecycleIntegrationTest {
                 assertThat(response.path("result").path("resultType").asText())
                         .as("Stateless-ответ должен иметь resultType=complete")
                         .isEqualTo("complete");
-                assertThat(response.path("result").path("supportedVersions").isArray()).isTrue();
-                assertThat(response.path("result").path("capabilities").path("tools").isObject()).isTrue();
+                assertThat(response.path("result").path("supportedVersions").isArray()).as("Проверка response.path('result').path('supportedVersions').isArray(): ожидалось isTrue").isTrue();
+                assertThat(response.path("result").path("capabilities").path("tools").isObject()).as("Проверка response.path('result').path('capabilities').path('tools').isObject(): ожидалось isTrue").isTrue();
                 assertThat(response.path("result").path("_meta")
-                        .path("io.modelcontextprotocol/serverInfo").path("name").asText())
+                        .path("io.modelcontextprotocol/serverInfo").path("name").asText()).as("Проверка response.path('result').path('_meta') .path('io.modelcontextprotocol/serverInfo').path('name').asTex: ожидалось isEqualTo('atlassian-lite')")
                         .isEqualTo("atlassian-lite");
             }
         }
