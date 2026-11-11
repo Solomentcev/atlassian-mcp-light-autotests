@@ -215,7 +215,7 @@ class McpContractIntegrationTest {
     @Story("MCP-010 — Вызов неизвестного инструмента")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-010: tools/call неизвестного инструмента [name=aqa_unknown_tool] возвращает MCP tool error")
-    @Description("Предусловия: Инициализация завершена\nШаги: 1. Вызвать `tools/call` с неизвестным именем инструмента.\nОжидаемый результат: Сервер возвращает JSON-RPC response с `result.isError=true` и текстом ошибки в `result.content`; верхнеуровневый JSON-RPC `error` для ошибки dispatch не используется.")
+    @Description("Предусловия: MCP-сервер запущен; stateless-вызов tools/call доступен.\nШаги: вызвать tools/call с name=aqa_unknown_tool и arguments={}.\nОжидаемый результат: JSON-RPC response содержит result.isError=true и текстовую диагностику в result.content; верхнеуровневое поле error отсутствует.")
     @Tag("negative")
     @Tag("case-MCP-010")
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
@@ -233,7 +233,7 @@ class McpContractIntegrationTest {
     @Story("MCP-011 — Вызов инструмента без обязательного аргумента")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-011: jira_get_issue без обязательного issue_key [arguments={}] возвращает MCP tool error")
-    @Description("Предусловия: Инициализация завершена\nШаги: 1. Вызвать инструмент без одного обязательного аргумента.\nОжидаемый результат: Возвращается JSON-RPC response с `result.isError=true`; `result.content[0].text` содержит сообщение об ошибке обязательного параметра.")
+    @Description("Предусловия: MCP-сервер запущен; jira_get_issue требует обязательный аргумент issue_key.\nШаги: вызвать stateless tools/call с name=jira_get_issue и arguments={}, то есть без issue_key.\nОжидаемый результат: JSON-RPC response содержит result.isError=true; result.content[0].text содержит текстовую диагностику; верхнеуровневое поле error отсутствует.")
     @Tag("negative")
     @Tag("case-MCP-011")
     @Tag("jira")
@@ -243,7 +243,7 @@ class McpContractIntegrationTest {
         Allure.parameter("Переданные arguments", "{}");
         JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
-        assertToolError(response);
+        assertToolError(response, "jira_get_issue без обязательного issue_key (arguments={})");
     
     
     }
@@ -253,7 +253,7 @@ class McpContractIntegrationTest {
     @Story("MCP-034 — Валидация пустых и null значений аргументов")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-034: jira_get_issue отклоняет issue_key=null, пустую и пробельную строки; валидный ключ=" + JiraTestData.ISSUE_KEY)
-    @Description("Предусловия: Classic lifecycle завершён; доступен jira_get_issue.\nШаги: по отдельности передать null, пустую строку и строку из пробельных символов в обязательный аргумент issue_key; после негативных вызовов выполнить валидный вызов.\nОжидаемый результат: каждый некорректный вызов возвращает MCP tool error (result.isError=true); следующий валидный вызов обрабатывается штатно.")
+    @Description("Предусловия: MCP-сервер запущен; доступен stateless-вызов jira_get_issue.\nШаги: по отдельности передать issue_key=null, issue_key=\"\" и issue_key из трёх пробелов; после трёх негативных вызовов передать issue_key=" + JiraTestData.ISSUE_KEY + ".\nОжидаемый результат: каждый некорректный аргумент приводит к MCP tool error (result.isError=true); контрольный вызов с валидным ключом возвращает result.isError=false.")
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
@@ -330,7 +330,7 @@ class McpContractIntegrationTest {
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", JiraTestData.ISSUE_KEY);
         arguments.put("unexpected", "value");
-        assertToolError(callTool(client, "jira_get_issue", arguments));
+        assertToolError(callTool(client, "jira_get_issue", arguments), "jira_get_issue с дополнительным аргументом unexpected=value");
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
