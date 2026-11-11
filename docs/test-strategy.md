@@ -110,7 +110,7 @@ AQA не импортирует внутренние классы основно
 
 ### 5.4. End-to-end tests
 
-Критичный путь: тест → MCP Client → STDIO процесса Atlassian MCP Light → MCP tool → Atlassian API → результат.
+Целевой критичный путь: тест → MCP Client → STDIO процесса Atlassian MCP Light → MCP tool → Atlassian API → результат. Полноценные end-to-end проверки реальных Jira/Confluence операций в текущей версии ещё не реализованы; существующие integration-классы проверяют MCP contract, lifecycle и transport.
 
 ## 6. Инструменты под тестированием
 
