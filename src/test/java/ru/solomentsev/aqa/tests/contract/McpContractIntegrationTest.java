@@ -293,7 +293,7 @@ class McpContractIntegrationTest {
 
     private static Stream<Arguments> requiredArgumentCases() {
         return Stream.of(
-                Arguments.of("null", null),
+                Arguments.of("null", (String) null),
                 Arguments.of("пустая строка", ""),
                 Arguments.of("строка из трёх пробелов", "   ")
         );
