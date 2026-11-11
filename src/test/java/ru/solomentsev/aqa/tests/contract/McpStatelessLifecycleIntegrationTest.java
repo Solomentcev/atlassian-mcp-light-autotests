@@ -68,7 +68,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Tag("case-MCP-019")
     @Tag("smoke")
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
-        Allure.parameter("MCP method", "server/discover");
+        Allure.parameter("MCP method", McpTestData.SERVER_DISCOVER_METHOD);
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
 
         McpProcessSession session = Allure.step(
@@ -153,7 +153,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Tag("case-MCP-021")
     @Tag("smoke")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
-        Allure.parameter("MCP method", "tools/call");
+        Allure.parameter("MCP method", McpTestData.TOOLS_CALL_METHOD);
         Allure.parameter("MCP tool", ConfluenceTestData.LIST_SPACES_TOOL);
         Allure.parameter("arguments.limit", McpTestData.DEFAULT_LIMIT);
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
@@ -163,7 +163,7 @@ class McpStatelessLifecycleIntegrationTest {
             params.put("name", ConfluenceTestData.LIST_SPACES_TOOL);
             params.putObject("arguments").put("limit", McpTestData.DEFAULT_LIMIT);
             JsonNode response = Allure.step("Вызвать stateless tool " + ConfluenceTestData.LIST_SPACES_TOOL + " с arguments.limit=" + McpTestData.DEFAULT_LIMIT, () -> session.client().requestStateless(
-                    "tools/call",
+                    McpTestData.TOOLS_CALL_METHOD,
                     params,
                     McpTestData.STATELESS_PROTOCOL_VERSION,
                     OBJECT_MAPPER.createObjectNode(),
