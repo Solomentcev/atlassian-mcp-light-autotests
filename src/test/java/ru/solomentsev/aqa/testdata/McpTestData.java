@@ -34,6 +34,7 @@ public final class McpTestData {
     public static final int JSON_RPC_METHOD_NOT_FOUND = -32601;
     public static final int JSON_RPC_INVALID_PARAMS = -32602;
     public static final int MCP_UNSUPPORTED_PROTOCOL_VERSION = -32022;
+    public static final int MCP_SERVER_NOT_INITIALIZED = -32001;
 
     public static final int EXPECTED_TOOL_COUNT = 13;
     public static final long DISCOVERY_TTL_MS = 300_000L;
@@ -51,8 +52,10 @@ public final class McpTestData {
 
     public static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofMillis(DEFAULT_STARTUP_TIMEOUT_MS);
     public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
-    public static final Duration SHORT_REQUEST_TIMEOUT = Duration.ofSeconds(3);
-    public static final Duration ASYNC_EVENT_TIMEOUT = Duration.ofSeconds(3);
+    public static final long SHORT_REQUEST_TIMEOUT_MS = 3_000L;
+    public static final long ASYNC_EVENT_TIMEOUT_MS = 3_000L;
+    public static final Duration SHORT_REQUEST_TIMEOUT = Duration.ofMillis(SHORT_REQUEST_TIMEOUT_MS);
+    public static final Duration ASYNC_EVENT_TIMEOUT = Duration.ofMillis(ASYNC_EVENT_TIMEOUT_MS);
     public static final Duration INVALID_REQUEST_TIMEOUT = Duration.ofSeconds(1);
     public static final Duration JAVA_VERSION_PROCESS_TIMEOUT = Duration.ofSeconds(15);
     public static final Duration STDERR_COLLECTION_TIMEOUT = Duration.ofSeconds(3);
