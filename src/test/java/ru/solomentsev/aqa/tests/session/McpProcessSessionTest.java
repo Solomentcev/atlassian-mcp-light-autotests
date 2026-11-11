@@ -1,17 +1,5 @@
 package ru.solomentsev.aqa.tests.session;
 
-import ru.solomentsev.aqa.mcp.McpClient;
-import ru.solomentsev.aqa.mcp.McpProcessSession;
-import ru.solomentsev.aqa.support.fake.FakeMcpServer;
-import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
-import ru.solomentsev.aqa.testdata.McpTestData;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.discoverStateless;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.listToolsStateless;
-import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.launcherFor;
-import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startSession;
-import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startStatelessSession;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -19,15 +7,25 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.DisplayName;
-import ru.solomentsev.aqa.process.ManagedProcess;
 
-import java.time.Duration;
 import java.util.Map;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import ru.solomentsev.aqa.mcp.McpProcessSession;
+import ru.solomentsev.aqa.process.ManagedProcess;
+import ru.solomentsev.aqa.support.fake.FakeMcpServer;
+import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
+import ru.solomentsev.aqa.testdata.McpTestData;
+
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.discoverStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.listToolsStateless;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
+import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.launcherFor;
+import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startSession;
+import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startStatelessSession;
 
 @Epic("AQA Test Infrastructure")
 @Tag("unit")
