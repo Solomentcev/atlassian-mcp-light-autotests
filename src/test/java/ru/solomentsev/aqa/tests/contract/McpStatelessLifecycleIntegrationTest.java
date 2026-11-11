@@ -81,29 +81,24 @@ class McpStatelessLifecycleIntegrationTest {
                             McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
 
             JsonNode result = response.path("result");
-            assertFalseStep("JSON-RPC response не содержит error", response.has("error"));
-            assertEqualsStep("result.resultType", result.path("resultType").asText(), "complete");
+            assertThat(response.has("error")).as("JSON-RPC response не содержит error" + " должно быть ложным").isFalse();
+            assertThat(result.path("resultType").asText()).as("result.resultType" + " должен совпадать с ожидаемым значением").isEqualTo("complete");
 
             JsonNode supportedVersions = result.path("supportedVersions");
-            assertTrueStep("result.supportedVersions является массивом", supportedVersions.isArray());
-            assertEqualsStep("Количество поддерживаемых версий", supportedVersions.size(), 3);
-            assertEqualsStep("supportedVersions[0] — stateless protocolVersion",
-                    supportedVersions.get(0).asText(), McpTestData.getStatelessProtocolVersion());
-            assertEqualsStep("supportedVersions[1] — classic protocolVersion",
-                    supportedVersions.get(1).asText(), McpTestData.getClassicProtocolVersion());
-            assertEqualsStep("supportedVersions[2] — legacy protocolVersion",
-                    supportedVersions.get(2).asText(), McpTestData.getLegacyProtocolVersion());
+            assertThat(supportedVersions.isArray()).as("result.supportedVersions является массивом" + " должно быть истинным").isTrue();
+            assertThat(supportedVersions.size()).as("Количество поддерживаемых версий" + " должен совпадать с ожидаемым значением").isEqualTo(3);
+            assertThat(supportedVersions.get(0).asText()).as("supportedVersions[0] — stateless protocolVersion" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getStatelessProtocolVersion());
+            assertThat(supportedVersions.get(1).asText()).as("supportedVersions[1] — classic protocolVersion" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getClassicProtocolVersion());
+            assertThat(supportedVersions.get(2).asText()).as("supportedVersions[2] — legacy protocolVersion" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getLegacyProtocolVersion());
 
             boolean toolsCapabilityIsObject = result.path("capabilities").path("tools").isObject();
-            assertTrueStep("result.capabilities.tools является объектом", toolsCapabilityIsObject);
-            assertEqualsStep("result.ttlMs", result.path("ttlMs").asLong(), McpTestData.getDiscoveryTtlMs());
-            assertEqualsStep("result.cacheScope", result.path("cacheScope").asText(),
-                    McpTestData.getDiscoveryCacheScope());
+            assertThat(toolsCapabilityIsObject).as("result.capabilities.tools является объектом" + " должно быть истинным").isTrue();
+            assertThat(result.path("ttlMs").asLong()).as("result.ttlMs" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getDiscoveryTtlMs());
+            assertThat(result.path("cacheScope").asText()).as("result.cacheScope" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getDiscoveryCacheScope());
 
             JsonNode serverInfo = result.path("_meta").path("io.modelcontextprotocol/serverInfo");
-            assertEqualsStep("serverInfo.name", serverInfo.path("name").asText(), McpTestData.getServerName());
-            assertEqualsStep("serverInfo.version", serverInfo.path("version").asText(),
-                    McpTestData.getServerVersion());
+            assertThat(serverInfo.path("name").asText()).as("serverInfo.name" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getServerName());
+            assertThat(serverInfo.path("version").asText()).as("serverInfo.version" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getServerVersion());
         }
     }
 
@@ -111,13 +106,14 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-020 — Вызов tools/list в stateless-режиме без initialize")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-020: stateless tools/list без initialize [protocolVersion=" + "2026-07-28" + "] возвращает " + 13 + " tools")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + "2026-07-28" + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools содержит ровно " + 13 + " инструментов; resultType=complete; serverInfo.name=" + "atlassian-lite" + " и serverInfo.version=" + "1.0.0" + ".")
+    @DisplayName("MCP-020: stateless tools/list без initialize возвращает инструменты по контракту")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + "2026-07-28" + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools соответствует количеству инструментов контракта; resultType=complete; serverInfo.name=" + "atlassian-lite" + " и serverInfo.version=" + "1.0.0" + ".")
     @Tag("case-MCP-020")
     @Tag("smoke")
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", McpTestData.getToolsListMethod());
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
+        Allure.parameter("Ожидаемое количество инструментов", McpTestData.getExpectedToolCount());
         Allure.parameter("Classic initialize", "не выполняется");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
@@ -220,7 +216,15 @@ class McpStatelessLifecycleIntegrationTest {
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode pingBeforeInitialize =
                     sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
-            assertEmptyPingResult(pingBeforeInitialize);
+            assertThat(pingBeforeInitialize.has("error"))
+                    .as("Ping не должен возвращать JSON-RPC error")
+                    .isFalse();
+            assertThat(pingBeforeInitialize.path("result").isObject())
+                    .as("Ping должен возвращать объект result")
+                    .isTrue();
+            assertThat(pingBeforeInitialize.path("result").isEmpty())
+                    .as("Ping должен возвращать пустой объект result")
+                    .isTrue();
 
             ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
             initializeParams.put("protocolVersion", McpTestData.getClassicProtocolVersion());
@@ -236,7 +240,15 @@ class McpStatelessLifecycleIntegrationTest {
 
             JsonNode pingBeforeReady =
                     sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
-            assertEmptyPingResult(pingBeforeReady);
+            assertThat(pingBeforeReady.has("error"))
+                    .as("Ping не должен возвращать JSON-RPC error")
+                    .isFalse();
+            assertThat(pingBeforeReady.path("result").isObject())
+                    .as("Ping должен возвращать объект result")
+                    .isTrue();
+            assertThat(pingBeforeReady.path("result").isEmpty())
+                    .as("Ping должен возвращать пустой объект result")
+                    .isTrue();
 
             JsonNode toolsBeforeReady =
                     sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
@@ -248,7 +260,15 @@ class McpStatelessLifecycleIntegrationTest {
 
             JsonNode pingAfterReady =
                     sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
-            assertEmptyPingResult(pingAfterReady);
+            assertThat(pingAfterReady.has("error"))
+                    .as("Ping не должен возвращать JSON-RPC error")
+                    .isFalse();
+            assertThat(pingAfterReady.path("result").isObject())
+                    .as("Ping должен возвращать объект result")
+                    .isTrue();
+            assertThat(pingAfterReady.path("result").isEmpty())
+                    .as("Ping должен возвращать пустой объект result")
+                    .isTrue();
 
             JsonNode toolsAfterReady =
                     sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
@@ -262,27 +282,6 @@ class McpStatelessLifecycleIntegrationTest {
     
     }
 
-    @Step("Сравнить {label}: фактически={actual}, ожидается={expected}")
-    private static <T> void assertEqualsStep(String label, T actual, T expected) {
-        assertThat(actual)
-                .as("%s должен совпадать с ожидаемым значением", label)
-                .isEqualTo(expected);
-    }
-
-    @Step("Проверить условие «{label}»: фактически={actual}, ожидается=true")
-    private static void assertTrueStep(String label, boolean actual) {
-        assertThat(actual)
-                .as("%s должно быть истинным", label)
-                .isTrue();
-    }
-
-    @Step("Проверить условие «{label}»: фактически={actual}, ожидается=false")
-    private static void assertFalseStep(String label, boolean actual) {
-        assertThat(actual)
-                .as("%s должно быть ложным", label)
-                .isFalse();
-    }
-
     @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
     private static JsonNode sendRequest(ru.solomentsev.aqa.mcp.McpClient client,
                                         String method,
@@ -291,16 +290,4 @@ class McpStatelessLifecycleIntegrationTest {
         return client.request(method, params, timeout);
     }
 
-    @Step("Проверить, что ping возвращает пустой объект result")
-    private static void assertEmptyPingResult(JsonNode response) {
-        assertThat(response.has("error"))
-                        .as("Ping должен завершаться без JSON-RPC error")
-                        .isFalse();
-        assertThat(response.path("result").isObject())
-                .as("Ping должен возвращать объект result")
-                .isTrue();
-        assertThat(response.path("result").isEmpty())
-                .as("Результат ping должен быть пустым объектом")
-                .isTrue();
-    }
 }
