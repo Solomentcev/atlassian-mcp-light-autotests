@@ -40,14 +40,14 @@ class ManagedProcessTest {
         NonTerminatingProcess process = new NonTerminatingProcess();
         ManagedProcess managedProcess = new ManagedProcess(process);
 
-        assertThatThrownBy(managedProcess::close)
-                .as("Если процесс не завершился после destroyForcibly, close должен сообщить об ошибке")
+        assertThatThrownBy(() -> Allure.step("Закрыть процесс, который остаётся активным после destroyForcibly", managedProcess::close))
+                .as("Если процесс остаётся активным после destroyForcibly, close должен выбросить IOException")
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("did not terminate after destroyForcibly");
-        assertThat(process.destroyForciblyCalled).as("После таймаута ManagedProcess должен вызвать destroyForcibly").isTrue();
+        assertThat(process.destroyForciblyCalled).as("После неудачного graceful shutdown ManagedProcess должен вызвать destroyForcibly, фактически: %s", process.destroyForciblyCalled).isTrue();
 
         process.alive = false;
-        managedProcess.close();
+        Allure.step("Повторно закрыть ManagedProcess после фактического завершения дочернего процесса", managedProcess::close);
         assertThat(managedProcess.isAlive()).as("После завершения процесса ManagedProcess должен сообщать isAlive=false").isFalse();
     
     
