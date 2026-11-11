@@ -30,7 +30,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 @Epic("AQA Test Infrastructure")
 @Tag("unit")
@@ -300,7 +300,7 @@ class McpClientTest {
         params.putObject("_meta");
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> Allure.step(
+            ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy(() -> Allure.step(
                     "Выполнить stateless tools/list с уже существующим params._meta и protocolVersion="
                             + McpTestData.STATELESS_PROTOCOL_VERSION,
                     () -> client.requestStateless(
