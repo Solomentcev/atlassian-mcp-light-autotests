@@ -131,7 +131,7 @@ public final class McpClient implements AutoCloseable {
         }
 
         if (response == null || !response.isObject()
-                || !"2.0".equals(response.path("jsonrpc").asText())
+                || !McpTestData.getJsonRpcVersion().equals(response.path("jsonrpc").asText())
                 || !response.has("id")
                 || !response.get("id").isIntegralNumber()
                 || response.get("id").longValue() != requestId) {
@@ -192,7 +192,7 @@ public final class McpClient implements AutoCloseable {
                 .put("name", clientName)
                 .put("version", clientVersion);
 
-        JsonNode response = request("initialize", params, timeout);
+        JsonNode response = request(McpTestData.getInitializeMethod(), params, timeout);
         if (response.has("error")) {
             throw new McpClientException("MCP initialize failed: " + response.get("error"));
         }
@@ -274,7 +274,7 @@ public final class McpClient implements AutoCloseable {
      */
     public JsonNode listToolsStateless(String protocolVersion, Duration timeout) {
         return requestStateless(
-                "tools/list",
+                McpTestData.getToolsListMethod(),
                 null,
                 protocolVersion,
                 OBJECT_MAPPER.createObjectNode(),
