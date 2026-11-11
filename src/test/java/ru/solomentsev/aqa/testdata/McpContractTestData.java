@@ -88,7 +88,7 @@ public final class McpContractTestData {
                                      boolean readOnly,
                                      boolean destructive,
                                      boolean idempotent,
-                             boolean openWorld) {
+                                     boolean openWorld) {
         return new ToolContract(propertyTypes, required, readOnly, destructive, idempotent, openWorld);
     }
 
