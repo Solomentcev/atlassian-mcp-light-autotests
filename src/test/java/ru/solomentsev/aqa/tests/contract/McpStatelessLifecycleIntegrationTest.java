@@ -26,6 +26,7 @@ import ru.solomentsev.aqa.testdata.McpContractTestData;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
 import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 /**
@@ -60,6 +61,12 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.has("error"))
                     .as("До initialize сервер должен вернуть JSON-RPC error")
                     .isTrue();
+            assertThat(response.path("error").isObject())
+                    .as("JSON-RPC error должен быть объектом")
+                    .isTrue();
+            assertThat(response.path("error").has("code"))
+                    .as("JSON-RPC error должен содержать code")
+                    .isTrue();
             assertThat(response.path("error").path("code").isIntegralNumber())
                     .as("JSON-RPC error.code должен быть целым числом")
                     .isTrue();
@@ -92,18 +99,44 @@ class McpStatelessLifecycleIntegrationTest {
                             McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
 
             JsonNode result = response.path("result");
-            assertThat(response.has("error")).as("JSON-RPC response не содержит error" + " должно быть ложным").isFalse();
-            assertThat(result.path("resultType").asText()).as("result.resultType" + " должен совпадать с ожидаемым значением").isEqualTo("complete");
+            assertThat(response.has("error"))
+                    .as("Успешный server/discover не должен содержать JSON-RPC error")
+                    .isFalse();
+            assertThat(result.isObject())
+                    .as("Успешный server/discover должен вернуть объект result")
+                    .isTrue();
+            assertThat(result.has("resultType"))
+                    .as("Результат server/discover должен содержать resultType")
+                    .isTrue();
+            assertThat(result.path("resultType").isTextual())
+                    .as("result.resultType должен быть строкой")
+                    .isTrue();
+            assertThat(result.path("resultType").asText())
+                    .as("server/discover должен вернуть resultType=complete")
+                    .isEqualTo(McpTestData.getCompleteResultType());
 
             JsonNode supportedVersions = result.path("supportedVersions");
-            assertThat(supportedVersions.isArray()).as("result.supportedVersions является массивом" + " должно быть истинным").isTrue();
-            assertThat(supportedVersions.size()).as("Количество поддерживаемых версий" + " должен совпадать с ожидаемым значением").isEqualTo(3);
-            assertThat(supportedVersions.get(0).asText()).as("supportedVersions[0] — stateless protocolVersion" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getStatelessProtocolVersion());
-            assertThat(supportedVersions.get(1).asText()).as("supportedVersions[1] — classic protocolVersion" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getClassicProtocolVersion());
-            assertThat(supportedVersions.get(2).asText()).as("supportedVersions[2] — legacy protocolVersion" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getLegacyProtocolVersion());
+            assertThat(supportedVersions.isArray())
+                    .as("result.supportedVersions должен быть массивом")
+                    .isTrue();
+            for (JsonNode supportedVersion : supportedVersions) {
+                assertThat(supportedVersion.isTextual())
+                        .as("Каждая поддерживаемая версия протокола должна быть строкой")
+                        .isTrue();
+            }
+            assertThat(textValues(supportedVersions))
+                    .as("Список поддерживаемых protocolVersion должен совпадать с контрактом")
+                    .containsExactlyElementsOf(McpTestData.getSupportedProtocolVersions());
 
-            boolean toolsCapabilityIsObject = result.path("capabilities").path("tools").isObject();
-            assertThat(toolsCapabilityIsObject).as("result.capabilities.tools является объектом" + " должно быть истинным").isTrue();
+            assertThat(result.path("capabilities").isObject())
+                    .as("result.capabilities должен быть объектом")
+                    .isTrue();
+            assertThat(result.path("capabilities").has("tools"))
+                    .as("result.capabilities должен содержать tools")
+                    .isTrue();
+            assertThat(result.path("capabilities").path("tools").isObject())
+                    .as("result.capabilities.tools должен быть объектом")
+                    .isTrue();
             assertThat(result.has("ttlMs"))
                     .as("result.ttlMs должен присутствовать")
                     .isTrue();
@@ -113,11 +146,44 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(result.path("ttlMs").asLong())
                     .as("result.ttlMs должен совпадать с контрактом")
                     .isEqualTo(McpTestData.getDiscoveryTtlMs());
-            assertThat(result.path("cacheScope").asText()).as("result.cacheScope" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getDiscoveryCacheScope());
+            assertThat(result.has("cacheScope"))
+                    .as("result должен содержать cacheScope")
+                    .isTrue();
+            assertThat(result.path("cacheScope").isTextual())
+                    .as("result.cacheScope должен быть строкой")
+                    .isTrue();
+            assertThat(result.path("cacheScope").asText())
+                    .as("result.cacheScope должен совпадать с контрактом")
+                    .isEqualTo(McpTestData.getDiscoveryCacheScope());
 
+            assertThat(result.path("_meta").isObject())
+                    .as("result._meta должен быть объектом")
+                    .isTrue();
+            assertThat(result.path("_meta").has("io.modelcontextprotocol/serverInfo"))
+                    .as("result._meta должен содержать serverInfo")
+                    .isTrue();
             JsonNode serverInfo = result.path("_meta").path("io.modelcontextprotocol/serverInfo");
-            assertThat(serverInfo.path("name").asText()).as("serverInfo.name" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getServerName());
-            assertThat(serverInfo.path("version").asText()).as("serverInfo.version" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getServerVersion());
+            assertThat(serverInfo.isObject())
+                    .as("serverInfo должен быть объектом")
+                    .isTrue();
+            assertThat(serverInfo.has("name"))
+                    .as("serverInfo должен содержать name")
+                    .isTrue();
+            assertThat(serverInfo.path("name").isTextual())
+                    .as("serverInfo.name должен быть строкой")
+                    .isTrue();
+            assertThat(serverInfo.path("name").asText())
+                    .as("serverInfo.name должен совпадать с контрактом")
+                    .isEqualTo(McpTestData.getServerName());
+            assertThat(serverInfo.has("version"))
+                    .as("serverInfo должен содержать version")
+                    .isTrue();
+            assertThat(serverInfo.path("version").isTextual())
+                    .as("serverInfo.version должен быть строкой")
+                    .isTrue();
+            assertThat(serverInfo.path("version").asText())
+                    .as("serverInfo.version должен совпадать с контрактом")
+                    .isEqualTo(McpTestData.getServerVersion());
         }
     }
 
@@ -147,7 +213,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .isEqualTo(McpContractTestData.getExpectedTools().size());
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
-                    .isEqualTo("complete");
+                    .isEqualTo(McpTestData.getCompleteResultType());
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("name").asText())
                     .as("Stateless tools/list должен возвращать serverInfo с именем сервера")
@@ -201,7 +267,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .isFalse();
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
-                    .isEqualTo("complete");
+                    .isEqualTo(McpTestData.getCompleteResultType());
             JsonNode content = response.path("result").path("content");
             assertThat(content.isArray())
                     .as("Успешный MCP tool result должен содержать массив content")
