@@ -40,7 +40,8 @@ class McpServerConfigurationTest {
     void shouldReadLocalModeFromEnvironment() {
         Allure.parameter(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode());
         Allure.parameter(McpConfigurationTestData.getServerJarEnv(), McpConfigurationTestData.getServerJarPath());
-        McpServerConfiguration configuration = Allure.step("Построить конфигурацию: AQA_SERVER_MODE=local, AQA_SERVER_JAR задан", () -> McpServerConfiguration.from(
+        McpServerConfiguration configuration = Allure.step("Построить конфигурацию: " + McpConfigurationTestData.getServerModeEnv() + "="
+                + McpConfigurationTestData.getLocalMode() + ", " + McpConfigurationTestData.getServerJarEnv() + " задан", () -> McpServerConfiguration.from(
                 Map.of(
                         McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode(),
                         McpConfigurationTestData.getServerJarEnv(), McpConfigurationTestData.getServerJarPath()
@@ -60,11 +61,11 @@ class McpServerConfigurationTest {
     @Description("Предусловия: Во временном каталоге создан .env с настройками local mode.\nШаги: построить конфигурацию с dotenv-файлом.\nОжидаемый результат: конфигурация выбирает local mode.")
     void shouldLoadConfigurationFromEnvFile(@TempDir Path tempDir) throws IOException {
         Path envFile = tempDir.resolve(".env");
-        Files.writeString(envFile, """
-                # Локальный запуск AQA
-                AQA_SERVER_MODE=local
-                AQA_SERVER_JAR="server/target/server.jar" # путь к артефакту
-                """);
+        Files.writeString(envFile, String.join(System.lineSeparator(),
+                "# Локальный запуск AQA",
+                McpConfigurationTestData.getServerModeEnv() + "=" + McpConfigurationTestData.getLocalMode(),
+                McpConfigurationTestData.getServerJarEnv() + "=\"" + McpConfigurationTestData.getServerJarPath()
+                        + "\" # путь к артефакту"));
 
         McpServerConfiguration configuration = Allure.step(
                 "Загрузить настройки из временного .env-файла",
@@ -84,12 +85,11 @@ class McpServerConfigurationTest {
     @Description("Предусловия: .env задаёт local mode и JAR; environment задаёт docker mode и обязательные параметры Docker.\nШаги: построить конфигурацию из обоих источников.\nОжидаемый результат: используется значение environment.")
     void shouldPreferEnvironmentToEnvFile(@TempDir Path tempDir) throws IOException {
         Path envFile = tempDir.resolve(".env");
-        Files.writeString(envFile, """
-                AQA_SERVER_MODE=local
-                AQA_SERVER_JAR=server.jar
-                AQA_DOCKER_IMAGE=atlassian-mcp-light:from-env-file
-                AQA_DOCKER_ENV_FILE=.runtime.env
-                """);
+        Files.writeString(envFile, String.join(System.lineSeparator(),
+                McpConfigurationTestData.getServerModeEnv() + "=" + McpConfigurationTestData.getLocalMode(),
+                McpConfigurationTestData.getServerJarEnv() + "=" + McpConfigurationTestData.getServerJarName(),
+                McpConfigurationTestData.getDockerImageEnv() + "=" + McpConfigurationTestData.getDockerImage(),
+                McpConfigurationTestData.getDockerEnvFileEnv() + "=" + McpConfigurationTestData.getDockerEnvFile()));
 
         McpServerConfiguration configuration = Allure.step(
                 "Объединить .env с системными переменными окружения",
