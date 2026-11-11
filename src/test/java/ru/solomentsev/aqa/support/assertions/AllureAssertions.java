@@ -52,6 +52,12 @@ public final class AllureAssertions {
             return this;
         }
 
+        public AllureAssert<T> isNotEqualTo(Object expected) {
+            step("фактически=" + display(actual) + ", не ожидается=" + display(expected),
+                    () -> Assertions.assertThat(actual).isNotEqualTo(expected));
+            return this;
+        }
+
         public AllureAssert<T> isTrue() {
             step("фактически=" + display(actual) + ", ожидается=true",
                     () -> Assertions.assertThat((Boolean) actual).isTrue());
