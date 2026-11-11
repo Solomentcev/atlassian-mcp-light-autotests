@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.testdata;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Общие параметры MCP-сценариев.
@@ -22,6 +23,9 @@ public final class McpTestData {
     private static final String MOCK_CLIENT_VERSION = "1.0";
     private static final String SERVER_NAME = "atlassian-lite";
     private static final String SERVER_VERSION = "1.0.0";
+    private static final List<String> SUPPORTED_PROTOCOL_VERSIONS = List.of(
+            STATELESS_PROTOCOL_VERSION, CLASSIC_PROTOCOL_VERSION, LEGACY_PROTOCOL_VERSION);
+    private static final String COMPLETE_RESULT_TYPE = "complete";
 
     private static final String JSON_RPC_VERSION = "2.0";
     private static final String INITIALIZE_METHOD = "initialize";
@@ -114,6 +118,14 @@ public final class McpTestData {
 
     public static String getServerVersion() {
         return SERVER_VERSION;
+    }
+
+    public static List<String> getSupportedProtocolVersions() {
+        return SUPPORTED_PROTOCOL_VERSIONS;
+    }
+
+    public static String getCompleteResultType() {
+        return COMPLETE_RESULT_TYPE;
     }
 
     public static String getJsonRpcVersion() {
