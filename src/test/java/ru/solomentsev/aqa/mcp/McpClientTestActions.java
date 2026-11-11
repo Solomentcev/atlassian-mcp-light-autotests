@@ -72,6 +72,14 @@ public final class McpClientTestActions {
                 () -> client.discoverStateless(version, timeout));
     }
 
+    public static JsonNode listToolsStateless(McpClient client) {
+        return listToolsStateless(
+                client,
+                McpTestData.getStatelessProtocolVersion(),
+                McpTestData.getRequestTimeout()
+        );
+    }
+
     public static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
         return Allure.step("Выполнить stateless tools/list: protocolVersion=" + version,
                 () -> client.listToolsStateless(version, timeout));
