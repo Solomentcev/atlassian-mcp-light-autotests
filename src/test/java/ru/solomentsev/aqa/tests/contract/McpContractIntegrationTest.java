@@ -118,16 +118,16 @@ class McpContractIntegrationTest {
             assertThat(schema.path("additionalProperties").asBoolean()).as("%s: additionalProperties должен быть false", name).isFalse();
             assertThat(schema.path("properties").isObject()).as("%s: inputSchema должен содержать объект properties", name).isTrue();
             assertThat(fieldNames(schema.path("properties"))).as("%s: набор аргументов должен совпадать с контрактом", name)
-                    .containsExactlyInAnyOrderElementsOf(expected.propertyTypes().keySet());
+                    .containsExactlyInAnyOrderElementsOf(expected.getPropertyTypes().keySet());
 
-            if (expected.required().isEmpty()) {
+            if (expected.getRequired().isEmpty()) {
                 assertThat(schema.has("required")).as("%s: поле required не должно присутствовать при пустом ожидаемом списке", name).isFalse();
             } else {
                 assertThat(textValues(schema.path("required"))).as("%s: список required должен совпадать с контрактом", name)
-                        .containsExactlyInAnyOrderElementsOf(expected.required());
+                        .containsExactlyInAnyOrderElementsOf(expected.getRequired());
             }
 
-            for (Map.Entry<String, String> property : expected.propertyTypes().entrySet()) {
+            for (Map.Entry<String, String> property : expected.getPropertyTypes().entrySet()) {
                 JsonNode definition = schema.path("properties").path(property.getKey());
                 assertThat(definition.path("type").asText())
                         .as("%s.%s: ожидаемый type=%s", name, property.getKey(), property.getValue())
@@ -522,12 +522,12 @@ class McpContractIntegrationTest {
         assertThat(annotations.path("destructiveHint").isBoolean()).as("%s: destructiveHint должен быть boolean", toolName).isTrue();
         assertThat(annotations.path("idempotentHint").isBoolean()).as("%s: idempotentHint должен быть boolean", toolName).isTrue();
         assertThat(annotations.path("openWorldHint").isBoolean()).as("%s: openWorldHint должен быть boolean", toolName).isTrue();
-        assertThat(annotations.path("readOnlyHint").asBoolean()).as("%s: readOnlyHint должен быть %s", toolName, expected.readOnly())
-                .isEqualTo(expected.readOnly());
-        assertThat(annotations.path("destructiveHint").asBoolean()).as("%s: destructiveHint должен быть %s", toolName, expected.destructive())
-                .isEqualTo(expected.destructive());
-        assertThat(annotations.path("idempotentHint").asBoolean()).as("%s: idempotentHint должен быть %s", toolName, expected.idempotent())
-                .isEqualTo(expected.idempotent());
+        assertThat(annotations.path("readOnlyHint").asBoolean()).as("%s: readOnlyHint должен быть %s", toolName, expected.isReadOnly())
+                .isEqualTo(expected.isReadOnly());
+        assertThat(annotations.path("destructiveHint").asBoolean()).as("%s: destructiveHint должен быть %s", toolName, expected.isDestructive())
+                .isEqualTo(expected.isDestructive());
+        assertThat(annotations.path("idempotentHint").asBoolean()).as("%s: idempotentHint должен быть %s", toolName, expected.isIdempotent())
+                .isEqualTo(expected.isIdempotent());
         assertThat(annotations.path("openWorldHint").asBoolean()).as("%s: openWorldHint должен быть true", toolName).isTrue();
     }
 
@@ -595,10 +595,47 @@ class McpContractIntegrationTest {
         return Set.of(values);
     }
 
-    private record ToolContract(Map<String, String> propertyTypes,
-                                Set<String> required,
-                                boolean readOnly,
-                                boolean destructive,
-                                boolean idempotent) {
+    /**
+     * Ожидаемое описание публичного контракта MCP-инструмента.
+     */
+    private static final class ToolContract {
+
+        private final Map<String, String> propertyTypes;
+        private final Set<String> required;
+        private final boolean readOnly;
+        private final boolean destructive;
+        private final boolean idempotent;
+
+        private ToolContract(Map<String, String> propertyTypes,
+                             Set<String> required,
+                             boolean readOnly,
+                             boolean destructive,
+                             boolean idempotent) {
+            this.propertyTypes = Map.copyOf(propertyTypes);
+            this.required = Set.copyOf(required);
+            this.readOnly = readOnly;
+            this.destructive = destructive;
+            this.idempotent = idempotent;
+        }
+
+        private Map<String, String> getPropertyTypes() {
+            return propertyTypes;
+        }
+
+        private Set<String> getRequired() {
+            return required;
+        }
+
+        private boolean isReadOnly() {
+            return readOnly;
+        }
+
+        private boolean isDestructive() {
+            return destructive;
+        }
+
+        private boolean isIdempotent() {
+            return idempotent;
+        }
     }
 }
