@@ -35,8 +35,8 @@ class ProcessBuilderLauncherTest {
     @DisplayName("ProcessBuilder запускает java -version [timeout=15000 ms], exitCode=0; STDERR собирается отдельно")
     @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения не более 15000 ms; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
         Allure.parameter("Команда", "java -version");
-        Allure.parameter("Process timeout", "параметр".toMillis() + " ms");
-        Allure.parameter("STDERR collection timeout", "параметр".toMillis() + " ms");
+        Allure.parameter("Process timeout", McpTestData.getJavaVersionProcessTimeout().toMillis() + " ms");
+        Allure.parameter("STDERR collection timeout", McpTestData.getStderrCollectionTimeout().toMillis() + " ms");
         String executable = Path.of(
                 System.getProperty("java.home"),
                 "bin",
@@ -48,10 +48,10 @@ class ProcessBuilderLauncherTest {
                 Map.of(),
                 null
         ));
-        StderrCollector stderrCollector = new StderrCollector(process.stderr(), "параметр");
+        StderrCollector stderrCollector = new StderrCollector(process.stderr(), McpTestData.getStderrBufferSizeBytes());
 
         try {
-            assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor("параметр")))
+            assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(McpTestData.getJavaVersionProcessTimeout())))
                     .as("Процесс java -version должен завершиться в пределах 15 секунд")
                     .isTrue();
             assertThat(process.exitCode()).as("После ожидания не более %d ms процесс java -version должен завершиться с exit code=0, фактически: %d", McpTestData.getJavaVersionProcessTimeout().toMillis(), process.exitCode()).isZero();
