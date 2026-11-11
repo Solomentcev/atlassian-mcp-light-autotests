@@ -14,6 +14,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicReference;
 
 import ru.solomentsev.aqa.testdata.McpTestData;
 
@@ -84,12 +85,14 @@ public final class McpClientTestActions {
      * Исключение в серверном потоке проявится как timeout/ошибка обмена в тесте клиента.
      */
     public static void respondToSingleRequest(PipedInputStream serverStdin,
-                                              PipedOutputStream serverStdout) {
+                                              PipedOutputStream serverStdout,
+                                              AtomicReference<JsonNode> requestReceived) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(serverStdin, StandardCharsets.UTF_8));
              BufferedWriter writer = new BufferedWriter(
                      new OutputStreamWriter(serverStdout, StandardCharsets.UTF_8))) {
             JsonNode request = OBJECT_MAPPER.readTree(reader.readLine());
+            requestReceived.set(request);
             ObjectNode response = OBJECT_MAPPER.createObjectNode();
             response.put("jsonrpc", McpTestData.getJsonRpcVersion());
             response.set("id", request.get("id"));
