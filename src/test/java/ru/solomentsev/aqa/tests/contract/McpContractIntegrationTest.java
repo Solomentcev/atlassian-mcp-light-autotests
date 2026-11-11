@@ -359,9 +359,9 @@ class McpContractIntegrationTest {
         }
 
         ObjectNode requestParams = params;
-        JsonNode invalidResponse = Allure.step(
-                "Вызвать " + method + " без обязательного " + missingField,
-                () -> sendRequest(client, method, requestParams));
+        Allure.parameter("MCP method", method);
+        Allure.parameter("Отсутствующее поле metadata", missingField);
+        JsonNode invalidResponse = sendRequest(client, method, requestParams);
         assertThat(invalidResponse.path("error").path("code").asInt())
                 .as("%s без обязательного %s должен вернуть JSON-RPC error code=%d, фактически: %s",
                         method, missingField, McpTestData.getJsonRpcInvalidParams(),
@@ -404,8 +404,7 @@ class McpContractIntegrationTest {
         metadata.put("io.modelcontextprotocol/protocolVersion", McpTestData.getUnsupportedProtocolVersion());
         metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
-        JsonNode response = Allure.step("Вызвать server/discover с protocolVersion=" + McpTestData.getUnsupportedProtocolVersion(),
-                () -> sendRequest(client, McpTestData.getServerDiscoverMethod(), params));
+        JsonNode response = sendRequest(client, McpTestData.getServerDiscoverMethod(), params);
 
         assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.getUnsupportedProtocolVersion()).isEqualTo(McpTestData.getMcpUnsupportedProtocolVersion());
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
@@ -424,8 +423,7 @@ class McpContractIntegrationTest {
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
         Allure.parameter("MCP method", McpTestData.getToolsCallMethod());
         Allure.parameter("Tool name", "aqa_unknown_tool");
-        JsonNode response = Allure.step("Вызвать неизвестный инструмент name=aqa_unknown_tool с пустыми arguments",
-                () -> callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode()));
+        JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
 
         JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
@@ -454,8 +452,7 @@ class McpContractIntegrationTest {
         Allure.parameter("MCP tool", "jira_get_issue");
         Allure.parameter("Обязательный аргумент", "issue_key");
         Allure.parameter("Переданные arguments", "{}");
-        JsonNode response = Allure.step("Вызвать jira_get_issue без обязательного аргумента issue_key",
-                () -> callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode()));
+        JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
 
         JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
@@ -495,9 +492,7 @@ class McpContractIntegrationTest {
             arguments.put("issue_key", value);
         }
 
-        JsonNode response = Allure.step(
-                "Вызвать jira_get_issue с issue_key=" + scenario,
-                () -> callTool(client, "jira_get_issue", arguments));
+        JsonNode response = callTool(client, "jira_get_issue", arguments);
         JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
@@ -526,8 +521,7 @@ class McpContractIntegrationTest {
         Allure.parameter("Ожидаемый тип issue_key", "string");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", JiraTestData.getInvalidIssueKeyNumber());
-        JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=" + JiraTestData.getInvalidIssueKeyNumber() + " (integer вместо string)",
-                () -> callTool(client, "jira_get_issue", arguments));
+        JsonNode invalidResponse = callTool(client, "jira_get_issue", arguments);
         JsonNode toolErrorResult = invalidResponse.path("result");
         assertThat(invalidResponse.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(invalidResponse.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
@@ -557,8 +551,7 @@ class McpContractIntegrationTest {
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", JiraTestData.getIssueKey());
         arguments.put("unexpected", "value");
-        JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с неизвестным аргументом unexpected=value",
-                () -> callTool(client, "jira_get_issue", arguments));
+        JsonNode invalidResponse = callTool(client, "jira_get_issue", arguments);
         JsonNode toolErrorResult = invalidResponse.path("result");
         assertThat(invalidResponse.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(invalidResponse.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
@@ -602,9 +595,8 @@ class McpContractIntegrationTest {
                 invalidArguments.put(queryField, query);
             }
             invalidArguments.put("limit", invalidLimit);
-            JsonNode invalidResponse = Allure.step(
-                    "Вызвать " + toolName + " с недопустимым limit=" + invalidLimit,
-                    () -> callTool(client, toolName, invalidArguments));
+            Allure.parameter("Недопустимый limit", invalidLimit);
+            JsonNode invalidResponse = callTool(client, toolName, invalidArguments);
             JsonNode invalidResult = invalidResponse.path("result");
             assertThat(invalidResponse.has("error"))
                     .as("%s с limit=%d не должен возвращать JSON-RPC error", toolName, invalidLimit)
@@ -629,9 +621,8 @@ class McpContractIntegrationTest {
         }
         arguments.put("limit", McpTestData.getDefaultLimit());
 
-        JsonNode response = Allure.step(
-                "Вызвать " + toolName + " с допустимым limit=" + McpTestData.getDefaultLimit(),
-                () -> callTool(client, toolName, arguments));
+        Allure.parameter("Допустимый limit", McpTestData.getDefaultLimit());
+        JsonNode response = callTool(client, toolName, arguments);
         assertThat(response.path("jsonrpc").asText())
                 .as("Вызов MCP-инструмента: response должен соответствовать JSON-RPC 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
@@ -665,8 +656,7 @@ class McpContractIntegrationTest {
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("page_id", ConfluenceTestData.getPageId());
 
-        JsonNode response = Allure.step("Вызвать confluence_update_page только с page_id=" + ConfluenceTestData.getPageId() + ", без title и content",
-                () -> callTool(client, "confluence_update_page", arguments));
+        JsonNode response = callTool(client, "confluence_update_page", arguments);
         JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
