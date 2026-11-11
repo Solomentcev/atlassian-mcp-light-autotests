@@ -60,9 +60,23 @@ public final class McpServerExtension
     public void testFailed(ExtensionContext context, Throwable cause) {
         LOG.error("Тест завершился ошибкой: {} ({})",
                 context.getDisplayName(), cause.getClass().getSimpleName());
-        context.getParent()
-                .map(parent -> parent.getStore(NAMESPACE).get(SESSION_KEY, McpProcessSession.class))
-                .ifPresent(session -> AllureDiagnostics.attachStderr(session.stderr()));
+        McpProcessSession session = findSession(context);
+        if (session != null) {
+            AllureDiagnostics.attachStderr(session.stderr());
+        }
+    }
+
+    private McpProcessSession findSession(ExtensionContext context) {
+        ExtensionContext current = context;
+        while (current != null) {
+            McpProcessSession session = current.getStore(NAMESPACE)
+                    .get(SESSION_KEY, McpProcessSession.class);
+            if (session != null) {
+                return session;
+            }
+            current = current.getParent().orElse(null);
+        }
+        return null;
     }
 
     @Override
@@ -77,8 +91,7 @@ public final class McpServerExtension
     public Object resolveParameter(ParameterContext parameterContext,
                                    ExtensionContext extensionContext)
             throws ParameterResolutionException {
-        McpProcessSession session = extensionContext.getStore(NAMESPACE)
-                .get(SESSION_KEY, McpProcessSession.class);
+        McpProcessSession session = findSession(extensionContext);
         if (session == null) {
             throw new ParameterResolutionException(
                     "MCP session is not available; use @McpServerTest on the test class");
