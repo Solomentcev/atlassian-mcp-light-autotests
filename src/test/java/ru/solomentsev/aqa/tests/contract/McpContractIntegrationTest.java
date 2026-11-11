@@ -163,7 +163,7 @@ class McpContractIntegrationTest {
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-023: Stateless-запрос без обязательного metadata отклоняется")
-    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=" + McpTestData.JSON_RPC_INVALID_PARAMS + "; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
+    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=" + McpTestData.JSON_RPC_INVALID_PARAMS + "; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(String missingField,
