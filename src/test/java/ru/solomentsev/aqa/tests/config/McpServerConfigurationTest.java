@@ -76,6 +76,12 @@ class McpServerConfigurationTest {
 
         Allure.parameter("Первый run id", first.runId());
         Allure.parameter("Второй run id", second.runId());
+        assertThat(first.runId().matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,58}"))
+                .as("Первый run id должен соответствовать ограничениям имени Docker-контейнера")
+                .isTrue();
+        assertThat(second.runId().matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,58}"))
+                .as("Второй run id должен соответствовать ограничениям имени Docker-контейнера")
+                .isTrue();
         assertThat(first.runId())
                 .as("Независимые конфигурации должны получать разные run id для изоляции Docker-контейнеров")
                 .isNotEqualTo(second.runId());
