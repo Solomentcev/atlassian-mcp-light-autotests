@@ -38,12 +38,12 @@ class McpServerConfigurationTest {
     @DisplayName("AQA_SERVER_MODE=local и AQA_SERVER_JAR=server/target/server.jar из environment выбирают local mode")
     @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")
     void shouldReadLocalModeFromEnvironment() {
-        Allure.parameter("AQA_SERVER_MODE", "local");
-        Allure.parameter("AQA_SERVER_JAR", "server/target/server.jar");
+        Allure.parameter(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode());
+        Allure.parameter(McpConfigurationTestData.getServerJarEnv(), McpConfigurationTestData.getServerJarPath());
         McpServerConfiguration configuration = Allure.step("Построить конфигурацию: AQA_SERVER_MODE=local, AQA_SERVER_JAR задан", () -> McpServerConfiguration.from(
                 Map.of(
-                        "AQA_SERVER_MODE", "local",
-                        "AQA_SERVER_JAR", "server/target/server.jar"
+                        McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode(),
+                        McpConfigurationTestData.getServerJarEnv(), McpConfigurationTestData.getServerJarPath()
                 ),
                 new Properties()
         ));
@@ -112,24 +112,24 @@ class McpServerConfigurationTest {
     @DisplayName("System property aqa.server.mode=docker переопределяет environment AQA_SERVER_MODE=local [image=atlassian-mcp-light:test]")
     @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")
     void shouldPreferSystemPropertiesToEnvironment() {
-        Allure.parameter("Environment AQA_SERVER_MODE", "local");
-        Allure.parameter("System property aqa.server.mode", "docker");
-        Allure.parameter("Docker image", "atlassian-mcp-light:test");
-        Allure.parameter("Docker env file", ".runtime.env");
+        Allure.parameter("Environment " + McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode());
+        Allure.parameter("System property " + McpConfigurationTestData.getServerModeProperty(), McpConfigurationTestData.getDockerMode());
+        Allure.parameter("Docker image", McpConfigurationTestData.getDockerImage());
+        Allure.parameter("Docker env file", McpConfigurationTestData.getDockerEnvFile());
         Properties properties = new Properties();
-        properties.setProperty("aqa.server.mode", "docker");
-        properties.setProperty("aqa.docker.image", "atlassian-mcp-light:test");
-        properties.setProperty("aqa.docker.envFile", ".runtime.env");
+        properties.setProperty(McpConfigurationTestData.getServerModeProperty(), McpConfigurationTestData.getDockerMode());
+        properties.setProperty(McpConfigurationTestData.getDockerImageProperty(), McpConfigurationTestData.getDockerImage());
+        properties.setProperty(McpConfigurationTestData.getDockerEnvFileProperty(), McpConfigurationTestData.getDockerEnvFile());
 
         McpServerConfiguration configuration = Allure.step("Построить конфигурацию: environment=local, system property= docker", () -> McpServerConfiguration.from(
                 Map.of(
-                        "AQA_SERVER_MODE", "local",
-                        "AQA_SERVER_JAR", "server.jar"
+                        McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode(),
+                        McpConfigurationTestData.getServerJarEnv(), McpConfigurationTestData.getServerJarName()
                 ),
                 properties
         ));
 
-        assertThat(configuration.mode()).as("Системное свойство должно иметь приоритет и выбирать docker mode").isEqualTo("docker");
+        assertThat(configuration.mode()).as("Системное свойство должно иметь приоритет и выбирать docker mode").isEqualTo(McpConfigurationTestData.getDockerMode());
 
     }
 
