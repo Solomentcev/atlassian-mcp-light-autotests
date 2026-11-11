@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.process.McpServerLauncher;
 import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
@@ -35,6 +36,11 @@ public final class McpProcessSessionTestSupport {
                                                            Path workingDirectory) throws Exception {
         return Allure.step("Запустить stateless MCP-сессию без classic initialize",
                 () -> McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory));
+    }
+
+    public static McpProcessSession startConfiguredStatelessSession() throws Exception {
+        return Allure.step("Запустить настроенный MCP-сервер без classic initialize",
+                () -> McpServerConfiguration.fromEnvironment().startStatelessSession());
     }
 
     public static McpServerLauncher launcherFor(Class<?> serverClass) {
