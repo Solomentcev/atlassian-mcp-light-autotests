@@ -24,6 +24,10 @@ import ru.solomentsev.aqa.testdata.ConfluenceTestData;
 import ru.solomentsev.aqa.testdata.McpContractTestData;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.discoverStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.listToolsStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.requestStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendNotification;
 import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startConfiguredStatelessSession;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
@@ -89,10 +93,11 @@ class McpStatelessLifecycleIntegrationTest {
 
         McpProcessSession session = startConfiguredStatelessSession();
         try (session) {
-            JsonNode response = Allure.step(
-                    "Отправить server/discover: protocolVersion=" + McpTestData.getStatelessProtocolVersion(),
-                    () -> session.client().discoverStateless(
-                            McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
+            JsonNode response = discoverStateless(
+                    session.client(),
+                    McpTestData.getStatelessProtocolVersion(),
+                    REQUEST_TIMEOUT
+            );
 
             JsonNode result = response.path("result");
             assertThat(response.has("error"))
@@ -197,8 +202,11 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("Ожидаемое количество инструментов", McpContractTestData.getExpectedTools().size());
         Allure.parameter("Classic initialize", "не выполняется");
         try (McpProcessSession session = startConfiguredStatelessSession()) {
-            JsonNode response = Allure.step("Выполнить tools/list в stateless-режиме: protocolVersion=" + McpTestData.getStatelessProtocolVersion(), () -> session.client().listToolsStateless(
-                    McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
+            JsonNode response = listToolsStateless(
+                    session.client(),
+                    McpTestData.getStatelessProtocolVersion(),
+                    REQUEST_TIMEOUT
+            );
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос не должен завершаться JSON-RPC error")
                     .isFalse();
@@ -274,14 +282,15 @@ class McpStatelessLifecycleIntegrationTest {
             ObjectNode params = OBJECT_MAPPER.createObjectNode();
             params.put("name", ConfluenceTestData.getListSpacesTool());
             params.putObject("arguments").put("limit", McpTestData.getDefaultLimit());
-            JsonNode response = Allure.step("Вызвать stateless tool " + ConfluenceTestData.getListSpacesTool() + " с arguments.limit=" + McpTestData.getDefaultLimit(), () -> session.client().requestStateless(
+            JsonNode response = requestStateless(
+                    session.client(),
                     McpTestData.getToolsCallMethod(),
                     params,
                     McpTestData.getStatelessProtocolVersion(),
                     OBJECT_MAPPER.createObjectNode(),
                     null,
                     REQUEST_TIMEOUT
-            ));
+            );
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос не должен завершаться JSON-RPC error")
                     .isFalse();
@@ -450,7 +459,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
                     .isEqualTo(McpTestData.getMcpServerNotInitialized());
 
-            Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification(McpTestData.getInitializedNotificationMethod(), null));
+            sendNotification(session.client(), McpTestData.getInitializedNotificationMethod(), null);
 
             JsonNode pingAfterReady =
                     sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
