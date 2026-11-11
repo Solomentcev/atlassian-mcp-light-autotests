@@ -80,6 +80,11 @@ public final class McpClientTestActions {
     /**
      * Отвечает на один запрос в изолированном fake STDIO endpoint.
      * Исключение серверного потока сохраняется для явной проверки в тесте.
+     *
+     * @param serverStdin входной поток fake-сервера
+     * @param serverStdout выходной поток fake-сервера
+     * @param requestReceived ссылка для передачи полученного JSON-RPC request
+     * @param serverFailure ссылка для передачи исключения серверного потока
      */
     public static void respondToSingleRequest(PipedInputStream serverStdin,
                                               PipedOutputStream serverStdout,
