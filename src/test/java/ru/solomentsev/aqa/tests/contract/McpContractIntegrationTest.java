@@ -168,17 +168,17 @@ class McpContractIntegrationTest {
                 .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         JsonNode missingCapabilities = sendRequest(client, 
                 "tools/list", missingCapabilitiesParams);
-        assertThat(missingCapabilities.path("error").path("code").asInt()).as("Stateless-запрос без clientCapabilities должен завершаться ошибкой -32602").isEqualTo(-32602);
+        assertThat(missingCapabilities.path("error").path("code").asInt()).as("tools/list с protocolVersion=%s, но без clientCapabilities должен вернуть -32602, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, missingCapabilities.path("error").path("code")).isEqualTo(-32602);
 
         ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
         missingVersionParams.putObject("_meta")
                 .putObject("io.modelcontextprotocol/clientCapabilities");
         JsonNode missingVersion = sendRequest(client, 
                 "tools/list", missingVersionParams);
-        assertThat(missingVersion.path("error").path("code").asInt()).as("Stateless-запрос без protocolVersion должен завершаться ошибкой -32602").isEqualTo(-32602);
+        assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(-32602);
 
-        assertSuccessfulJsonRpc(client.listToolsStateless(
-                McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+        assertSuccessfulJsonRpc(Allure.step("Повторить tools/list с корректным protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> client.listToolsStateless(
+                McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
     
     }
 
