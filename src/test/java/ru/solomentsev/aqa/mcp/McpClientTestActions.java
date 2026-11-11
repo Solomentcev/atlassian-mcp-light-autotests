@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 
+import ru.solomentsev.aqa.testdata.McpClientTestData;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
 /**
@@ -92,7 +93,7 @@ public final class McpClientTestActions {
             ObjectNode response = OBJECT_MAPPER.createObjectNode();
             response.put("jsonrpc", McpTestData.getJsonRpcVersion());
             response.set("id", request.get("id"));
-            response.putObject("result").put("alive", true);
+            response.putObject("result").put("alive", McpClientTestData.isAliveValue());
             writer.write(OBJECT_MAPPER.writeValueAsString(response));
             writer.newLine();
             writer.flush();
