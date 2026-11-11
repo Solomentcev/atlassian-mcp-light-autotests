@@ -2,9 +2,14 @@ package ru.solomentsev.aqa.tests.client;
 
 import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.awaitRawResponse;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.initialize;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.requestStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.respondToSingleRequest;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendNotification;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -324,45 +329,4 @@ class McpClientTest {
     
     }
 
-    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
-    private static JsonNode sendRequest(McpClient client, String method, ObjectNode params, Duration timeout) {
-        return client.request(method, params, timeout);
-    }
-
-    @Step("Отправить JSON-RPC notification: method={method}")
-    private static void sendNotification(McpClient client, String method, ObjectNode params) {
-        client.notification(method, params);
-    }
-
-    @Step("Выполнить classic initialize: protocolVersion={version}, client={clientName}/{clientVersion}")
-    private static JsonNode initialize(McpClient client, String version, String clientName,
-                                        String clientVersion, Duration timeout) {
-        return client.initialize(version, clientName, clientVersion, timeout);
-    }
-
-    @Step("Отправить stateless MCP request: method={method}, protocolVersion={version}")
-    private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
-                                             String version, ObjectNode capabilities,
-                                             ObjectNode clientInfo, Duration timeout) {
-        return client.requestStateless(method, params, version, capabilities, clientInfo, timeout);
-    }
-
-    private static void respondToSingleRequest(PipedInputStream serverStdin,
-                                               PipedOutputStream serverStdout) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(serverStdin, StandardCharsets.UTF_8));
-             BufferedWriter writer = new BufferedWriter(
-                     new OutputStreamWriter(serverStdout, StandardCharsets.UTF_8))) {
-            JsonNode request = OBJECT_MAPPER.readTree(reader.readLine());
-            var response = OBJECT_MAPPER.createObjectNode();
-            response.put("jsonrpc", McpTestData.getJsonRpcVersion());
-            response.set("id", request.get("id"));
-            response.putObject("result").put("alive", true);
-            writer.write(OBJECT_MAPPER.writeValueAsString(response));
-            writer.newLine();
-            writer.flush();
-        } catch (Exception ignored) {
-            // The client-side assertion reports a failed exchange.
-        }
-    }
 }
