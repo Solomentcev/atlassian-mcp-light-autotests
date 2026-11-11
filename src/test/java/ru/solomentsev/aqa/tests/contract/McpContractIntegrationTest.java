@@ -168,7 +168,7 @@ class McpContractIntegrationTest {
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
         Allure.parameter("Stateless metadata scenarios", "без _meta; без clientCapabilities; без protocolVersion");
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.JSON_RPC_INVALID_PARAMS);
-        JsonNode missingMetadata = Allure.step("Вызвать server/discover без обязательного params._meta", () -> sendRequest(client, "server/discover", null));
+        JsonNode missingMetadata = Allure.step("Вызвать server/discover без обязательного params._meta", () -> sendRequest(client, McpTestData.SERVER_DISCOVER_METHOD, null));
         assertThat(missingMetadata.path("error").path("code").asInt()).as("server/discover без обязательного _meta должен вернуть JSON-RPC error code=-32602, фактически: %s", missingMetadata.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
@@ -212,7 +212,7 @@ class McpContractIntegrationTest {
         metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
         JsonNode response = Allure.step("Вызвать server/discover с protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION,
-                () -> sendRequest(client, "server/discover", params));
+                () -> sendRequest(client, McpTestData.SERVER_DISCOVER_METHOD, params));
 
         assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.UNSUPPORTED_PROTOCOL_VERSION).isEqualTo(McpTestData.MCP_UNSUPPORTED_PROTOCOL_VERSION);
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
@@ -230,7 +230,7 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-010")
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
-        Allure.parameter("MCP method", "tools/call");
+        Allure.parameter("MCP method", McpTestData.TOOLS_CALL_METHOD);
         Allure.parameter("Tool name", "aqa_unknown_tool");
         JsonNode response = Allure.step("Вызвать неизвестный инструмент name=aqa_unknown_tool с пустыми arguments",
                 () -> callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode()));
@@ -424,7 +424,7 @@ class McpContractIntegrationTest {
         params.put("name", name);
         params.set("arguments", arguments);
         return client.requestStateless(
-                "tools/call",
+                McpTestData.TOOLS_CALL_METHOD,
                 params,
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 OBJECT_MAPPER.createObjectNode(),
