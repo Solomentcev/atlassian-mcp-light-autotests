@@ -51,7 +51,7 @@ class AllureDiagnosticsTest {
     @Description("Проверяет маскирование секретов в строках диагностики до прикрепления к Allure.")
     void shouldMaskSensitiveEnvironmentValues() {
         Allure.parameter("Проверяемые секретные поля", "TOKEN; PASSWORD; SECRET; access_token");
-        Allure.parameter("Ожидаемый маркер маскирования", "[REDACTED]");
+        Allure.parameter("Ожидаемый маркер маскирования", AllureDiagnosticsTestData.getRedactedMarker());
         String source = AllureDiagnosticsTestData.getSensitiveEnvironmentValues();
 
         String masked = Allure.step("Замаскировать значения секретных переменных и JSON-полей", () -> AllureDiagnostics.maskSecrets(source));
