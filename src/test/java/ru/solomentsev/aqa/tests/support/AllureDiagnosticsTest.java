@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 @Epic("AQA Test Infrastructure")
 @Feature("Allure Diagnostics")
