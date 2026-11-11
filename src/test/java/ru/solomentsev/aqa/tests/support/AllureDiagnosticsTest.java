@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("Allure Diagnostics")
 @Tag("unit")
 @Tag("allure")
+@Tag("regression")
 class AllureDiagnosticsTest {
 
     @Test
