@@ -1,15 +1,16 @@
 package ru.solomentsev.aqa.support.session;
 
 import io.qameta.allure.Step;
-import ru.solomentsev.aqa.mcp.McpProcessSession;
-import ru.solomentsev.aqa.process.McpServerLauncher;
-import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
-import ru.solomentsev.aqa.support.OperatingSystem;
 
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+
+import ru.solomentsev.aqa.mcp.McpProcessSession;
+import ru.solomentsev.aqa.process.McpServerLauncher;
+import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
+import ru.solomentsev.aqa.support.OperatingSystem;
 
 /** Подготовка fake MCP-процессов для тестов жизненного цикла сессии. */
 public final class McpProcessSessionTestSupport {
