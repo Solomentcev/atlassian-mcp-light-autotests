@@ -13,6 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
@@ -28,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
@@ -257,41 +261,42 @@ class McpContractIntegrationTest {
     
     }
 
-    @Test
+    @ParameterizedTest(name = "MCP-034: jira_get_issue отклоняет issue_key={0}")
+    @MethodSource("requiredArgumentCases")
     @Feature("Tool Validation")
     @Story("MCP-034 — Валидация пустых и null значений аргументов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-034: jira_get_issue отклоняет issue_key=null, пустую и пробельную строки")
-    @Description("Предусловия: MCP-сервер запущен; доступен stateless-вызов jira_get_issue.\nШаги: по отдельности передать issue_key=null, issue_key=\"\" и issue_key из трёх пробелов.\nОжидаемый результат: каждый из трёх некорректных аргументов приводит к MCP tool error (result.isError=true); обращения к Jira с корректным ключом для этой проверки не требуется.")
+    @DisplayName("MCP-034: jira_get_issue отклоняет пустые и null значения issue_key")
+    @Description("Предусловия: MCP-сервер запущен; доступен stateless-вызов jira_get_issue.\\nШаги: передать issue_key с одним из некорректных значений.\\nОжидаемый результат: каждый некорректный аргумент приводит к MCP tool error (result.isError=true); обращения к Jira с корректным ключом не требуется.")
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client) {
+    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client,
+                                                        String scenario,
+                                                        String value) {
         Allure.parameter("MCP tool", "jira_get_issue");
         Allure.parameter("Аргумент", "issue_key");
-        Allure.parameter("Проверяемые значения", "null; пустая строка; пробельная строка");
-        ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
-        nullArgument.putNull("issue_key");
-        JsonNode nullResponse = Allure.step(
-                "Вызвать jira_get_issue с issue_key=null",
-                () -> callTool(client, "jira_get_issue", nullArgument));
-        assertToolError(nullResponse, "jira_get_issue с issue_key=null");
+        Allure.parameter("Проверяемое значение", scenario);
 
-        ObjectNode emptyArgument = OBJECT_MAPPER.createObjectNode();
-        emptyArgument.put("issue_key", "");
-        JsonNode emptyResponse = Allure.step(
-                "Вызвать jira_get_issue с issue_key=пустая строка",
-                () -> callTool(client, "jira_get_issue", emptyArgument));
-        assertToolError(emptyResponse, "jira_get_issue с issue_key=пустая строка");
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        if (value == null) {
+            arguments.putNull("issue_key");
+        } else {
+            arguments.put("issue_key", value);
+        }
 
-        ObjectNode blankArgument = OBJECT_MAPPER.createObjectNode();
-        blankArgument.put("issue_key", "   ");
-        JsonNode blankResponse = Allure.step(
-                "Вызвать jira_get_issue с issue_key из трёх пробелов",
-                () -> callTool(client, "jira_get_issue", blankArgument));
-        assertToolError(blankResponse, "jira_get_issue с issue_key из трёх пробелов");
+        JsonNode response = Allure.step(
+                "Вызвать jira_get_issue с issue_key=" + scenario,
+                () -> callTool(client, "jira_get_issue", arguments));
+        assertToolError(response, "jira_get_issue с issue_key=" + scenario);
+    }
 
-    
+    private static Stream<Arguments> requiredArgumentCases() {
+        return Stream.of(
+                Arguments.of("null", null),
+                Arguments.of("пустая строка", ""),
+                Arguments.of("строка из трёх пробелов", "   ")
+        );
     }
 
     @Test
