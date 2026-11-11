@@ -58,7 +58,7 @@ public final class FakeStatelessMcpServer {
         result.putObject("capabilities").putObject("tools");
         result.putObject("_meta").putObject("io.modelcontextprotocol/serverInfo")
                 .put("name", McpTestData.FAKE_STATELESS_SERVER_NAME)
-                .put("version", McpTestData.FAKE_STATELESS_SERVER_VERSION);
+                .put("version", McpTestData.FAKE_SERVER_VERSION);
         result.put("ttlMs", McpTestData.DISCOVERY_TTL_MS);
         result.put("cacheScope", McpTestData.DISCOVERY_CACHE_SCOPE);
         return result;
