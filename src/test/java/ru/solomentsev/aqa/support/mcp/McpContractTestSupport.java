@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.qameta.allure.Allure;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,14 +18,7 @@ import ru.solomentsev.aqa.testdata.McpTestData;
 public final class McpContractTestSupport {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final Duration REQUEST_TIMEOUT = McpTestData.getRequestTimeout();
-
     private McpContractTestSupport() {
-    }
-
-    public static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method,
-                () -> client.request(method, params, REQUEST_TIMEOUT));
     }
 
     public static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
