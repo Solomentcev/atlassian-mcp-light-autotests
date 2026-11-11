@@ -1,6 +1,7 @@
 package ru.solomentsev.aqa.tests.contract;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("MCP Server")
 @Tag("lifecycle")
 @Tag("protocol")
+@Tag("regression")
 class McpStatelessLifecycleIntegrationTest {
 
     private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
@@ -64,6 +66,7 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-019: server/discover без initialize [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] возвращает capabilities и serverInfo")
     @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить server/discover с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " и clientCapabilities; проверить supportedVersions, capabilities.tools, ttlMs, cacheScope и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; resultType=complete; supportedVersions содержит три версии в ожидаемом порядке; tools capability объявлена; TTL=" + McpTestData.DISCOVERY_TTL_MS + " ms; cacheScope=" + McpTestData.DISCOVERY_CACHE_SCOPE + "; serverInfo совпадает с метаданными сервера.")
     @Tag("case-MCP-019")
+    @Tag("smoke")
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "server/discover");
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
@@ -121,6 +124,7 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-020: stateless tools/list без initialize [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] возвращает " + McpTestData.EXPECTED_TOOL_COUNT + " tools")
     @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools содержит ровно " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов; resultType=complete; serverInfo.name=" + McpTestData.SERVER_NAME + " и serverInfo.version=" + McpTestData.SERVER_VERSION + ".")
     @Tag("case-MCP-020")
+    @Tag("smoke")
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "tools/list");
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
@@ -157,6 +161,7 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-021: stateless tools/call " + ConfluenceTestData.LIST_SPACES_TOOL + " [limit=" + McpTestData.DEFAULT_LIMIT + ", protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] без initialize")
     @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; инструмент " + ConfluenceTestData.LIST_SPACES_TOOL + " доступен для чтения.\nШаги: вызвать tools/call с name=" + ConfluenceTestData.LIST_SPACES_TOOL + ", arguments.limit=" + McpTestData.DEFAULT_LIMIT + " и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ".\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит хотя бы один текстовый элемент; serverInfo содержит ожидаемые имя и версию сервера.")
     @Tag("case-MCP-021")
+    @Tag("smoke")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "tools/call");
         Allure.parameter("MCP tool", ConfluenceTestData.LIST_SPACES_TOOL);
@@ -216,6 +221,7 @@ class McpStatelessLifecycleIntegrationTest {
     @DisplayName("MCP-036: ping в NEW, INITIALIZING и READY возвращает пустой result; tools/list доступен только в READY")
     @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=-32001; tools/list в READY возвращает массив tools.")
     @Tag("case-MCP-036")
+    @Tag("smoke")
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
         Allure.parameter("MCP method", "ping");
         Allure.parameter("Lifecycle states", "NEW; INITIALIZING; READY");
@@ -266,6 +272,7 @@ class McpStatelessLifecycleIntegrationTest {
     
     }
 
+    @Step("Выполнить действие или проверку: sendRequest")
     private static JsonNode sendRequest(ru.solomentsev.aqa.mcp.McpClient client,
                                         String method,
                                         ObjectNode params,
@@ -273,6 +280,7 @@ class McpStatelessLifecycleIntegrationTest {
         return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
     }
 
+    @Step("Выполнить действие или проверку: assertEmptyPingResult")
     private static void assertEmptyPingResult(JsonNode response) {
         assertThat(response.has("error"))
                         .as("Ping должен завершаться без JSON-RPC error")
