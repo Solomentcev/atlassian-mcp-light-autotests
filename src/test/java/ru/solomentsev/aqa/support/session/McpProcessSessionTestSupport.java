@@ -1,6 +1,6 @@
 package ru.solomentsev.aqa.support.session;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -18,7 +18,6 @@ public final class McpProcessSessionTestSupport {
     private McpProcessSessionTestSupport() {
     }
 
-    @Step("Запустить classic MCP-сессию: protocolVersion={protocolVersion}")
     public static McpProcessSession startSession(McpServerLauncher launcher,
                                                  Map<String, String> environment,
                                                  Path workingDirectory,
@@ -26,15 +25,16 @@ public final class McpProcessSessionTestSupport {
                                                  String clientName,
                                                  String clientVersion,
                                                  Duration timeout) throws Exception {
-        return McpProcessSession.start(launcher, environment, workingDirectory,
-                protocolVersion, clientName, clientVersion, timeout);
+        return Allure.step("Запустить classic MCP-сессию: protocolVersion=" + protocolVersion,
+                () -> McpProcessSession.start(launcher, environment, workingDirectory,
+                        protocolVersion, clientName, clientVersion, timeout));
     }
 
-    @Step("Запустить stateless MCP-сессию без classic initialize")
     public static McpProcessSession startStatelessSession(McpServerLauncher launcher,
                                                            Map<String, String> environment,
                                                            Path workingDirectory) throws Exception {
-        return McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory);
+        return Allure.step("Запустить stateless MCP-сессию без classic initialize",
+                () -> McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory));
     }
 
     public static McpServerLauncher launcherFor(Class<?> serverClass) {
