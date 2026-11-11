@@ -445,7 +445,30 @@ public final class McpClient implements AutoCloseable {
         }
     }
 
-    private record ReadEvent(String line, IOException error, boolean eof) {
+    private static final class ReadEvent {
+
+        private final String line;
+        private final IOException error;
+        private final boolean eof;
+
+        private ReadEvent(String line, IOException error, boolean eof) {
+            this.line = line;
+            this.error = error;
+            this.eof = eof;
+        }
+
+        private String line() {
+            return line;
+        }
+
+        private IOException error() {
+            return error;
+        }
+
+        private boolean eof() {
+            return eof;
+        }
+
         private static ReadEvent line(String value) {
             return new ReadEvent(value, null, false);
         }
