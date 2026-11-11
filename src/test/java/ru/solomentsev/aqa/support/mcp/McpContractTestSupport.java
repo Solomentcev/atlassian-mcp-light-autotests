@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,13 +24,13 @@ public final class McpContractTestSupport {
     private McpContractTestSupport() {
     }
 
-    @Step("Отправить JSON-RPC request: method={method}")
     public static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return client.request(method, params, REQUEST_TIMEOUT);
+        return Allure.step("Отправить JSON-RPC request: method=" + method,
+                () -> client.request(method, params, REQUEST_TIMEOUT));
     }
 
-    @Step("Вызвать MCP-инструмент через tools/call: name={name}")
     public static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
+        return Allure.step("Вызвать MCP-инструмент через tools/call: name=" + name, () -> {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", name);
         params.set("arguments", arguments);
@@ -42,14 +42,15 @@ public final class McpContractTestSupport {
                 null,
                 REQUEST_TIMEOUT
         );
+        });
     }
 
-    @Step("Выполнить stateless tools/list")
     public static JsonNode requestStatelessTools(McpClient client) {
-        return client.listToolsStateless(
-                McpTestData.getStatelessProtocolVersion(),
-                REQUEST_TIMEOUT
-        );
+        return Allure.step("Выполнить stateless tools/list",
+                () -> client.listToolsStateless(
+                        McpTestData.getStatelessProtocolVersion(),
+                        REQUEST_TIMEOUT
+                ));
     }
 
     public static List<String> textValues(JsonNode array) {
