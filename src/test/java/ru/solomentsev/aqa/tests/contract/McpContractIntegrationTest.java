@@ -414,14 +414,14 @@ class McpContractIntegrationTest {
     }
 
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method + ", params=" + (params == null ? "отсутствуют" : params.fieldNames().toString()), () -> client.request(method, params, REQUEST_TIMEOUT));
+        return Allure.step("Отправить JSON-RPC request: method=" + method + ", params=" + (params == null ? "отсутствуют" : "полей=" + params.size()), () -> client.request(method, params, REQUEST_TIMEOUT));
     }
 
     private static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", name);
         params.set("arguments", arguments);
-        return Allure.step("Вызвать MCP tool: " + name + ", аргументы=" + arguments.fieldNames().toString(), () -> client.requestStateless(
+        return Allure.step("Вызвать MCP tool: " + name + ", аргументы=" + "количество аргументов=" + arguments.size() + (arguments.has("limit") ? ", limit=" + arguments.path("limit").asInt() : ""), () -> client.requestStateless(
                 "tools/call",
                 params,
                 McpTestData.STATELESS_PROTOCOL_VERSION,
