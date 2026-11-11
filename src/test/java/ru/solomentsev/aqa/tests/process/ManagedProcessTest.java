@@ -31,7 +31,6 @@ class ManagedProcessTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("close() сообщает IOException, если процесс остаётся alive после destroyForcibly(); повторный close после завершения успешен")
     @Description("Предусловия: вместо ОС-процесса используется тестовая реализация Process; waitFor(timeout) сообщает timeout, destroyForcibly() вызывается, но isAlive() остаётся true.\nШаги: вызвать ManagedProcess.close(); проверить IOException и факт вызова destroyForcibly(); изменить состояние fake-процесса на завершённое и повторить close().\nОжидаемый результат: первая попытка завершается IOException с диагностикой незавершённого процесса; после isAlive=false повторный close() завершается без ошибки, ManagedProcess.isAlive() возвращает false.")
-    @Tag("process")
     void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
         Allure.parameter("Состояние процесса после destroyForcibly", "остаётся запущенным");
         Allure.parameter("Повторное состояние процесса", "завершён");
@@ -42,7 +41,9 @@ class ManagedProcessTest {
                 .as("Если процесс остаётся активным после destroyForcibly, close должен выбросить IOException")
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("did not terminate after destroyForcibly");
-        assertThat(process.wasDestroyForciblyCalled()).as("После неудачного graceful shutdown ManagedProcess должен вызвать destroyForcibly, фактически: %s", process.wasDestroyForciblyCalled()).isTrue();
+        assertThat(process.wasDestroyForciblyCalled())
+                .as("После неудачного graceful shutdown ManagedProcess должен вызвать destroyForcibly")
+                .isTrue();
 
         process.setAlive(false);
         Allure.step("Повторно закрыть ManagedProcess после фактического завершения дочернего процесса", managedProcess::close);
