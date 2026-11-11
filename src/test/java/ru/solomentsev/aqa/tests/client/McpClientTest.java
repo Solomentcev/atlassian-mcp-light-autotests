@@ -59,7 +59,8 @@ class McpClientTest {
         PipedInputStream serverStdin = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
 
-        Thread server = new Thread(() -> respondToSingleRequest(serverStdin, serverStdout));
+        AtomicReference<JsonNode> requestReceived = new AtomicReference<>();
+        Thread server = new Thread(() -> respondToSingleRequest(serverStdin, serverStdout, requestReceived));
         server.setDaemon(true);
         server.start();
 
@@ -67,6 +68,15 @@ class McpClientTest {
             JsonNode response = sendRequest(client, McpTestData.getPingMethod(), null, McpTestData.getShortRequestTimeout());
 
             assertThat(response.path("jsonrpc").asText()).as("Для method=ping ожидается jsonrpc=2.0, фактически: %s", response.path("jsonrpc").asText()).isEqualTo(McpTestData.getJsonRpcVersion());
+            assertThat(response.has("id"))
+                    .as("JSON-RPC response должен содержать request id")
+                    .isTrue();
+            assertThat(requestReceived.get())
+                    .as("Fake MCP server должен получить исходный JSON-RPC request")
+                    .isNotNull();
+            assertThat(response.path("id"))
+                    .as("MCP Client должен сопоставить response с id отправленного request")
+                    .isEqualTo(requestReceived.get().path("id"));
             assertThat(response.path("result").isObject()).as("Ответ на ping должен содержать объект result").isTrue();
             assertThat(response.path("result").has("alive"))
                     .as("Ответ на ping должен содержать поле result.alive")
