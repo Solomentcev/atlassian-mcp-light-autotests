@@ -42,8 +42,8 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Отправка запроса и сопоставление ответа по request id")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отправка запроса и сопоставление ответа по request id")
-    @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: отправить ping через MCP Client; получить ответ.\nОжидаемый результат: ответ содержит JSON-RPC 2.0, исходный request id и ожидаемый result.")
+    @DisplayName("Отправка ping и сопоставление ответа по request id [method=ping, timeout=" + McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через отдельные STDIN/STDOUT-потоки.\nШаги: отправить JSON-RPC request с method=ping; дождаться ответа в пределах " + McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms.\nОжидаемый результат: ответ имеет jsonrpc=2.0, request id совпадает с отправленным, result является объектом и содержит alive=true.")
     @Tag("protocol")
     void shouldSendRequestAndMatchResponseById() throws Exception {
         Allure.parameter("JSON-RPC method", "ping");
@@ -75,8 +75,8 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Отправка notification без request id")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отправка notification без request id")
-    @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация сервера.\nШаги: отправить notifications/initialized; проверить принятое сервером сообщение.\nОжидаемый результат: notification не содержит id и передаётся без ожидания response.")
+    @DisplayName("Передача notification notifications/initialized без request id")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более " + McpTestData.ASYNC_EVENT_TIMEOUT.toMillis() + " ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
     @Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
         Allure.parameter("Notification method", "notifications/initialized");
@@ -121,8 +121,8 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Выполнение classic initialize handshake")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Classic initialize handshake, protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION)
-    @Description("Предусловия: Созданы тестовые STDIO-потоки и имитация MCP-сервера.\nШаги: выполнить initialize через MCP Client; дождаться notifications/initialized.\nОжидаемый результат: версия протокола проверена; notification отправлен без request id.")
+    @DisplayName("Classic initialize handshake [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + "]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера, которая отвечает на initialize согласованной версией протокола.\nШаги: отправить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", clientInfo.name=" + McpTestData.CLIENT_NAME + " и clientInfo.version=" + McpTestData.CLIENT_VERSION + "; принять ответ; дождаться следующего сообщения клиента.\nОжидаемый результат: ответ initialize содержит согласованную protocolVersion; клиент отправляет notifications/initialized без поля id.")
     @Tag("protocol")
     void shouldCompleteClassicInitializeHandshake() throws Exception {
         Allure.parameter("MCP protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
@@ -191,8 +191,8 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Добавление stateless metadata без изменения исходных params")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Stateless metadata, protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; исходные params не изменяются")
-    @Description("Предусловия: Созданы тестовые STDIO-потоки; подготовлены исходные params и client capabilities.\nШаги: выполнить stateless request; проверить переданные серверу metadata и исходный объект params.\nОжидаемый результат: protocolVersion, clientCapabilities и clientInfo добавлены в копию params; исходный объект не изменён.")
+    @DisplayName("tools/list stateless metadata [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", исходный params.filter=all]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера; исходный params содержит filter=all, capabilities содержат experimental=true, clientInfo задан.\nШаги: отправить stateless tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; проверить полученную сервером строку запроса и исходный объект params.\nОжидаемый результат: в переданном запросе сохранён filter=all и добавлены protocolVersion, clientCapabilities и clientInfo; исходный params не получает поле _meta и остаётся неизменным.")
     @Tag("protocol")
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
         Allure.parameter("JSON-RPC method", "tools/list");
@@ -277,8 +277,8 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Отклонение params с уже заданным _meta")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение params с уже заданным _meta")
-    @Description("Предусловия: Переданы params с уже существующим полем _meta.\nШаги: вызвать requestStateless.\nОжидаемый результат: клиент выбрасывает IllegalArgumentException и не отправляет запрос.")
+    @DisplayName("Отклонение stateless tools/list при уже заданном params._meta [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "]")
+    @Description("Предусловия: Исходный params уже содержит поле _meta; MCP Client подключён к STDIO-потокам без запущенного обработчика сервера.\nШаги: вызвать requestStateless для method=tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ".\nОжидаемый результат: метод завершается IllegalArgumentException с упоминанием _meta до записи каких-либо данных в STDIN.")
     @Tag("negative")
     void shouldRejectStatelessParamsContainingMetadata() throws Exception {
         Allure.parameter("JSON-RPC method", "tools/list");
