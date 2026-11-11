@@ -2,7 +2,7 @@
 
 Внешний black-box AQA-проект для проверки [Atlassian MCP Light](https://github.com/Solomentcev/atlassian-mcp-light).
 
-AQA взаимодействует с сервером через его штатный MCP/JSON-RPC интерфейс поверх STDIO. Тесты не импортируют внутренние классы основного проекта и не обращаются напрямую к Jira/Confluence REST API. Фактический контракт классического и stateless MCP-режимов, JSON-RPC ошибок и 13 инструментов описан в [mcp-contract.md](docs/mcp-contract.md).
+AQA взаимодействует с сервером через его штатный MCP/JSON-RPC интерфейс поверх STDIO. Тесты не импортируют внутренние классы основного проекта и не обращаются напрямую к Jira/Confluence REST API. Фактический контракт классического и stateless MCP-режимов, JSON-RPC ошибок и текущего набора инструментов описан в [mcp-contract.md](docs/mcp-contract.md).
 
 ## Технологии
 
