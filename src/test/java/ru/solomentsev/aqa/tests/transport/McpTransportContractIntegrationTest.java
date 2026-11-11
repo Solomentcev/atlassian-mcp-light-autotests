@@ -270,7 +270,7 @@ class McpTransportContractIntegrationTest {
     }
 
     private static void sendRawLine(McpClient client, String line) {
-        Allure.step("Отправить необработанную STDIO-строку: " + (line.isBlank() ? "пустая/пробельная строка" : line.length() > 80 ? line.substring(0, 80) + "…" : line), () -> client.sendRawLine(line));
+        Allure.step("Отправить необработанную STDIO-строку: " + (line.isEmpty() ? "пустая" : line.isBlank() ? "только пробелы" : "непустая JSONL-строка, длина=" + line.length()), () -> client.sendRawLine(line));
     }
 
     private static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
