@@ -59,8 +59,7 @@ class DockerMcpServerLauncherTest {
         assertThat(command).as("Docker run должен использовать заданный image=atlassian-mcp-light:latest")
                 .contains(DockerTestData.getImage());
         assertThat(command).as("STDIO-контейнер нельзя запускать с TTY или опубликованными портами").doesNotContain("-t", "-p", "--publish");
-    
-    
+
     }
 
     @Test
@@ -82,8 +81,7 @@ class DockerMcpServerLauncherTest {
         ))).as("При AQA_RUN_ID=unsafe/run-id ожидается IllegalArgumentException с указанием runId")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("runId");
-    
-    
+
     }
 
     @Test
@@ -105,7 +103,6 @@ class DockerMcpServerLauncherTest {
         ))).as("При stopTimeoutSeconds=0 ожидается IllegalArgumentException с указанием stopTimeoutSeconds")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("stopTimeoutSeconds");
-    
-    
+
     }
 }
