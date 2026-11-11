@@ -39,24 +39,24 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск готовой MCP-сессии и завершение процесса при закрытии")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName(McpTestData.CLASSIC_SESSION_MODE + " session [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + ", startupTimeout=" + McpTestData.DEFAULT_STARTUP_TIMEOUT_MS + " ms, shutdownTimeout=" + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms]: handshake готов, close завершает процесс")
-    @Description("Предусловия: доступен FakeMcpServer, который отвечает на initialize и notifications/initialized.\nШаги: запустить McpProcessSession в режиме " + McpTestData.CLASSIC_SESSION_MODE + " с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + " и startup timeout=" + McpTestData.DEFAULT_STARTUP_TIMEOUT_MS + " ms; убедиться, что процесс активен и MCP Client создан; закрыть сессию.\nОжидаемый результат: start() возвращает только после успешного readiness handshake; после close() процесс завершается в пределах " + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms с exit code=0.")
+    @DisplayName("параметр" + " session [protocolVersion=" + "параметр" + ", client=" + "параметр" + "/" + "параметр" + ", startupTimeout=" + "параметр" + " ms, shutdownTimeout=" + "параметр" + " ms]: handshake готов, close завершает процесс")
+    @Description("Предусловия: доступен FakeMcpServer, который отвечает на initialize и notifications/initialized.\nШаги: запустить McpProcessSession в режиме " + "параметр" + " с protocolVersion=" + "параметр" + " и startup timeout=" + "параметр" + " ms; убедиться, что процесс активен и MCP Client создан; закрыть сессию.\nОжидаемый результат: start() возвращает только после успешного readiness handshake; после close() процесс завершается в пределах " + "параметр" + " ms с exit code=0.")
     @Tag("process")
     void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
-        Allure.parameter("Session mode", McpTestData.CLASSIC_SESSION_MODE);
-        Allure.parameter("MCP protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
-        Allure.parameter("Client name", McpTestData.CLIENT_NAME);
-        Allure.parameter("Client version", McpTestData.CLIENT_VERSION);
-        Allure.parameter("Startup timeout", McpTestData.DEFAULT_STARTUP_TIMEOUT.toMillis() + " ms");
-        Allure.parameter("Shutdown timeout", McpTestData.PROCESS_SHUTDOWN_TIMEOUT.toMillis() + " ms");
+        Allure.parameter("Session mode", McpTestData.getClassicSessionMode());
+        Allure.parameter("MCP protocolVersion", McpTestData.getClassicProtocolVersion());
+        Allure.parameter("Client name", McpTestData.getClientName());
+        Allure.parameter("Client version", McpTestData.getClientVersion());
+        Allure.parameter("Startup timeout", McpTestData.getDefaultStartupTimeout().toMillis() + " ms");
+        Allure.parameter("Shutdown timeout", McpTestData.getProcessShutdownTimeout().toMillis() + " ms");
         McpProcessSession session = startSession(
                 launcherFor(FakeMcpServer.class),
                 Map.of(),
                 null,
-                McpTestData.CLASSIC_PROTOCOL_VERSION,
-                McpTestData.CLIENT_NAME,
-                McpTestData.CLIENT_VERSION,
-                McpTestData.DEFAULT_STARTUP_TIMEOUT
+                McpTestData.getClassicProtocolVersion(),
+                McpTestData.getClientName(),
+                McpTestData.getClientVersion(),
+                McpTestData.getDefaultStartupTimeout()
         );
         ManagedProcess process = session.process();
 
@@ -67,7 +67,7 @@ class McpProcessSessionTest {
             Allure.step("Закрыть MCP-сессию", session::close);
         }
 
-        assertThat(Allure.step("Дождаться завершения MCP-процесса", () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)))
+        assertThat(Allure.step("Дождаться завершения MCP-процесса", () -> process.waitFor(McpTestData.getProcessShutdownTimeout())))
                 .as("MCP-процесс должен завершиться после закрытия сессии")
                 .isTrue();
         assertThat(process.exitCode()).as("Fake MCP server должен завершиться с кодом 0").isZero();
@@ -79,14 +79,14 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск stateless-сессии без classic initialize")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName(McpTestData.STATELESS_SESSION_MODE + " session [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", без initialize, shutdownTimeout=" + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms]: discover и tools/list успешны, close завершает процесс")
-    @Description("Предусловия: доступен FakeStatelessMcpServer, поддерживающий server/discover и tools/list.\nШаги: запустить McpProcessSession в режиме " + McpTestData.STATELESS_SESSION_MODE + " без classic handshake; выполнить server/discover и tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; закрыть сессию.\nОжидаемый результат: оба stateless-запроса обрабатываются без initialize; serverInfo.name=fake-stateless-server; tools/list возвращает массив; после close() процесс завершается в пределах " + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms с exit code=0.")
+    @DisplayName("параметр" + " session [protocolVersion=" + "параметр" + ", без initialize, shutdownTimeout=" + "параметр" + " ms]: discover и tools/list успешны, close завершает процесс")
+    @Description("Предусловия: доступен FakeStatelessMcpServer, поддерживающий server/discover и tools/list.\nШаги: запустить McpProcessSession в режиме " + "параметр" + " без classic handshake; выполнить server/discover и tools/list с protocolVersion=" + "параметр" + "; закрыть сессию.\nОжидаемый результат: оба stateless-запроса обрабатываются без initialize; serverInfo.name=fake-stateless-server; tools/list возвращает массив; после close() процесс завершается в пределах " + "параметр" + " ms с exit code=0.")
     @Tag("process")
     void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
-        Allure.parameter("Session mode", McpTestData.STATELESS_SESSION_MODE);
-        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("Session mode", McpTestData.getStatelessSessionMode());
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         Allure.parameter("Classic initialize", "не выполняется");
-        Allure.parameter("Shutdown timeout", McpTestData.PROCESS_SHUTDOWN_TIMEOUT.toMillis() + " ms");
+        Allure.parameter("Shutdown timeout", McpTestData.getProcessShutdownTimeout().toMillis() + " ms");
         McpProcessSession session = startStatelessSession(
                 launcherFor(FakeStatelessMcpServer.class),
                 Map.of(),
@@ -98,18 +98,18 @@ class McpProcessSessionTest {
             assertThat(process.isAlive()).as("После запуска stateless-сессии процесс должен быть активен").isTrue();
 
             var discovery = discoverStateless(session.client(), 
-                    McpTestData.STATELESS_PROTOCOL_VERSION,
-                    McpTestData.PROCESS_SHUTDOWN_TIMEOUT
+                    McpTestData.getStatelessProtocolVersion(),
+                    McpTestData.getProcessShutdownTimeout()
             );
             assertThat(discovery.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo")
                     .path("name").asText())
                     .as("server/discover должен вернуть metadata fake-stateless-server")
-                    .isEqualTo(McpTestData.FAKE_STATELESS_SERVER_NAME);
+                    .isEqualTo(McpTestData.getFakeStatelessServerName());
 
             var tools = listToolsStateless(session.client(), 
-                    McpTestData.STATELESS_PROTOCOL_VERSION,
-                    McpTestData.PROCESS_SHUTDOWN_TIMEOUT
+                    McpTestData.getStatelessProtocolVersion(),
+                    McpTestData.getProcessShutdownTimeout()
             );
             assertThat(tools.path("result").path("tools").isArray())
                     .as("tools/list должен вернуть массив инструментов")
@@ -119,7 +119,7 @@ class McpProcessSessionTest {
         }
 
         assertThat(Allure.step("Дождаться завершения stateless MCP-процесса",
-                () -> process.waitFor(McpTestData.PROCESS_SHUTDOWN_TIMEOUT)))
+                () -> process.waitFor(McpTestData.getProcessShutdownTimeout())))
                 .as("Stateless MCP-процесс должен завершиться после закрытия сессии")
                 .isTrue();
         assertThat(process.exitCode()).as("Fake stateless MCP server должен завершиться с кодом 0").isZero();
