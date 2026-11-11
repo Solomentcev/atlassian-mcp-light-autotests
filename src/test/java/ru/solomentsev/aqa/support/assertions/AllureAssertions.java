@@ -146,6 +146,13 @@ public final class AllureAssertions {
             return this;
         }
 
+        public AllureAssert<T> containsExactlyElementsOf(Iterable<?> expectedValues) {
+            step("фактически=" + display(actual) + ", ожидается точная последовательность=" + display(expectedValues),
+                    () -> Assertions.assertThat((Iterable<Object>) actual)
+                            .containsExactlyElementsOf((Iterable<Object>) expectedValues));
+            return this;
+        }
+
         public AllureAssert<T> containsSubsequence(Object... expectedValues) {
             step("фактически=" + display(actual) + ", ожидается последовательность=" + displayExpected(expectedValues),
                     () -> Assertions.assertThat((Iterable<Object>) actual).containsSubsequence(expectedValues));
