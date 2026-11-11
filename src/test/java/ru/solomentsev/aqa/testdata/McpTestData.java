@@ -32,13 +32,17 @@ public final class McpTestData {
     public static final int INVALID_LIMIT_BELOW_MIN = 0;
     public static final int INVALID_LIMIT_ABOVE_MAX = 101;
 
+    public static final long DEFAULT_STARTUP_TIMEOUT_MS = 15_000L;
+    public static final long PROCESS_SHUTDOWN_TIMEOUT_MS = 3_000L;
+
+    public static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofMillis(DEFAULT_STARTUP_TIMEOUT_MS);
     public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     public static final Duration SHORT_REQUEST_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration ASYNC_EVENT_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration INVALID_REQUEST_TIMEOUT = Duration.ofSeconds(1);
     public static final Duration JAVA_VERSION_PROCESS_TIMEOUT = Duration.ofSeconds(15);
     public static final Duration STDERR_COLLECTION_TIMEOUT = Duration.ofSeconds(3);
-    public static final Duration PROCESS_SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
+    public static final Duration PROCESS_SHUTDOWN_TIMEOUT = Duration.ofMillis(PROCESS_SHUTDOWN_TIMEOUT_MS);
 
     private McpTestData() {
     }
