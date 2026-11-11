@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("AQA Test Infrastructure")
 @Tag("unit")
 @Tag("process")
+@Tag("regression")
 class ProcessBuilderLauncherTest {
 
     @Test
