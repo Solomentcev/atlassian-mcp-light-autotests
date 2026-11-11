@@ -18,4 +18,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(McpServerExtension.class)
 public @interface McpServerTest {
+
+    /**
+     * Запустить процесс без classic initialize handshake для stateless-сценариев.
+     *
+     * @return {@code true}, если MCP-сессия должна начинаться без initialize
+     */
+    boolean stateless() default false;
 }
