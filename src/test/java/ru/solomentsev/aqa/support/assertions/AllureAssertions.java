@@ -117,7 +117,7 @@ public final class AllureAssertions {
         }
 
         public AllureAssert<T> doesNotContain(Object... unexpectedValues) {
-            step("фактически=" + display(actual) + ", ожидается не содержит=" + displayExpected(unexpectedValues),
+            step("фактически=" + display(actual) + ", ожидается отсутствие указанных значений (значения скрыты)",
                     () -> {
                         if (actual instanceof CharSequence) {
                             String[] values = Arrays.stream(unexpectedValues).map(String::valueOf).toArray(String[]::new);
@@ -160,13 +160,13 @@ public final class AllureAssertions {
 
         public AllureAssert<T> isGreaterThan(int expected) {
             step("фактически=" + display(actual) + ", ожидается больше " + expected,
-                    () -> Assertions.assertThat((Comparable) actual).isGreaterThan(expected));
+                    () -> Assertions.assertThat((Integer) actual).isGreaterThan(expected));
             return this;
         }
 
         public AllureAssert<T> isGreaterThanOrEqualTo(int expected) {
             step("фактически=" + display(actual) + ", ожидается не меньше " + expected,
-                    () -> Assertions.assertThat((Comparable) actual).isGreaterThanOrEqualTo(expected));
+                    () -> Assertions.assertThat((Integer) actual).isGreaterThanOrEqualTo(expected));
             return this;
         }
 
