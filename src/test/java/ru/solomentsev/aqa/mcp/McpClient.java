@@ -92,7 +92,7 @@ public final class McpClient implements AutoCloseable {
 
         long requestId = requestIds.incrementAndGet();
         ObjectNode request = OBJECT_MAPPER.createObjectNode();
-        request.put("jsonrpc", "2.0");
+        request.put("jsonrpc", McpTestData.getJsonRpcVersion());
         request.put("id", requestId);
         request.put("method", method);
         if (params != null) {
@@ -159,7 +159,7 @@ public final class McpClient implements AutoCloseable {
         validateMethod(method);
 
         ObjectNode notification = OBJECT_MAPPER.createObjectNode();
-        notification.put("jsonrpc", "2.0");
+        notification.put("jsonrpc", McpTestData.getJsonRpcVersion());
         notification.put("method", method);
         if (params != null) {
             notification.set("params", params);
