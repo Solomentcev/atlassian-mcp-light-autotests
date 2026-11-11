@@ -228,7 +228,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Notification method", "notifications/initialized");
         Allure.parameter("Notification request id", "отсутствует");
         Allure.parameter("Контрольный запрос", "ping");
-        client.notification("notifications/initialized", null);
+        Allure.step("Отправить notification notifications/initialized без request id", () -> client.notification("notifications/initialized", null));
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
 
