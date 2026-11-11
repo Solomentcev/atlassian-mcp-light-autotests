@@ -1,8 +1,8 @@
 package ru.solomentsev.aqa.support.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.qameta.allure.Allure;
 
@@ -31,17 +31,17 @@ public final class McpContractTestSupport {
 
     public static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
         return Allure.step("Вызвать MCP-инструмент через tools/call: name=" + name, () -> {
-        ObjectNode params = OBJECT_MAPPER.createObjectNode();
-        params.put("name", name);
-        params.set("arguments", arguments);
-        return client.requestStateless(
-                McpTestData.getToolsCallMethod(),
-                params,
-                McpTestData.getStatelessProtocolVersion(),
-                OBJECT_MAPPER.createObjectNode(),
-                null,
-                REQUEST_TIMEOUT
-        );
+            ObjectNode params = OBJECT_MAPPER.createObjectNode();
+            params.put("name", name);
+            params.set("arguments", arguments);
+            return client.requestStateless(
+                    McpTestData.getToolsCallMethod(),
+                    params,
+                    McpTestData.getStatelessProtocolVersion(),
+                    OBJECT_MAPPER.createObjectNode(),
+                    null,
+                    REQUEST_TIMEOUT
+            );
         });
     }
 
