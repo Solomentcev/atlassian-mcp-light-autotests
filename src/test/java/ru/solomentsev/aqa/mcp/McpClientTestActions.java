@@ -83,7 +83,8 @@ public final class McpClientTestActions {
      */
     public static void respondToSingleRequest(PipedInputStream serverStdin,
                                               PipedOutputStream serverStdout,
-                                              AtomicReference<JsonNode> requestReceived) {
+                                              AtomicReference<JsonNode> requestReceived,
+                                              AtomicReference<Throwable> serverFailure) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(serverStdin, StandardCharsets.UTF_8));
              BufferedWriter writer = new BufferedWriter(
@@ -97,8 +98,8 @@ public final class McpClientTestActions {
             writer.write(OBJECT_MAPPER.writeValueAsString(response));
             writer.newLine();
             writer.flush();
-        } catch (Exception ignored) {
-            // Ошибка обмена будет зафиксирована проверкой на стороне MCP Client.
+        } catch (Exception exception) {
+            serverFailure.set(exception);
         }
     }
 }
