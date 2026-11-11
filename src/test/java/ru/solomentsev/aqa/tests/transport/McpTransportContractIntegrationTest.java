@@ -4,6 +4,7 @@ import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("MCP Server")
 @Tag("transport")
 @Tag("protocol")
+@Tag("regression")
 class McpTransportContractIntegrationTest {
 
     private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
@@ -238,6 +240,7 @@ class McpTransportContractIntegrationTest {
     @Description("Предусловия: MCP STDIO-процесс завершил initialize и находится в READY.\nШаги: отправить notifications/initialized без request id; затем отправить ping с request id.\nОжидаемый результат: notification отправляется без поля id; следующий ping получает успешный JSON-RPC response с объектом result. Отдельное отсутствие ответа на notification этим тестом напрямую не проверяется.")
     @Tag("protocol")
     @Tag("case-MCP-004")
+    @Tag("smoke")
     void shouldSendInitializedNotificationWithoutRequestIdAndKeepSessionReady(McpClient client) {
         Allure.parameter("Notification method", "notifications/initialized");
         Allure.parameter("Notification request id", "отсутствует");
@@ -285,19 +288,23 @@ class McpTransportContractIntegrationTest {
     
     }
 
+    @Step("Выполнить действие или проверку: sendRawLine")
     private static void sendRawLine(McpClient client, String line) {
         Allure.step("Отправить необработанную STDIO-строку: " + (line.isEmpty() ? "пустая" : line.isBlank() ? "только пробелы" : "непустая JSONL-строка, длина=" + line.length()), () -> client.sendRawLine(line));
     }
 
+    @Step("Выполнить действие или проверку: awaitRawResponse")
     private static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
         return Allure.step("Дождаться JSON-RPC ответа на некорректную STDIO-строку: timeout=" + timeout.toMillis() + " ms", () -> client.awaitRawResponse(timeout));
     }
 
+    @Step("Выполнить действие или проверку: sendRequest")
     private static JsonNode sendRequest(
             McpClient client, String method, ObjectNode params, Duration timeout) {
         return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
     }
 
+    @Step("Выполнить действие или проверку: assertJsonRpcError")
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,
                                            int expectedCode) {
         assertThat(response.path("jsonrpc").asText())
