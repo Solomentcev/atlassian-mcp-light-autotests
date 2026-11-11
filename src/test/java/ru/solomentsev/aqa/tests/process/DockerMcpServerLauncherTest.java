@@ -56,7 +56,7 @@ class DockerMcpServerLauncherTest {
     @Feature("Docker Launcher")
     @Story("Отклонение небезопасного Docker run id")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Docker launcher отклоняет небезопасный AQA_RUN_ID [runId содержит недопустимые символы]")
+    @DisplayName("Docker launcher отклоняет AQA_RUN_ID=unsafe/run-id")
     @Description("Предусловия: Передан run id с недопустимым символом /.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием runId.")
     @Tag("negative")
     void shouldRejectUnsafeRunId() {
