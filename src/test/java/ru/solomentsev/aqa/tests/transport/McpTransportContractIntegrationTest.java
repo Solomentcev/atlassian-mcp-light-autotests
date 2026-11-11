@@ -21,7 +21,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 /**
  * Проверяет STDIO framing и JSON-RPC ошибки реального MCP-сервера.
