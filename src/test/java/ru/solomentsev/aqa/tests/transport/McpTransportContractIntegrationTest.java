@@ -78,6 +78,9 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.has("error"))
                 .as("Контрольный ping после предыдущего запроса должен завершиться без JSON-RPC error")
                 .isFalse();
+        assertThat(ping.path("result").isObject())
+                .as("Контрольный ping после предыдущего запроса должен вернуть объект result")
+                .isTrue();
     
     }
 
