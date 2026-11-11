@@ -57,8 +57,8 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-005 — Получение списка инструментов")
     @Severity(SeverityLevel.BLOCKER)
-    @DisplayName("MCP-005: tools/list возвращает массив инструментов [protocolVersion=" + "2026-07-28" + "]")
-    @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с protocolVersion=" + "2026-07-28" + ".\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
+    @DisplayName("MCP-005: tools/list возвращает массив инструментов")
+    @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с обязательными metadata.\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
     @Tag("smoke")
     void shouldReturnToolsList(McpClient client) {
         JsonNode response = requestStatelessTools(client);
@@ -84,8 +84,8 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-006 — Проверка состава инструментов")
     @Severity(SeverityLevel.BLOCKER)
-    @DisplayName("MCP-006: Состав tools/list совпадает с контрактом [ожидается " + 13 + " инструментов]")
-    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: возвращено ровно " + 13 + " уникальных имён; набор полностью совпадает с " + 13 + " инструментами, перечисленными в контракте.")    @Tag("case-MCP-006")
+    @DisplayName("MCP-006: Состав tools/list совпадает с контрактом")
+    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: количество и набор уникальных имён полностью совпадают с публичным контрактом.")    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
         JsonNode response = requestStatelessTools(client);
@@ -118,7 +118,7 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-007 — Проверка описаний инструментов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-007: У каждого из " + 13 + " инструментов есть непустой description")
+    @DisplayName("MCP-007: У каждого инструмента есть непустой description")
     @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         JsonNode response = requestStatelessTools(client);
@@ -150,8 +150,8 @@ class McpContractIntegrationTest {
     @Feature("Tool Schemas")
     @Story("MCP-008 — Проверка JSON Schema и annotations инструментов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-008: JSON Schema и annotations всех " + 13 + " инструментов соответствуют контракту")
-    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый контракт " + 13 + " инструментов.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
+    @DisplayName("MCP-008: JSON Schema и annotations инструментов соответствуют контракту")
+    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый публичный контракт.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
@@ -300,7 +300,7 @@ class McpContractIntegrationTest {
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-023: Stateless-запрос без обязательного metadata отклоняется")
-    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=" + -32602 + "; контрольный tools/list с protocolVersion=" + "2026-07-28" + " выполняется успешно и возвращает массив tools.")
+    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=INVALID_PARAMS; контрольный tools/list с обязательными metadata выполняется успешно и возвращает массив tools.")
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(String missingField,
@@ -355,8 +355,8 @@ class McpContractIntegrationTest {
     @Feature("Stateless Protocol")
     @Story("MCP-022 — Отклонение неподдерживаемой stateless protocolVersion")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-022: server/discover отклоняет protocolVersion=" + "2099-01-01" + " [error=-32022]")
-    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSON-RPC запросы.\nШаги: вызвать server/discover с protocolVersion=" + "2099-01-01" + " и непустым clientCapabilities.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32022; error.data.supportedVersions содержит поддерживаемую версию " + "2026-07-28" + ".")
+    @DisplayName("MCP-022: server/discover отклоняет неподдерживаемую protocolVersion")
+    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSON-RPC запросы.\nШаги: вызвать server/discover с неподдерживаемой protocolVersion и непустым clientCapabilities.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32022; error.data.supportedVersions содержит поддерживаемую версию протокола.")
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
@@ -481,8 +481,8 @@ class McpContractIntegrationTest {
     @Feature("Tool Validation")
     @Story("MCP-012 — Вызов инструмента с неверным типом аргумента")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=" + 42 + " (integer вместо string)")
-    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=" + 42 + " (JSON integer).\nОжидаемый результат: вызов с аргументом неверного JSON-типа возвращает MCP tool error (result.isError=true); проверка не зависит от наличия конкретной задачи в Jira.")
+    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key неверного JSON-типа")
+    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с числовым issue_key.\nОжидаемый результат: вызов с аргументом неверного JSON-типа возвращает MCP tool error (result.isError=true); проверка не зависит от наличия конкретной задачи в Jira.")
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
@@ -621,8 +621,8 @@ class McpContractIntegrationTest {
     @Feature("Confluence Page Updates")
     @Story("CONF-019 — Обновление страницы без полей для изменения")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("CONF-019: confluence_update_page отклоняет запрос только с page_id=" + "1" + " без title и content")
-    @Description("Предусловия: В тестовом Confluence-окружении существует страница с ID=" + "1" + ".\nШаги: вызвать confluence_update_page с единственным аргументом page_id=" + "1" + "; не передавать title и content.\nОжидаемый результат: вызов возвращает MCP tool error с диагностикой отсутствия полей для изменения; запрос не должен запускать обновление страницы.")
+    @DisplayName("CONF-019: confluence_update_page отклоняет запрос без title и content")
+    @Description("Предусловия: В тестовом Confluence-окружении существует тестовая страница.\nШаги: вызвать confluence_update_page только с page_id; не передавать title и content.\nОжидаемый результат: вызов возвращает MCP tool error с диагностикой отсутствия полей для изменения; запрос не должен запускать обновление страницы.")
     @Tag("negative")
     @Tag("case-CONF-019")
     @Tag("confluence")
