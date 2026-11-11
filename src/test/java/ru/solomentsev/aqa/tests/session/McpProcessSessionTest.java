@@ -5,6 +5,7 @@ import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.support.fake.FakeMcpServer;
 import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import ru.solomentsev.aqa.support.OperatingSystem;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.qameta.allure.Allure;
@@ -160,7 +161,7 @@ class McpProcessSessionTest {
         String javaExecutable = Path.of(
                 System.getProperty("java.home"),
                 "bin",
-                isWindows() ? "java.exe" : "java"
+                OperatingSystem.isWindows() ? "java.exe" : "java"
         ).toString();
         String testClasspath = System.getProperty(
                 "surefire.test.class.path",
@@ -176,7 +177,4 @@ class McpProcessSessionTest {
                 new ProcessBuilderLauncher().launch(command, environment, workingDirectory);
     }
 
-    private static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
-    }
 }
