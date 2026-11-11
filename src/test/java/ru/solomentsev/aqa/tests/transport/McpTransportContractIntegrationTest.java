@@ -41,7 +41,7 @@ class McpTransportContractIntegrationTest {
     @Story("MCP-029 — Игнорирование пустых строк STDIO")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-029: STDIO игнорирует пустую строку и строку из пробелов; следующий ping успешен")
-    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSONL-сообщения.\nШаги: записать в STDIN сначала пустую строку, затем строку из трёх пробелов; после них отправить JSON-RPC request method=ping.\nОжидаемый результат: на пустые строки не формируются JSON-RPC error-ответы; сервер не завершается; ping получает успешный response с объектом result.")
+    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSONL-сообщения.\nШаги: записать в STDIN пустую строку, затем строку из трёх пробелов; после них отправить JSON-RPC request method=ping.\nОжидаемый результат: пустые строки не приводят к JSON-RPC error; сервер продолжает чтение STDIN; контрольный ping получает успешный response с объектом result. Отсутствие отдельного ответа на пустые строки этим тестом напрямую не проверяется.")
     @Tag("negative")
     @Tag("case-MCP-029")
     void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
@@ -76,7 +76,7 @@ class McpTransportContractIntegrationTest {
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после предыдущего запроса должен завершиться без JSON-RPC error")
                 .isFalse();
     
     }
@@ -190,7 +190,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.has("error"))
                 .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
                 .isFalse();
-        assertThat(ping.path("result").isObject()).as("После ошибочного сообщения сервер должен вернуть объект result на ping").isTrue();
+        assertThat(ping.path("result").isObject()).as("Контрольный ping после notification должен вернуть объект result").isTrue();
     
     
     }
@@ -221,7 +221,7 @@ class McpTransportContractIntegrationTest {
     @Story("MCP-004 — Отправка notifications/initialized без response")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-004: notifications/initialized без request id не нарушает обработку следующего ping")
-    @Description("Предусловия: MCP STDIO-процесс завершил initialize и находится в READY.\nШаги: отправить notifications/initialized без request id; затем отправить ping с request id.\nОжидаемый результат: notification передаётся без id и не требует response; следующий ping получает успешный JSON-RPC response с объектом result.")
+    @Description("Предусловия: MCP STDIO-процесс завершил initialize и находится в READY.\nШаги: отправить notifications/initialized без request id; затем отправить ping с request id.\nОжидаемый результат: notification отправляется без поля id; следующий ping получает успешный JSON-RPC response с объектом result. Отдельное отсутствие ответа на notification этим тестом напрямую не проверяется.")
     @Tag("protocol")
     @Tag("case-MCP-004")
     void shouldNotRespondToNotifications(McpClient client) {
@@ -288,7 +288,7 @@ class McpTransportContractIntegrationTest {
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
                 .isEqualTo("2.0");
         assertThat(response.has("error"))
-                .as("Некорректный JSON-RPC запрос должен вернуть объект error")
+                .as("JSON-RPC response с ожидаемой ошибкой должен содержать объект error")
                 .isTrue();
         assertThat(response.path("error").path("code").asInt())
                 .as("Для некорректного сообщения ожидается JSON-RPC error code=%s, фактически: %s", expectedCode, response.path("error").path("code"))
