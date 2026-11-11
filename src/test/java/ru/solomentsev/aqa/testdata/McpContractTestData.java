@@ -29,7 +29,7 @@ public final class McpContractTestData {
 
     public static Stream<Arguments> getRequiredArgumentCases() {
         return Stream.of(
-                Arguments.of("null", (String) null),
+                Arguments.of("null", null),
                 Arguments.of("пустая строка", ""),
                 Arguments.of("строка из трёх пробелов", "   ")
         );
@@ -50,36 +50,36 @@ public final class McpContractTestData {
     private static Map<String, ToolContract> createExpectedTools() {
         return Map.ofEntries(
                 Map.entry("jira_get_issue", tool(
-                        Map.of("issue_key", "string"), Set.of("issue_key"), true, false, true, true)),
+                        Map.of("issue_key", "string"), Set.of("issue_key"), true, false, true)),
                 Map.entry("jira_search", tool(
-                        Map.of("jql", "string", "limit", "integer"), Set.of("jql"), true, false, true, true)),
+                        Map.of("jql", "string", "limit", "integer"), Set.of("jql"), true, false, true)),
                 Map.entry("jira_create_issue", tool(
                         Map.of("project_key", "string", "summary", "string", "description", "string", "issue_type", "string"),
-                        Set.of("project_key", "summary", "description"), false, false, false, true)),
+                        Set.of("project_key", "summary", "description"), false, false, false)),
                 Map.entry("jira_transition", tool(
                         Map.of("issue_key", "string", "transition_name", "string"),
-                        Set.of("issue_key", "transition_name"), false, true, false, true)),
+                        Set.of("issue_key", "transition_name"), false, true, false)),
                 Map.entry("jira_add_comment", tool(
                         Map.of("issue_key", "string", "comment", "string"),
-                        Set.of("issue_key", "comment"), false, false, false, true)),
+                        Set.of("issue_key", "comment"), false, false, false)),
                 Map.entry("jira_get_project", tool(
-                        Map.of("project_key", "string"), Set.of("project_key"), true, false, true, true)),
+                        Map.of("project_key", "string"), Set.of("project_key"), true, false, true)),
                 Map.entry("jira_get_user", tool(
-                        Map.of("user_identifier", "string"), Set.of("user_identifier"), true, false, true, true)),
+                        Map.of("user_identifier", "string"), Set.of("user_identifier"), true, false, true)),
                 Map.entry("confluence_get_page", tool(
-                        Map.of("page_id", "string"), Set.of("page_id"), true, false, true, true)),
+                        Map.of("page_id", "string"), Set.of("page_id"), true, false, true)),
                 Map.entry("confluence_list_spaces", tool(
-                        Map.of("limit", "integer"), Set.of(), true, false, true, true)),
+                        Map.of("limit", "integer"), Set.of(), true, false, true)),
                 Map.entry("confluence_get_space", tool(
-                        Map.of("space_key", "string"), Set.of("space_key"), true, false, true, true)),
+                        Map.of("space_key", "string"), Set.of("space_key"), true, false, true)),
                 Map.entry("confluence_search", tool(
-                        Map.of("cql", "string", "limit", "integer"), Set.of("cql"), true, false, true, true)),
+                        Map.of("cql", "string", "limit", "integer"), Set.of("cql"), true, false, true)),
                 Map.entry("confluence_create_page", tool(
                         Map.of("space_key", "string", "title", "string", "content", "string", "parent_id", "string"),
-                        Set.of("space_key", "title", "content"), false, false, false, true)),
+                        Set.of("space_key", "title", "content"), false, false, false)),
                 Map.entry("confluence_update_page", tool(
                         Map.of("page_id", "string", "version", "integer", "title", "string", "content", "string"),
-                        Set.of("page_id"), false, true, false, true))
+                        Set.of("page_id"), false, true, false))
         );
     }
 
@@ -87,9 +87,8 @@ public final class McpContractTestData {
                                      Set<String> required,
                                      boolean readOnly,
                                      boolean destructive,
-                                     boolean idempotent,
-                             boolean openWorld) {
-        return new ToolContract(propertyTypes, required, readOnly, destructive, idempotent, openWorld);
+                                     boolean idempotent) {
+        return new ToolContract(propertyTypes, required, readOnly, destructive, idempotent);
     }
 
     /**
@@ -102,20 +101,17 @@ public final class McpContractTestData {
         private final boolean readOnly;
         private final boolean destructive;
         private final boolean idempotent;
-        private final boolean openWorld;
 
         private ToolContract(Map<String, String> propertyTypes,
                              Set<String> required,
                              boolean readOnly,
                              boolean destructive,
-                             boolean idempotent,
-                                     boolean openWorld) {
+                             boolean idempotent) {
             this.propertyTypes = Map.copyOf(propertyTypes);
             this.required = Set.copyOf(required);
             this.readOnly = readOnly;
             this.destructive = destructive;
             this.idempotent = idempotent;
-            this.openWorld = openWorld;
         }
 
         public Map<String, String> getPropertyTypes() {
@@ -139,7 +135,7 @@ public final class McpContractTestData {
         }
 
         public boolean isOpenWorld() {
-            return openWorld;
+            return true;
         }
     }
 }
