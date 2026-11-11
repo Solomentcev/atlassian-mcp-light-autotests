@@ -1,10 +1,8 @@
 package ru.solomentsev.aqa.mcp;
 
-import ru.solomentsev.aqa.support.junit.McpServerTest;
-import ru.solomentsev.aqa.testdata.McpTestData;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.awaitRawResponse;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRawLine;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -13,16 +11,20 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import ru.solomentsev.aqa.support.junit.McpServerTest;
+import ru.solomentsev.aqa.testdata.McpTestData;
+
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.awaitRawResponse;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRawLine;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 /**
