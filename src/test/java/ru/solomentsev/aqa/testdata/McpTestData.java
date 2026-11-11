@@ -41,7 +41,6 @@ public final class McpTestData {
     private static final int MCP_UNSUPPORTED_PROTOCOL_VERSION = -32022;
     private static final int MCP_SERVER_NOT_INITIALIZED = -32001;
 
-    private static final int EXPECTED_TOOL_COUNT = 13;
     private static final int PIPE_BUFFER_SIZE_BYTES = 8_192;
     private static final int STDERR_BUFFER_SIZE_BYTES = 8_192;
     private static final long DISCOVERY_TTL_MS = 300_000L;
@@ -179,10 +178,6 @@ public final class McpTestData {
 
     public static int getMcpServerNotInitialized() {
         return MCP_SERVER_NOT_INITIALIZED;
-    }
-
-    public static int getExpectedToolCount() {
-        return EXPECTED_TOOL_COUNT;
     }
 
     public static int getPipeBufferSizeBytes() {
