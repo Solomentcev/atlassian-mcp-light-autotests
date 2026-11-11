@@ -4,6 +4,7 @@ import ru.solomentsev.aqa.process.ManagedProcess;
 import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
 import ru.solomentsev.aqa.process.StderrCollector;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import ru.solomentsev.aqa.support.OperatingSystem;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -40,7 +41,7 @@ class ProcessBuilderLauncherTest {
         String executable = Path.of(
                 System.getProperty("java.home"),
                 "bin",
-                isWindows() ? "java.exe" : "java"
+                OperatingSystem.isWindows() ? "java.exe" : "java"
         ).toString();
 
         ManagedProcess process = Allure.step("Запустить java -version через ProcessBuilder", () -> new ProcessBuilderLauncher().launch(
@@ -67,7 +68,4 @@ class ProcessBuilderLauncherTest {
     
     }
 
-    private static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
-    }
 }
