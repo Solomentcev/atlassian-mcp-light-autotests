@@ -1,5 +1,9 @@
 package ru.solomentsev.aqa.tests.contract;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -7,33 +11,32 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import ru.solomentsev.aqa.support.junit.McpServerTest;
-import ru.solomentsev.aqa.mcp.McpClient;
-import ru.solomentsev.aqa.testdata.McpTestData;
-import ru.solomentsev.aqa.testdata.JiraTestData;
-import ru.solomentsev.aqa.testdata.ConfluenceTestData;
-import ru.solomentsev.aqa.testdata.McpContractTestData;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.callTool;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.fieldNames;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.requestStatelessTools;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.sendRequest;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.support.junit.McpServerTest;
+import ru.solomentsev.aqa.testdata.ConfluenceTestData;
+import ru.solomentsev.aqa.testdata.JiraTestData;
+import ru.solomentsev.aqa.testdata.McpContractTestData;
+import ru.solomentsev.aqa.testdata.McpTestData;
+
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.callTool;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.fieldNames;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.requestStatelessTools;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.sendRequest;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
 
 /**
  * Проверяет публичный stateless MCP contract работающего тестового сервера.
