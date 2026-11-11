@@ -326,7 +326,9 @@ class McpContractIntegrationTest {
             assertThat(annotations.path("idempotentHint").asBoolean()).as("%s: idempotentHint должен соответствовать контракту", name).isEqualTo(expected.isIdempotent());
             assertThat(annotations.has("openWorldHint")).as("%s: openWorldHint должен присутствовать", name).isTrue();
             assertThat(annotations.path("openWorldHint").isBoolean()).as("%s: openWorldHint должен иметь boolean type", name).isTrue();
-            assertThat(annotations.path("openWorldHint").asBoolean()).as("%s: openWorldHint должен быть true", name).isTrue();
+            assertThat(annotations.path("openWorldHint").asBoolean())
+                    .as("%s: openWorldHint должен соответствовать контракту", name)
+                    .isEqualTo(expected.isOpenWorld());
         }
 
     }
@@ -359,8 +361,6 @@ class McpContractIntegrationTest {
         }
 
         ObjectNode requestParams = params;
-        Allure.parameter("MCP method", method);
-        Allure.parameter("Отсутствующее поле metadata", missingField);
         JsonNode invalidResponse = sendRequest(client, method, requestParams);
         assertThat(invalidResponse.has("error"))
                 .as("%s без обязательного %s должен вернуть JSON-RPC error", method, missingField)
