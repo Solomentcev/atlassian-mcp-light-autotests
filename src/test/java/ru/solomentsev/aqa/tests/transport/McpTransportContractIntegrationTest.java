@@ -205,7 +205,6 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-        assertThat(ping.path("result").isObject()).as("Контрольный ping после предыдущего запроса должен вернуть объект result").isTrue();
     
     
     }
@@ -253,7 +252,6 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-        assertThat(ping.path("result").isObject()).as("Контрольный ping после notification должен вернуть объект result").isTrue();
     
     
     }
