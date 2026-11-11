@@ -157,6 +157,22 @@ public final class DockerMcpServerLauncher implements McpServerLauncher {
         return value;
     }
 
-    private record CommandResult(int exitCode, String output) {
+    private static final class CommandResult {
+
+        private final int exitCode;
+        private final String output;
+
+        private CommandResult(int exitCode, String output) {
+            this.exitCode = exitCode;
+            this.output = output;
+        }
+
+        private int exitCode() {
+            return exitCode;
+        }
+
+        private String output() {
+            return output;
+        }
     }
 }
