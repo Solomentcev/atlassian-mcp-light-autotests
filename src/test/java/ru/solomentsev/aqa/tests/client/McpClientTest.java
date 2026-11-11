@@ -4,6 +4,7 @@ import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -34,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("AQA Test Infrastructure")
 @Tag("unit")
 @Tag("mcp-client")
+@Tag("regression")
 class McpClientTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -322,19 +324,23 @@ class McpClientTest {
     
     }
 
+    @Step("Выполнить действие или проверку: sendRequest")
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params, Duration timeout) {
         return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
     }
 
+    @Step("Выполнить действие или проверку: sendNotification")
     private static void sendNotification(McpClient client, String method, ObjectNode params) {
         Allure.step("Отправить JSON-RPC notification: method=" + method + ", request id отсутствует", () -> client.notification(method, params));
     }
 
+    @Step("Выполнить действие или проверку: initialize")
     private static JsonNode initialize(McpClient client, String version, String clientName,
                                         String clientVersion, Duration timeout) {
         return Allure.step("Выполнить initialize: protocolVersion=" + version + ", client=" + clientName + "/" + clientVersion, () -> client.initialize(version, clientName, clientVersion, timeout));
     }
 
+    @Step("Выполнить действие или проверку: requestStateless")
     private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
                                              String version, ObjectNode capabilities,
                                              ObjectNode clientInfo, Duration timeout) {
