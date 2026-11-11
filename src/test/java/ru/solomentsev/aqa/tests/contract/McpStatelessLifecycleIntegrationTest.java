@@ -46,12 +46,12 @@ class McpStatelessLifecycleIntegrationTest {
     @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32001 (сервер ещё не инициализирован); инструменты не перечисляются.")
     @Tag("case-MCP-017")
     void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
-        Allure.parameter("MCP method", "tools/list");
+        Allure.parameter("MCP method", McpTestData.TOOLS_LIST_METHOD);
         Allure.parameter("Lifecycle state", "NEW; initialize не выполнялся");
         Allure.parameter("Ожидаемый JSON-RPC error code", -32001);
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
+            JsonNode response = sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
             assertThat(response.path("error").path("code").asInt())
                     .as("До initialize сервер должен отклонять tools/list с ошибкой состояния -32001")
                     .isEqualTo(-32001);
@@ -116,7 +116,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Tag("case-MCP-020")
     @Tag("smoke")
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
-        Allure.parameter("MCP method", "tools/list");
+        Allure.parameter("MCP method", McpTestData.TOOLS_LIST_METHOD);
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         Allure.parameter("Classic initialize", "не выполняется");
         try (McpProcessSession session =
@@ -213,13 +213,13 @@ class McpStatelessLifecycleIntegrationTest {
     @Tag("case-MCP-036")
     @Tag("smoke")
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
-        Allure.parameter("MCP method", "ping");
+        Allure.parameter("MCP method", McpTestData.PING_METHOD);
         Allure.parameter("Lifecycle states", "NEW; INITIALIZING; READY");
         Allure.parameter("Ожидаемый результат ping", "пустой объект");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode pingBeforeInitialize =
-                    sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
             assertEmptyPingResult(pingBeforeInitialize);
 
             ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
@@ -229,29 +229,29 @@ class McpStatelessLifecycleIntegrationTest {
                     .put("name", McpTestData.CLIENT_NAME)
                     .put("version", McpTestData.CLIENT_VERSION);
             JsonNode initialize = sendRequest(session.client(), 
-                    "initialize", initializeParams, REQUEST_TIMEOUT);
+                    McpTestData.INITIALIZE_METHOD, initializeParams, REQUEST_TIMEOUT);
             assertThat(initialize.has("error"))
                     .as("Корректный initialize должен завершиться без JSON-RPC error")
                     .isFalse();
 
             JsonNode pingBeforeReady =
-                    sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
             assertEmptyPingResult(pingBeforeReady);
 
             JsonNode toolsBeforeReady =
-                    sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
             assertThat(toolsBeforeReady.path("error").path("code").asInt())
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
                     .isEqualTo(-32001);
 
-            Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification("notifications/initialized", null));
+            Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification(McpTestData.INITIALIZED_NOTIFICATION_METHOD, null));
 
             JsonNode pingAfterReady =
-                    sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
             assertEmptyPingResult(pingAfterReady);
 
             JsonNode toolsAfterReady =
-                    sendRequest(session.client(), "tools/list", null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
             assertThat(toolsAfterReady.has("error"))
                     .as("После notifications/initialized tools/list должен выполняться успешно")
                     .isFalse();
