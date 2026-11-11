@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Epic("AQA Test Infrastructure")
 @Tag("unit")
 @Tag("configuration")
+@Tag("regression")
 class McpServerConfigurationTest {
 
     @Test
