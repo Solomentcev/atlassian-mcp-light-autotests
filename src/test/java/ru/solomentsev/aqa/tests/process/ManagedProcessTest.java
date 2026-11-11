@@ -20,8 +20,8 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy;
 
 @Epic("AQA Test Infrastructure")
-    @Tag("unit")
-    @Tag("process")
+@Tag("unit")
+@Tag("process")
 @Tag("regression")
 class ManagedProcessTest {
 
@@ -42,7 +42,7 @@ class ManagedProcessTest {
                 .as("Если процесс остаётся активным после destroyForcibly, close должен выбросить IOException")
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("did not terminate after destroyForcibly");
-        assertThat(process.wasDestroyForciblyCalled()).as("После неудачного graceful shutdown ManagedProcess должен вызвать destroyForcibly, фактически: %s", process.destroyForciblyCalled).isTrue();
+        assertThat(process.wasDestroyForciblyCalled()).as("После неудачного graceful shutdown ManagedProcess должен вызвать destroyForcibly, фактически: %s", process.wasDestroyForciblyCalled()).isTrue();
 
         process.setAlive(false);
         Allure.step("Повторно закрыть ManagedProcess после фактического завершения дочернего процесса", managedProcess::close);
