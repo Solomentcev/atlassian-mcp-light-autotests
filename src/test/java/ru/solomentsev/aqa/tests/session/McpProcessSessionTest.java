@@ -127,11 +127,11 @@ class McpProcessSessionTest {
     }
 
     private static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
-        return client.discoverStateless(version, timeout);
+        return Allure.step("Выполнить server/discover: protocolVersion=" + version + ", timeout=" + timeout.toMillis() + " ms", () -> client.discoverStateless(version, timeout));
     }
 
     private static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
-        return client.listToolsStateless(version, timeout);
+        return Allure.step("Выполнить tools/list: protocolVersion=" + version + ", timeout=" + timeout.toMillis() + " ms", () -> client.listToolsStateless(version, timeout));
     }
 
     private static McpProcessSession startSession(McpServerLauncher launcher,
@@ -141,14 +141,14 @@ class McpProcessSessionTest {
                                                    String clientName,
                                                    String clientVersion,
                                                    Duration timeout) throws Exception {
-        return McpProcessSession.start(launcher, environment, workingDirectory,
-                protocolVersion, clientName, clientVersion, timeout);
+        return Allure.step("Запустить classic MCP-сессию: protocolVersion=" + protocolVersion + ", client=" + clientName + "/" + clientVersion + ", startup timeout=" + timeout.toMillis() + " ms", () -> McpProcessSession.start(launcher, environment, workingDirectory,
+                protocolVersion, clientName, clientVersion, timeout));
     }
 
     private static McpProcessSession startStatelessSession(McpServerLauncher launcher,
                                                            Map<String, String> environment,
                                                            Path workingDirectory) throws Exception {
-        return McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory);
+        return Allure.step("Запустить stateless MCP-сессию без classic initialize", () -> McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory));
     }
 
     private static McpServerLauncher launcherFor(Class<?> serverClass) {
