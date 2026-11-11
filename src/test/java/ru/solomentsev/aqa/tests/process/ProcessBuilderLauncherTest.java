@@ -53,11 +53,11 @@ class ProcessBuilderLauncherTest {
             assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(McpTestData.JAVA_VERSION_PROCESS_TIMEOUT)))
                     .as("Процесс java -version должен завершиться в пределах 15 секунд")
                     .isTrue();
-            assertThat(process.exitCode()).as("Процесс java -version должен завершиться с кодом 0").isZero();
+            assertThat(process.exitCode()).as("После ожидания не более %d ms процесс java -version должен завершиться с exit code=0, фактически: %d", McpTestData.JAVA_VERSION_PROCESS_TIMEOUT.toMillis(), process.exitCode()).isZero();
             assertThat(Allure.step("Дождаться сбора STDERR", () -> stderrCollector.await(McpTestData.STDERR_COLLECTION_TIMEOUT)))
                     .as("STDERR collector должен завершить чтение потока")
                     .isTrue();
-            assertThat(stderrCollector.content()).as("STDERR должен содержать сведения о версии Java").contains("version");
+            assertThat(stderrCollector.content()).as("После java -version в отдельном STDERR ожидается текст версии Java; фактический вывод: %s", stderrCollector.content()).contains("version");
         } finally {
             Allure.step("Закрыть запущенный процесс", process::close);
             Allure.step("Закрыть STDERR collector", stderrCollector::close);
