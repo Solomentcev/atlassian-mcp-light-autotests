@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Allure;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,53 +30,53 @@ public final class McpClientTestActions {
     private McpClientTestActions() {
     }
 
-    @Step("Отправить JSON-RPC request: method={method}")
     public static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return client.request(method, params, McpTestData.getRequestTimeout());
+        return Allure.step("Отправить JSON-RPC request: method=" + method,
+                () -> client.request(method, params, McpTestData.getRequestTimeout()));
     }
 
-    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
     public static JsonNode sendRequest(McpClient client, String method,
                                        ObjectNode params, Duration timeout) {
-        return client.request(method, params, timeout);
+        return Allure.step("Отправить JSON-RPC request: method=" + method,
+                () -> client.request(method, params, timeout));
     }
 
-    @Step("Отправить JSON-RPC notification: method={method}")
     public static void sendNotification(McpClient client, String method, ObjectNode params) {
-        client.notification(method, params);
+        Allure.step("Отправить JSON-RPC notification: method=" + method,
+                () -> client.notification(method, params));
     }
 
-    @Step("Выполнить classic initialize: protocolVersion={version}, client={clientName}/{clientVersion}")
     public static JsonNode initialize(McpClient client, String version, String clientName,
                                       String clientVersion, Duration timeout) {
-        return client.initialize(version, clientName, clientVersion, timeout);
+        return Allure.step("Выполнить classic initialize: protocolVersion=" + version,
+                () -> client.initialize(version, clientName, clientVersion, timeout));
     }
 
-    @Step("Отправить stateless MCP request: method={method}, protocolVersion={version}")
     public static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
                                             String version, ObjectNode capabilities,
                                             ObjectNode clientInfo, Duration timeout) {
-        return client.requestStateless(method, params, version, capabilities, clientInfo, timeout);
+        return Allure.step("Отправить stateless MCP request: method=" + method
+                        + ", protocolVersion=" + version,
+                () -> client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
     }
 
-    @Step("Отправить необработанную STDIO-строку")
     public static void sendRawLine(McpClient client, String line) {
-        client.sendRawLine(line);
+        Allure.step("Отправить необработанную STDIO-строку", () -> client.sendRawLine(line));
     }
 
-    @Step("Дождаться JSON-RPC response после отправки необработанной STDIO-строки")
     public static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
-        return client.awaitRawResponse(timeout);
+        return Allure.step("Дождаться JSON-RPC response после отправки необработанной STDIO-строки",
+                () -> client.awaitRawResponse(timeout));
     }
 
-    @Step("Выполнить server/discover: protocolVersion={version}, timeout={timeout}")
     public static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
-        return client.discoverStateless(version, timeout);
+        return Allure.step("Выполнить server/discover: protocolVersion=" + version,
+                () -> client.discoverStateless(version, timeout));
     }
 
-    @Step("Выполнить stateless tools/list: protocolVersion={version}, timeout={timeout}")
     public static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
-        return client.listToolsStateless(version, timeout);
+        return Allure.step("Выполнить stateless tools/list: protocolVersion=" + version,
+                () -> client.listToolsStateless(version, timeout));
     }
 
     /**
