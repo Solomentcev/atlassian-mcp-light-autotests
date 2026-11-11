@@ -19,8 +19,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy;
 
 @Epic("AQA Test Infrastructure")
     @Tag("unit")
