@@ -70,51 +70,41 @@ class McpStatelessLifecycleIntegrationTest {
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "server/discover");
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
-        try (McpProcessSession session =
-                     McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = Allure.step("Выполнить server/discover в stateless-режиме: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> session.client().discoverStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
-            assertThat(response.has("error"))
-                    .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
-                    .isFalse();
-            assertThat(response.path("result").path("resultType").asText())
-                    .as("Stateless-ответ должен иметь resultType=complete")
-                    .isEqualTo("complete");
-            JsonNode supportedVersions = response.path("result").path("supportedVersions");
-            assertThat(supportedVersions.isArray())
-                    .as("server/discover должен вернуть массив поддерживаемых версий протокола")
-                    .isTrue();
-            assertThat(supportedVersions.size())
-                    .as("server/discover должен перечислить все три поддерживаемые версии протокола")
-                    .isEqualTo(3);
-            assertThat(supportedVersions.get(0).asText())
-                    .as("Первой должна быть текущая stateless protocolVersion")
-                    .isEqualTo(McpTestData.STATELESS_PROTOCOL_VERSION);
-            assertThat(supportedVersions.get(1).asText())
-                    .as("Вторая поддерживаемая версия должна совпадать с classic protocolVersion")
-                    .isEqualTo(McpTestData.CLASSIC_PROTOCOL_VERSION);
-            assertThat(supportedVersions.get(2).asText())
-                    .as("Третьей должна быть legacy protocolVersion")
-                    .isEqualTo(McpTestData.LEGACY_PROTOCOL_VERSION);
-            assertThat(response.path("result").path("capabilities").path("tools").isObject())
-                    .as("server/discover должен объявить capability tools")
-                    .isTrue();
-            assertThat(response.path("result").path("ttlMs").asLong())
-                    .as("server/discover должен вернуть установленный TTL кэша")
-                    .isEqualTo(McpTestData.DISCOVERY_TTL_MS);
-            assertThat(response.path("result").path("cacheScope").asText())
-                    .as("server/discover должен объявить область кэширования public")
-                    .isEqualTo(McpTestData.DISCOVERY_CACHE_SCOPE);
-            assertThat(response.path("result").path("_meta")
-                    .path("io.modelcontextprotocol/serverInfo").path("name").asText())
-                    .as("server/discover должен вернуть имя сервера в serverInfo metadata")
-                    .isEqualTo(McpTestData.SERVER_NAME);
-            assertThat(response.path("result").path("_meta")
-                    .path("io.modelcontextprotocol/serverInfo").path("version").asText())
-                    .as("serverInfo должен содержать версию MCP-сервера")
-                    .isEqualTo(McpTestData.SERVER_VERSION);
+
+        McpProcessSession session = Allure.step(
+                "Запустить новый MCP STDIO-процесс без classic initialize",
+                () -> McpServerConfiguration.fromEnvironment().startStatelessSession());
+        try (session) {
+            JsonNode response = Allure.step(
+                    "Отправить server/discover: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION,
+                    () -> session.client().discoverStateless(
+                            McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+
+            JsonNode result = response.path("result");
+            assertFalseStep("JSON-RPC response не содержит error", response.has("error"));
+            assertEqualsStep("result.resultType", result.path("resultType").asText(), "complete");
+
+            JsonNode supportedVersions = result.path("supportedVersions");
+            assertTrueStep("result.supportedVersions является массивом", supportedVersions.isArray());
+            assertEqualsStep("Количество поддерживаемых версий", supportedVersions.size(), 3);
+            assertEqualsStep("supportedVersions[0] — stateless protocolVersion",
+                    supportedVersions.get(0).asText(), McpTestData.STATELESS_PROTOCOL_VERSION);
+            assertEqualsStep("supportedVersions[1] — classic protocolVersion",
+                    supportedVersions.get(1).asText(), McpTestData.CLASSIC_PROTOCOL_VERSION);
+            assertEqualsStep("supportedVersions[2] — legacy protocolVersion",
+                    supportedVersions.get(2).asText(), McpTestData.LEGACY_PROTOCOL_VERSION);
+
+            boolean toolsCapabilityIsObject = result.path("capabilities").path("tools").isObject();
+            assertTrueStep("result.capabilities.tools является объектом", toolsCapabilityIsObject);
+            assertEqualsStep("result.ttlMs", result.path("ttlMs").asLong(), McpTestData.DISCOVERY_TTL_MS);
+            assertEqualsStep("result.cacheScope", result.path("cacheScope").asText(),
+                    McpTestData.DISCOVERY_CACHE_SCOPE);
+
+            JsonNode serverInfo = result.path("_meta").path("io.modelcontextprotocol/serverInfo");
+            assertEqualsStep("serverInfo.name", serverInfo.path("name").asText(), McpTestData.SERVER_NAME);
+            assertEqualsStep("serverInfo.version", serverInfo.path("version").asText(),
+                    McpTestData.SERVER_VERSION);
         }
-    
     }
 
     @Test
@@ -270,6 +260,27 @@ class McpStatelessLifecycleIntegrationTest {
                     .isTrue();
         }
     
+    }
+
+    @Step("Сравнить {label}: фактически={actual}, ожидается={expected}")
+    private static <T> void assertEqualsStep(String label, T actual, T expected) {
+        assertThat(actual)
+                .as("%s должен совпадать с ожидаемым значением", label)
+                .isEqualTo(expected);
+    }
+
+    @Step("Проверить условие «{label}»: фактически={actual}, ожидается=true")
+    private static void assertTrueStep(String label, boolean actual) {
+        assertThat(actual)
+                .as("%s должно быть истинным", label)
+                .isTrue();
+    }
+
+    @Step("Проверить условие «{label}»: фактически={actual}, ожидается=false")
+    private static void assertFalseStep(String label, boolean actual) {
+        assertThat(actual)
+                .as("%s должно быть ложным", label)
+                .isFalse();
     }
 
     @Step("Выполнить действие или проверку: sendRequest")
