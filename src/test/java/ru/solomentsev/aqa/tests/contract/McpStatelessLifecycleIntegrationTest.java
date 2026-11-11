@@ -42,19 +42,19 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Classic Lifecycle")
     @Story("MCP-017 — Запрос до инициализации")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=-32001")
+    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + ")
     @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32001 (сервер ещё не инициализирован); инструменты не перечисляются.")
     @Tag("case-MCP-017")
     void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
         Allure.parameter("MCP method", McpTestData.TOOLS_LIST_METHOD);
         Allure.parameter("Lifecycle state", "NEW; initialize не выполнялся");
-        Allure.parameter("Ожидаемый JSON-RPC error code", -32001);
+        Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.MCP_SERVER_NOT_INITIALIZED);
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode response = sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
             assertThat(response.path("error").path("code").asInt())
                     .as("До initialize сервер должен отклонять tools/list с ошибкой состояния -32001")
-                    .isEqualTo(-32001);
+                    .isEqualTo(McpTestData.MCP_SERVER_NOT_INITIALIZED);
         }
     
     }
@@ -209,7 +209,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Story("MCP-036 — Обработка ping до и после READY")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("MCP-036: ping в NEW, INITIALIZING и READY возвращает пустой result; tools/list доступен только в READY")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=-32001; tools/list в READY возвращает массив tools.")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + "; tools/list в READY возвращает массив tools.")
     @Tag("case-MCP-036")
     @Tag("smoke")
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
@@ -242,7 +242,7 @@ class McpStatelessLifecycleIntegrationTest {
                     sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
             assertThat(toolsBeforeReady.path("error").path("code").asInt())
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
-                    .isEqualTo(-32001);
+                    .isEqualTo(McpTestData.MCP_SERVER_NOT_INITIALIZED);
 
             Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification(McpTestData.INITIALIZED_NOTIFICATION_METHOD, null));
 
