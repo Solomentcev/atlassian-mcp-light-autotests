@@ -61,6 +61,7 @@ class McpContractIntegrationTest {
     @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с обязательными metadata.\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
     @Tag("smoke")
     void shouldReturnToolsList(McpClient client) {
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         JsonNode response = requestStatelessTools(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
@@ -88,6 +89,7 @@ class McpContractIntegrationTest {
     @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: количество и набор уникальных имён полностью совпадают с публичным контрактом.")    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
+        Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
         JsonNode response = requestStatelessTools(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
@@ -121,6 +123,7 @@ class McpContractIntegrationTest {
     @DisplayName("MCP-007: У каждого инструмента есть непустой description")
     @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
+        Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
         JsonNode response = requestStatelessTools(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
@@ -155,6 +158,7 @@ class McpContractIntegrationTest {
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
+        Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
         JsonNode response = requestStatelessTools(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
