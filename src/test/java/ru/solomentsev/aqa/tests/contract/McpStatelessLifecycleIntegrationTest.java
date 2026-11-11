@@ -1,7 +1,6 @@
 package ru.solomentsev.aqa.tests.contract;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -20,6 +19,7 @@ import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.testdata.McpContractTestData;
 import ru.solomentsev.aqa.testdata.ConfluenceTestData;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 
 import java.time.Duration;
 
@@ -281,14 +281,6 @@ class McpStatelessLifecycleIntegrationTest {
                     .isTrue();
         }
     
-    }
-
-    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
-    private static JsonNode sendRequest(ru.solomentsev.aqa.mcp.McpClient client,
-                                        String method,
-                                        ObjectNode params,
-                                        Duration timeout) {
-        return client.request(method, params, timeout);
     }
 
 }
