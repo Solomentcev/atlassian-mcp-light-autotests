@@ -34,8 +34,8 @@ class ProcessBuilderLauncherTest {
     @Feature("Process Builder Launcher")
     @Story("Запуск процесса и отдельный сбор STDERR")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("ProcessBuilder запускает java -version [timeout=15000 ms], exitCode=0; STDERR собирается отдельно")
-    @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения не более 15000 ms; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
+    @DisplayName("ProcessBuilder запускает java -version; STDERR собирается отдельно")
+    @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения в пределах настроенного timeout; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
         Allure.parameter("Команда", "java -version");
         Allure.parameter("Process timeout", McpTestData.getJavaVersionProcessTimeout().toMillis() + " ms");
         Allure.parameter("STDERR collection timeout", McpTestData.getStderrCollectionTimeout().toMillis() + " ms");
@@ -54,7 +54,7 @@ class ProcessBuilderLauncherTest {
 
         try {
             assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(McpTestData.getJavaVersionProcessTimeout())))
-                    .as("Процесс java -version должен завершиться в пределах 15 секунд")
+                    .as("Процесс java -version должен завершиться в пределах %d ms", McpTestData.getJavaVersionProcessTimeout().toMillis())
                     .isTrue();
             assertThat(process.exitCode()).as("После ожидания не более %d ms процесс java -version должен завершиться с exit code=0, фактически: %d", McpTestData.getJavaVersionProcessTimeout().toMillis(), process.exitCode()).isZero();
             assertThat(Allure.step("Дождаться сбора STDERR", () -> stderrCollector.await(McpTestData.getStderrCollectionTimeout())))
