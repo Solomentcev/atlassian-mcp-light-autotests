@@ -363,7 +363,7 @@ class McpContractIntegrationTest {
 
         JsonNode validResponse = Allure.step(
                 "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.getStatelessProtocolVersion(),
-                () -> client.listToolsStateless(McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
+                () -> client.listToolsStateless(McpTestData.getStatelessProtocolVersion(), McpTestData.getRequestTimeout()));
         assertThat(validResponse.path("jsonrpc").asText())
                 .as("Контрольный tools/list: response должен соответствовать JSON-RPC 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
