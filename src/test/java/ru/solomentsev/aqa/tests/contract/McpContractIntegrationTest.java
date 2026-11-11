@@ -44,7 +44,7 @@ import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
  * <p>Запускается отдельно с Maven-профилем {@code integration} и требует
  * настроенного тестового экземпляра Atlassian MCP Light.</p>
  */
-@McpServerTest
+@McpServerTest(stateless = true)
 @Tag("integration")
 @EnabledIfSystemProperty(named = "AQA_RUN_INTEGRATION", matches = "true")
 @Epic("MCP Server")
