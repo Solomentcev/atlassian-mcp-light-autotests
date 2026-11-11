@@ -11,7 +11,9 @@ public final class DockerTestData {
     public static final Path ENV_FILE = Path.of(".runtime.env");
     public static final String IMAGE = "atlassian-mcp-light:latest";
     public static final String UNSAFE_RUN_ID = "unsafe/run-id";
+    public static final String SAFE_RUN_ID = "run-123";
     public static final int STOP_TIMEOUT_SECONDS = 5;
+    public static final int INVALID_STOP_TIMEOUT_SECONDS = 0;
 
     private DockerTestData() {
     }
