@@ -154,13 +154,13 @@ class McpContractIntegrationTest {
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-023: Stateless-запросы без _meta, clientCapabilities или protocolVersion отклоняются с error=-32602")
-    @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить `server/discover` без `_meta`. 2. Отправить stateless `tools/list` с `_meta`, содержащим protocolVersion, но без clientCapabilities. 3. Повторить с clientCapabilities, но без protocolVersion.\nОжидаемый результат: Для каждого запроса получен JSON-RPC error `-32602 Invalid params`; после негативных запросов корректный stateless-запрос обрабатывается штатно.")
+    @Description("Предусловия: MCP STDIO-процесс запущен; classic initialize для stateless-проверок не требуется.\nШаги: вызвать server/discover без params._meta; вызвать tools/list с protocolVersion, но без clientCapabilities; вызвать tools/list с clientCapabilities, но без protocolVersion; затем выполнить корректный tools/list.\nОжидаемый результат: каждый из трёх некорректных запросов возвращает JSON-RPC error code=-32602; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
         Allure.parameter("Stateless metadata scenarios", "без _meta; без clientCapabilities; без protocolVersion");
         Allure.parameter("Ожидаемый JSON-RPC error code", -32602);
-        JsonNode missingMetadata = sendRequest(client, "server/discover", null);
+        JsonNode missingMetadata = Allure.step("Вызвать server/discover без обязательного params._meta", () -> sendRequest(client, "server/discover", null));
         assertThat(missingMetadata.path("error").path("code").asInt()).as("server/discover без обязательного _meta должен вернуть JSON-RPC error code=-32602, фактически: %s", missingMetadata.path("error").path("code")).isEqualTo(-32602);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
@@ -223,7 +223,7 @@ class McpContractIntegrationTest {
         Allure.parameter("Tool name", "aqa_unknown_tool");
         JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
 
-        assertToolError(response);
+        assertToolError(response, "tools/call name=aqa_unknown_tool, arguments={}");
     
     
     }
@@ -408,7 +408,7 @@ class McpContractIntegrationTest {
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("page_id", ConfluenceTestData.PAGE_ID);
 
-        assertToolError(callTool(client, "confluence_update_page", arguments));
+        assertToolError(callTool(client, "confluence_update_page", arguments), "confluence_update_page с page_id=" + ConfluenceTestData.PAGE_ID + " без title и content");
     
     
     }
