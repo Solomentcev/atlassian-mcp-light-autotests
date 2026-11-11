@@ -25,21 +25,18 @@ AQA не импортирует внутренние классы сервера
 ## Архитектура
 
 ```text
-JUnit tests
-    |
-McpProcessSession
-    |
-McpServerLauncher
-    |--------------------------|
-Local Java process       Docker CLI / new container
-    |--------------------------|
-          STDIN / STDOUT
-             |
-          MCP Client
-             |
-     Atlassian MCP Light
-             |
-       Jira / Confluence API
+             JUnit tests
+                  |
+            McpProcessSession
+             /          \
+    McpClient          McpServerLauncher
+        |                    |
+    STDIN/STDOUT       Local Java process
+        |               or Docker CLI
+        |                    |
+        +---------- Atlassian MCP Light
+                             |
+                       Jira / Confluence API
 ```
 
 - `McpClient` выполняет JSON-RPC обмен по STDIN/STDOUT, сопоставляет request ID и поддерживает classic и stateless запросы.
