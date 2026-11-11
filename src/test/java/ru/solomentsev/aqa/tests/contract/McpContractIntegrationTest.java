@@ -488,11 +488,11 @@ class McpContractIntegrationTest {
                 .isTrue();
     }
 
-    @Step("Проверить MCP tool error")
-    private static void assertToolError(JsonNode response) {
+        private static void assertToolError(JsonNode response) {
         assertToolError(response, "MCP-инструмент");
     }
 
+    @Step("Проверить MCP tool error для сценария: {context}")
     private static void assertToolError(JsonNode response, String context) {
         assertSuccessfulJsonRpc(response);
         JsonNode result = response.path("result");
