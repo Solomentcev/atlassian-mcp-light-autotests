@@ -35,17 +35,17 @@ class McpServerConfigurationTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("AQA_SERVER_MODE=local и AQA_SERVER_JAR=server/target/server.jar из environment выбирают local mode")
     @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")    void shouldReadLocalModeFromEnvironment() {
-        Allure.parameter(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.LOCAL_MODE);
-        Allure.parameter(McpConfigurationTestData.SERVER_JAR_ENV, McpConfigurationTestData.SERVER_JAR_PATH);
+        Allure.parameter("AQA_SERVER_MODE", "local");
+        Allure.parameter("AQA_SERVER_JAR", "server/target/server.jar");
         McpServerConfiguration configuration = Allure.step("Построить конфигурацию: AQA_SERVER_MODE=local, AQA_SERVER_JAR задан", () -> McpServerConfiguration.from(
                 Map.of(
-                        McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.LOCAL_MODE,
-                        McpConfigurationTestData.SERVER_JAR_ENV, McpConfigurationTestData.SERVER_JAR_PATH
+                        "AQA_SERVER_MODE", "local",
+                        "AQA_SERVER_JAR", "server/target/server.jar"
                 ),
                 new Properties()
         ));
 
-        assertThat(configuration.mode()).as("При AQA_SERVER_MODE=local конфигурация должна выбрать local mode").isEqualTo(McpConfigurationTestData.LOCAL_MODE);
+        assertThat(configuration.mode()).as("При AQA_SERVER_MODE=local конфигурация должна выбрать local mode").isEqualTo(McpConfigurationTestData.getLocalMode());
     
     
     }
@@ -71,7 +71,7 @@ class McpServerConfigurationTest {
 
         assertThat(configuration.mode())
                 .as("AQA_SERVER_MODE из .env должен выбирать local mode")
-                .isEqualTo(McpConfigurationTestData.LOCAL_MODE);
+                .isEqualTo(McpConfigurationTestData.getLocalMode());
     }
 
     @Test
@@ -93,14 +93,14 @@ class McpServerConfigurationTest {
                 "Объединить .env с системными переменными окружения",
                 () -> McpServerConfiguration.fromEnvironment(
                         envFile,
-                        Map.of(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.DOCKER_MODE),
+                        Map.of(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getDockerMode()),
                         new Properties()
                 )
         );
 
         assertThat(configuration.mode())
                 .as("Системная переменная AQA_SERVER_MODE должна переопределять значение из .env")
-                .isEqualTo(McpConfigurationTestData.DOCKER_MODE);
+                .isEqualTo(McpConfigurationTestData.getDockerMode());
     }
 
     @Test
@@ -109,24 +109,24 @@ class McpServerConfigurationTest {
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("System property aqa.server.mode=docker переопределяет environment AQA_SERVER_MODE=local [image=atlassian-mcp-light:test]")
     @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")    void shouldPreferSystemPropertiesToEnvironment() {
-        Allure.parameter("Environment AQA_SERVER_MODE", McpConfigurationTestData.LOCAL_MODE);
-        Allure.parameter("System property aqa.server.mode", McpConfigurationTestData.DOCKER_MODE);
-        Allure.parameter("Docker image", McpConfigurationTestData.DOCKER_IMAGE);
-        Allure.parameter("Docker env file", McpConfigurationTestData.DOCKER_ENV_FILE);
+        Allure.parameter("Environment AQA_SERVER_MODE", "local");
+        Allure.parameter("System property aqa.server.mode", "docker");
+        Allure.parameter("Docker image", "atlassian-mcp-light:test");
+        Allure.parameter("Docker env file", ".runtime.env");
         Properties properties = new Properties();
-        properties.setProperty(McpConfigurationTestData.SERVER_MODE_PROPERTY, McpConfigurationTestData.DOCKER_MODE);
-        properties.setProperty(McpConfigurationTestData.DOCKER_IMAGE_PROPERTY, McpConfigurationTestData.DOCKER_IMAGE);
-        properties.setProperty(McpConfigurationTestData.DOCKER_ENV_FILE_PROPERTY, McpConfigurationTestData.DOCKER_ENV_FILE);
+        properties.setProperty("aqa.server.mode", "docker");
+        properties.setProperty("aqa.docker.image", "atlassian-mcp-light:test");
+        properties.setProperty("aqa.docker.envFile", ".runtime.env");
 
         McpServerConfiguration configuration = Allure.step("Построить конфигурацию: environment=local, system property= docker", () -> McpServerConfiguration.from(
                 Map.of(
-                        McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.LOCAL_MODE,
-                        McpConfigurationTestData.SERVER_JAR_ENV, McpConfigurationTestData.SERVER_JAR_NAME
+                        "AQA_SERVER_MODE", "local",
+                        "AQA_SERVER_JAR", "server.jar"
                 ),
                 properties
         ));
 
-        assertThat(configuration.mode()).as("Системное свойство должно иметь приоритет и выбирать docker mode").isEqualTo(McpConfigurationTestData.DOCKER_MODE);
+        assertThat(configuration.mode()).as("Системное свойство должно иметь приоритет и выбирать docker mode").isEqualTo("docker");
     
     
     }
@@ -139,14 +139,14 @@ class McpServerConfigurationTest {
     @Description("Предусловия: задан local-режим, но AQA_SERVER_JAR отсутствует.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_JAR.")
     @Tag("negative")
     void shouldRequireJarInLocalMode() {
-        Allure.parameter(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.LOCAL_MODE);
-        Allure.parameter(McpConfigurationTestData.SERVER_JAR_ENV, "отсутствует");
+        Allure.parameter(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode());
+        Allure.parameter(McpConfigurationTestData.getServerJarEnv(), "отсутствует");
         assertThatThrownBy(() -> Allure.step("Построить конфигурацию: AQA_SERVER_MODE=local, AQA_SERVER_JAR отсутствует", () -> McpServerConfiguration.from(
-                Map.of(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.LOCAL_MODE),
+                Map.of(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode()),
                 new Properties()
         ))).as("При AQA_SERVER_MODE=local без AQA_SERVER_JAR ожидается IllegalArgumentException с именем AQA_SERVER_JAR")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(McpConfigurationTestData.SERVER_JAR_ENV);
+                .hasMessageContaining(McpConfigurationTestData.getServerJarEnv());
     
     
     }
@@ -159,18 +159,18 @@ class McpServerConfigurationTest {
     @Description("Предусловия: задан Docker-режим и image, но отсутствует env-файл.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_DOCKER_ENV_FILE.")
     @Tag("negative")
     void shouldRequireImageAndEnvFileInDockerMode() {
-        Allure.parameter(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.DOCKER_MODE);
-        Allure.parameter(McpConfigurationTestData.DOCKER_IMAGE_ENV, McpConfigurationTestData.DOCKER_IMAGE);
-        Allure.parameter(McpConfigurationTestData.DOCKER_ENV_FILE_ENV, "отсутствует");
+        Allure.parameter(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getDockerMode());
+        Allure.parameter(McpConfigurationTestData.getDockerImageEnv(), McpConfigurationTestData.getDockerImage());
+        Allure.parameter(McpConfigurationTestData.getDockerEnvFileEnv(), "отсутствует");
         assertThatThrownBy(() -> Allure.step("Построить конфигурацию: docker image задан, AQA_DOCKER_ENV_FILE отсутствует", () -> McpServerConfiguration.from(
                 Map.of(
-                        McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.DOCKER_MODE,
-                        McpConfigurationTestData.DOCKER_IMAGE_ENV, McpConfigurationTestData.DOCKER_IMAGE
+                        McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getDockerMode(),
+                        McpConfigurationTestData.getDockerImageEnv(), McpConfigurationTestData.getDockerImage()
                 ),
                 new Properties()
         ))).as("При AQA_SERVER_MODE=docker без AQA_DOCKER_ENV_FILE ожидается IllegalArgumentException")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(McpConfigurationTestData.DOCKER_ENV_FILE_ENV);
+                .hasMessageContaining(McpConfigurationTestData.getDockerEnvFileEnv());
     
     
     }
@@ -183,13 +183,13 @@ class McpServerConfigurationTest {
     @Description("Предусловия: AQA_SERVER_MODE задан как неподдерживаемое значение remote.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_MODE.")
     @Tag("negative")
     void shouldRejectUnknownMode() {
-        Allure.parameter(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.UNSUPPORTED_MODE);
+        Allure.parameter(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getUnsupportedMode());
         assertThatThrownBy(() -> Allure.step("Построить конфигурацию с неподдерживаемым AQA_SERVER_MODE=remote", () -> McpServerConfiguration.from(
-                Map.of(McpConfigurationTestData.SERVER_MODE_ENV, McpConfigurationTestData.UNSUPPORTED_MODE),
+                Map.of(McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getUnsupportedMode()),
                 new Properties()
         ))).as("При AQA_SERVER_MODE=remote ожидается IllegalArgumentException с именем AQA_SERVER_MODE")
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(McpConfigurationTestData.SERVER_MODE_ENV);
+                .hasMessageContaining(McpConfigurationTestData.getServerModeEnv());
     
     
     }
