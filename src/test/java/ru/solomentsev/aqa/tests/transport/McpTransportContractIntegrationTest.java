@@ -49,10 +49,10 @@ class McpTransportContractIntegrationTest {
     void shouldProcessPingAfterBlankAndWhitespaceLines(McpClient client) {
         Allure.parameter("Пустая входная строка", "\"\"");
         Allure.parameter("Строка из пробелов", "\"   \"");
-        Allure.parameter("Контрольный запрос", "ping");
+        Allure.parameter("Контрольный запрос", McpTestData.PING_METHOD);
         sendRawLine(client, "");
         sendRawLine(client, "   ");
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после предыдущего некорректного сообщения должен завершиться без error, фактически: %s", ping.path("error"))
                 .isFalse();
@@ -76,7 +76,7 @@ class McpTransportContractIntegrationTest {
         assertJsonRpcError(error, -32700);
         assertThat(error.get("id").isNull()).as("Ответ на некорректную JSON-RPC строку должен содержать id=null").isTrue();
 
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после предыдущего запроса должен завершиться без JSON-RPC error")
                 .isFalse();
@@ -102,7 +102,7 @@ class McpTransportContractIntegrationTest {
         assertJsonRpcError(error, -32700);
         assertThat(error.get("id").isNull()).as("Ошибка парсинга должна содержать id=null, поскольку запрос не удалось разобрать").isTrue();
 
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
@@ -128,7 +128,7 @@ class McpTransportContractIntegrationTest {
         assertJsonRpcError(error, -32600);
         assertThat(error.get("id").isNull()).as("Ошибка парсинга должна содержать id=null, поскольку запрос не удалось разобрать").isTrue();
 
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
@@ -154,7 +154,7 @@ class McpTransportContractIntegrationTest {
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32600);
 
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
@@ -173,14 +173,14 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-032")
     void shouldRejectRequestWithoutId(McpClient client) {
-        Allure.parameter("JSON-RPC method", "tools/list");
+        Allure.parameter("JSON-RPC method", McpTestData.TOOLS_LIST_METHOD);
         Allure.parameter("Отсутствующее поле", "id");
         Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
         assertJsonRpcError(error, -32600);
 
-        var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
+        var tools = sendRequest(client, McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
         assertThat(tools.has("error")).as("После некорректной строки tools/list должен завершиться успешно").isFalse();
         assertThat(tools.path("result").path("tools").isArray()).as("tools/list должен вернуть массив инструментов").isTrue();
     
@@ -200,7 +200,7 @@ class McpTransportContractIntegrationTest {
         var response = sendRequest(client, "aqa/unknown-method", null, REQUEST_TIMEOUT);
         assertJsonRpcError(response, -32601);
 
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
@@ -242,12 +242,12 @@ class McpTransportContractIntegrationTest {
     @Tag("case-MCP-004")
     @Tag("smoke")
     void shouldSendInitializedNotificationWithoutRequestIdAndKeepSessionReady(McpClient client) {
-        Allure.parameter("Notification method", "notifications/initialized");
+        Allure.parameter("Notification method", McpTestData.INITIALIZED_NOTIFICATION_METHOD);
         Allure.parameter("Notification request id", "отсутствует");
-        Allure.parameter("Контрольный запрос", "ping");
-        Allure.step("Отправить notification notifications/initialized без request id", () -> client.notification("notifications/initialized", null));
+        Allure.parameter("Контрольный запрос", McpTestData.PING_METHOD);
+        Allure.step("Отправить notification notifications/initialized без request id", () -> client.notification(McpTestData.INITIALIZED_NOTIFICATION_METHOD, null));
 
-        var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
+        var ping = sendRequest(client, McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
 
         assertThat(ping.has("error"))
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
@@ -268,9 +268,9 @@ class McpTransportContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-025")
     void shouldRejectSecondClassicInitialize(McpClient client) {
-        Allure.parameter("Повторный JSON-RPC method", "initialize");
+        Allure.parameter("Повторный JSON-RPC method", McpTestData.INITIALIZE_METHOD);
         Allure.parameter("Ожидаемый JSON-RPC error code", -32600);
-        Allure.parameter("Проверка сохранения сессии", "tools/list");
+        Allure.parameter("Проверка сохранения сессии", McpTestData.TOOLS_LIST_METHOD);
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
         params.putObject("capabilities");
@@ -278,10 +278,10 @@ class McpTransportContractIntegrationTest {
                 .put("name", McpTestData.CLIENT_NAME)
                 .put("version", McpTestData.CLIENT_VERSION);
 
-        var response = sendRequest(client, "initialize", params, REQUEST_TIMEOUT);
+        var response = sendRequest(client, McpTestData.INITIALIZE_METHOD, params, REQUEST_TIMEOUT);
         assertJsonRpcError(response, -32600);
 
-        var tools = sendRequest(client, "tools/list", null, REQUEST_TIMEOUT);
+        var tools = sendRequest(client, McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
         assertThat(tools.has("error")).as("После некорректного запроса tools/list должен завершиться без JSON-RPC error").isFalse();
         assertThat(tools.path("result").path("tools").isArray()).as("Успешный tools/list должен вернуть массив инструментов").isTrue();
     
@@ -309,7 +309,7 @@ class McpTransportContractIntegrationTest {
                                            int expectedCode) {
         assertThat(response.path("jsonrpc").asText())
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
-                .isEqualTo("2.0");
+                .isEqualTo(McpTestData.JSON_RPC_VERSION);
         assertThat(response.has("error"))
                 .as("JSON-RPC response с ожидаемой ошибкой должен содержать объект error")
                 .isTrue();
