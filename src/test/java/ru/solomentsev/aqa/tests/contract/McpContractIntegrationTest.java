@@ -175,14 +175,14 @@ class McpContractIntegrationTest {
         missingCapabilitiesParams.putObject("_meta")
                 .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         JsonNode missingCapabilities = Allure.step("Вызвать tools/list с protocolVersion, но без clientCapabilities",
-                () -> sendRequest(client, "tools/list", missingCapabilitiesParams));
+                () -> sendRequest(client, McpTestData.TOOLS_LIST_METHOD, missingCapabilitiesParams));
         assertThat(missingCapabilities.path("error").path("code").asInt()).as("tools/list с protocolVersion=%s, но без clientCapabilities должен вернуть -32602, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, missingCapabilities.path("error").path("code")).isEqualTo(-32602);
 
         ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
         missingVersionParams.putObject("_meta")
                 .putObject("io.modelcontextprotocol/clientCapabilities");
         JsonNode missingVersion = Allure.step("Вызвать tools/list с clientCapabilities, но без protocolVersion",
-                () -> sendRequest(client, "tools/list", missingVersionParams));
+                () -> sendRequest(client, McpTestData.TOOLS_LIST_METHOD, missingVersionParams));
         assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(-32602);
 
         JsonNode validResponse = Allure.step(
@@ -474,7 +474,7 @@ class McpContractIntegrationTest {
     private static void assertSuccessfulJsonRpc(JsonNode response) {
         assertThat(response.path("jsonrpc").asText())
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
-                .isEqualTo("2.0");
+                .isEqualTo(McpTestData.JSON_RPC_VERSION);
         assertThat(response.has("id"))
                 .as("Ответ на запрос должен содержать исходный request id")
                 .isTrue();
