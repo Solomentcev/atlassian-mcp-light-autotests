@@ -73,7 +73,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcParseError());
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"} trailing");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-                assertThat(error.path("jsonrpc").asText())
+        assertThat(error.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(error.has("error"))
@@ -117,7 +117,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcParseError());
         sendRawLine(client, "{invalid-json");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-                assertThat(error.path("jsonrpc").asText())
+        assertThat(error.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(error.has("error"))
@@ -136,7 +136,7 @@ class McpTransportContractIntegrationTest {
         assertThat(jsonRpcError.path("code").asInt())
                 .as("JSON-RPC error.code должен соответствовать ожидаемому значению")
                 .isEqualTo(McpTestData.getJsonRpcParseError());
-        assertThat(error.get("id").isNull()).as("Ошибка парсинга должна содержать id=null, поскольку запрос не удалось разобрать").isTrue();
+        assertThat(error.path("id").isNull()).as("Ошибка парсинга должна содержать id=null, поскольку запрос не удалось разобрать").isTrue();
 
         var ping = sendRequest(client, McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
@@ -161,7 +161,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcInvalidRequest());
         sendRawLine(client, "[]");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-                assertThat(error.path("jsonrpc").asText())
+        assertThat(error.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(error.has("error"))
@@ -206,7 +206,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcInvalidRequest());
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"id\":1}");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-                assertThat(error.path("jsonrpc").asText())
+        assertThat(error.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(error.has("error"))
@@ -254,7 +254,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcInvalidRequest());
         sendRawLine(client, "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}");
         var error = awaitRawResponse(client, REQUEST_TIMEOUT);
-                assertThat(error.path("jsonrpc").asText())
+        assertThat(error.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(error.has("error"))
@@ -295,7 +295,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("JSON-RPC method", "aqa/unknown-method");
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcMethodNotFound());
         var response = sendRequest(client, "aqa/unknown-method", null, REQUEST_TIMEOUT);
-                assertThat(response.path("jsonrpc").asText())
+        assertThat(response.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("error"))
@@ -339,7 +339,7 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcMethodNotFound());
         var response = sendRequest(client, "aqa/неизвестный-метод", null, REQUEST_TIMEOUT);
 
-                assertThat(response.path("jsonrpc").asText())
+        assertThat(response.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("error"))
@@ -415,7 +415,7 @@ class McpTransportContractIntegrationTest {
                 .put("version", McpTestData.getClientVersion());
 
         var response = sendRequest(client, McpTestData.getInitializeMethod(), params, REQUEST_TIMEOUT);
-                assertThat(response.path("jsonrpc").asText())
+        assertThat(response.path("jsonrpc").asText())
                 .as("JSON-RPC error response должен соответствовать версии 2.0")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("error"))
