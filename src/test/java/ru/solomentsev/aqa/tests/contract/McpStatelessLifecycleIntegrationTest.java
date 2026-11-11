@@ -18,6 +18,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import ru.solomentsev.aqa.config.McpServerConfiguration;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import ru.solomentsev.aqa.testdata.McpContractTestData;
 import ru.solomentsev.aqa.testdata.ConfluenceTestData;
 
 import java.time.Duration;
@@ -63,8 +64,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-019 — Обнаружение возможностей stateless-режима")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-019: server/discover без initialize [protocolVersion=" + "2026-07-28" + "] возвращает capabilities и serverInfo")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить server/discover с protocolVersion=" + "2026-07-28" + " и clientCapabilities; проверить supportedVersions, capabilities.tools, ttlMs, cacheScope и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; resultType=complete; supportedVersions содержит три версии в ожидаемом порядке; tools capability объявлена; TTL=" + 300_000L + " ms; cacheScope=" + "public" + "; serverInfo совпадает с метаданными сервера.")
+    @DisplayName("MCP-019: server/discover без initialize возвращает capabilities и serverInfo")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить server/discover с protocolVersion и clientCapabilities; проверить supportedVersions, capabilities.tools, ttlMs, cacheScope и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; resultType=complete; supportedVersions содержит поддерживаемые версии; tools capability объявлена; TTL, cacheScope и serverInfo соответствуют контракту.")
     @Tag("case-MCP-019")
     @Tag("smoke")
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
@@ -107,13 +108,13 @@ class McpStatelessLifecycleIntegrationTest {
     @Story("MCP-020 — Вызов tools/list в stateless-режиме без initialize")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-020: stateless tools/list без initialize возвращает инструменты по контракту")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + "2026-07-28" + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools соответствует количеству инструментов контракта; resultType=complete; serverInfo.name=" + "atlassian-lite" + " и serverInfo.version=" + "1.0.0" + ".")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с обязательными metadata; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools соответствует публичному контракту; resultType=complete; serverInfo содержит метаданные сервера.")
     @Tag("case-MCP-020")
     @Tag("smoke")
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", McpTestData.getToolsListMethod());
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
-        Allure.parameter("Ожидаемое количество инструментов", McpTestData.getExpectedToolCount());
+        Allure.parameter("Ожидаемое количество инструментов", McpContractTestData.getExpectedTools().size());
         Allure.parameter("Classic initialize", "не выполняется");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
@@ -123,7 +124,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
             assertThat(response.path("result").path("tools").size())
-                    .as("Stateless tools/list должен вернуть все 13 инструментов контракта")
+                    .as("Stateless tools/list должен вернуть все инструменты, объявленные в публичном контракте")
                     .isEqualTo(McpTestData.getExpectedToolCount());
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
@@ -144,8 +145,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-021 — Вызов tools/call в stateless-режиме")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-021: stateless tools/call " + "confluence_list_spaces" + " [limit=" + 1 + ", protocolVersion=" + "2026-07-28" + "] без initialize")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; инструмент " + "confluence_list_spaces" + " доступен для чтения.\nШаги: вызвать tools/call с name=" + "confluence_list_spaces" + ", arguments.limit=" + 1 + " и protocolVersion=" + "2026-07-28" + ".\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит хотя бы один текстовый элемент; serverInfo содержит ожидаемые имя и версию сервера.")
+    @DisplayName("MCP-021: stateless tools/call read-инструмента без initialize")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; доступен read-инструмент Confluence.\nШаги: вызвать tools/call с допустимыми arguments и обязательными stateless metadata.\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит текстовый элемент; serverInfo соответствует контракту.")
     @Tag("case-MCP-021")
     @Tag("smoke")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
