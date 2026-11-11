@@ -32,19 +32,16 @@ public final class McpClientTestActions {
     }
 
     public static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method,
-                () -> client.request(method, params, McpTestData.getRequestTimeout()));
+        return client.request(method, params, McpTestData.getRequestTimeout());
     }
 
     public static JsonNode sendRequest(McpClient client, String method,
                                        ObjectNode params, Duration timeout) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method,
-                () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
     public static void sendNotification(McpClient client, String method, ObjectNode params) {
-        Allure.step("Отправить JSON-RPC notification: method=" + method,
-                () -> client.notification(method, params));
+        client.notification(method, params);
     }
 
     public static JsonNode initialize(McpClient client, String version, String clientName,
@@ -62,12 +59,11 @@ public final class McpClientTestActions {
     }
 
     public static void sendRawLine(McpClient client, String line) {
-        Allure.step("Отправить необработанную STDIO-строку", () -> client.sendRawLine(line));
+        client.sendRawLine(line);
     }
 
     public static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
-        return Allure.step("Дождаться JSON-RPC response после отправки необработанной STDIO-строки",
-                () -> client.awaitRawResponse(timeout));
+        return client.awaitRawResponse(timeout);
     }
 
     public static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
