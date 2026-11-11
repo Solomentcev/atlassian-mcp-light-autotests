@@ -172,15 +172,16 @@ MCP Client не читает STDERR как часть протокола. STDERR
 
 Один тестовый процесс принадлежит одной MCP-сессии. Независимые сессии требуют независимых процессов/контейнеров.
 
-На начальном этапе один тестовый класс получает один отдельный процесс и одну MCP-сессию. Методы класса используют эту сессию последовательно. Тесты, которым требуется начальное состояние NEW или отдельный lifecycle, запускают собственный процесс в рамках соответствующего тестового сценария.
+Каждый класс с `@McpServerTest` получает отдельный процесс и одну MCP-сессию. Методы класса используют эту сессию последовательно. Тесты, которым требуется начальное состояние NEW или отдельный lifecycle, запускают собственный процесс на каждый тестовый метод.
 
 Правила параллельности:
 
 - методы одного тестового класса, использующие одну MCP-сессию, выполняются последовательно;
-- параллельно могут выполняться только классы с независимыми процессами и независимыми тестовыми данными;
+- разные тестовые классы выполняются параллельно с ограничением в четыре потока; методы внутри класса выполняются последовательно;
+- параллельный запуск включён через `src/test/resources/junit-platform.properties`;
 - каждый процесс имеет отдельные STDIN/STDOUT/STDERR collectors;
 - каждый прогон имеет уникальный AQA_RUN_ID;
-- Docker container name формируется с уникальным идентификатором прогона;
+- Docker container name получает уникальный суффикс для каждого экземпляра сервера;
 - общие тестовые данные не изменяются параллельно без явной синхронизации.
 
 Параллельный запуск не должен приводить к совместному чтению одного потока, смешению ответов, взаимному завершению процессов или пересечению cleanup.
@@ -205,10 +206,10 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 - `AQA_SERVER_MODE=docker`: обязательны `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`; запускается отдельный контейнер через Docker launcher.
 - `AQA_SERVER_STARTUP_TIMEOUT_SECONDS` задаёт таймаут MCP readiness handshake (по умолчанию 15 секунд).
 - `AQA_DOCKER_STOP_TIMEOUT_SECONDS` задаёт время штатной остановки контейнера (по умолчанию 10 секунд).
-- `AQA_RUN_ID` задаёт базовый ID Jenkins-прогона; launcher добавляет уникальный суффикс для контейнера каждого тестового класса.
+- `AQA_RUN_ID` задаёт базовый ID Jenkins-прогона; каждый создаваемый экземпляр сервера получает отдельный уникальный суффикс.
 - `AQA_MCP_PROTOCOL_VERSION` задаёт версию классического MCP lifecycle (по умолчанию `2025-11-25`).
 
-Аннотация `@McpServerTest` из пакета `ru.solomentsev.aqa.support.junit` подключает `McpServerExtension` из того же пакета. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, выполняет classic initialize handshake, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Аннотация устанавливает `ExecutionMode.SAME_THREAD`, чтобы методы класса не использовали одну MCP-сессию параллельно. Каждый класс получает отдельный процесс/контейнер. Для stateless lifecycle `McpServerConfiguration.startStatelessSession()` создаёт отдельный процесс без classic initialize; готовность подтверждается первым stateless-запросом.
+Аннотация `@McpServerTest` из пакета `ru.solomentsev.aqa.support.junit` подключает `McpServerExtension`. Extension создаёт одну `McpProcessSession` в `BeforeAllCallback`, выполняет classic initialize handshake, предоставляет `McpClient` или `McpProcessSession` через parameter resolver и закрывает сессию в `AfterAllCallback`. Методы класса выполняются последовательно за счёт `junit.jupiter.execution.parallel.mode.default=same_thread`; разные классы выполняются параллельно за счёт `junit.jupiter.execution.parallel.mode.classes.default=concurrent`. Ограничение пула — четыре потока. Для stateless lifecycle `McpServerConfiguration.startStatelessSession()` создаёт отдельный процесс без classic initialize; готовность подтверждается первым stateless-запросом.
 ### Stateless client и интеграционные проверки
 
 `McpClient.requestStateless` добавляет в `params._meta` обязательные поля `io.modelcontextprotocol/protocolVersion` и `io.modelcontextprotocol/clientCapabilities`, а также необязательное `io.modelcontextprotocol/clientInfo`. Исходный объект params не изменяется; повторное поле `_meta` отклоняется до отправки запроса.
