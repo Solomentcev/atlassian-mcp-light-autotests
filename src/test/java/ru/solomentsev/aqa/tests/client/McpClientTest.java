@@ -68,7 +68,15 @@ class McpClientTest {
 
             assertThat(response.path("jsonrpc").asText()).as("Для method=ping ожидается jsonrpc=2.0, фактически: %s", response.path("jsonrpc").asText()).isEqualTo(McpTestData.getJsonRpcVersion());
             assertThat(response.path("result").isObject()).as("Ответ на ping должен содержать объект result").isTrue();
-            assertThat(response.path("result").path("alive").asBoolean()).as("Ответ на ping должен содержать result.alive=true, фактически: %s", response.path("result").path("alive")).isTrue();
+            assertThat(response.path("result").has("alive"))
+                    .as("Ответ на ping должен содержать поле result.alive")
+                    .isTrue();
+            assertThat(response.path("result").path("alive").isBoolean())
+                    .as("Поле result.alive должно иметь boolean type")
+                    .isTrue();
+            assertThat(response.path("result").path("alive").asBoolean())
+                    .as("Ответ на ping должен содержать result.alive=true")
+                    .isTrue();
         } finally {
             serverStdin.close();
             serverStdout.close();
@@ -259,6 +267,14 @@ class McpClientTest {
                 .path("io.modelcontextprotocol/protocolVersion").asText())
                 .as("В stateless metadata должна передаваться согласованная версия MCP-протокола")
                 .isEqualTo(McpTestData.getStatelessProtocolVersion());
+        assertThat(received.get().path("params").path("_meta")
+                .path("io.modelcontextprotocol/clientCapabilities").has("experimental"))
+                .as("В stateless metadata должен присутствовать clientCapabilities.experimental")
+                .isTrue();
+        assertThat(received.get().path("params").path("_meta")
+                .path("io.modelcontextprotocol/clientCapabilities").path("experimental").isBoolean())
+                .as("clientCapabilities.experimental должен иметь boolean type")
+                .isTrue();
         assertThat(received.get().path("params").path("_meta")
                 .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean())
                 .as("В stateless metadata должны передаваться client capabilities")
