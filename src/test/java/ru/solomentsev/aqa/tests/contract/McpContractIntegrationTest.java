@@ -414,31 +414,31 @@ class McpContractIntegrationTest {
     }
 
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return client.request(method, params, REQUEST_TIMEOUT);
+        return Allure.step("Отправить JSON-RPC request: method=" + method + ", params=" + (params == null ? "отсутствуют" : params.fieldNames().toString()), () -> client.request(method, params, REQUEST_TIMEOUT));
     }
 
     private static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", name);
         params.set("arguments", arguments);
-        return client.requestStateless(
+        return Allure.step("Вызвать MCP tool: " + name + ", аргументы=" + arguments.fieldNames().toString(), () -> client.requestStateless(
                 "tools/call",
                 params,
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 OBJECT_MAPPER.createObjectNode(),
                 null,
                 REQUEST_TIMEOUT
-        );
+        ));
     }
 
     private static JsonNode getStatelessTools(McpClient client) {
-        JsonNode response = client.listToolsStateless(
+        JsonNode response = Allure.step("Получить tools/list: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> client.listToolsStateless(
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 REQUEST_TIMEOUT
-        );
+        ));
         assertSuccessfulJsonRpc(response);
         JsonNode tools = response.path("result").path("tools");
-        assertThat(tools.isArray()).as("tools/list должен вернуть массив инструментов").isTrue();
+        assertThat(tools.isArray()).as("tools/list при protocolVersion=%s должен вернуть массив инструментов, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, tools.getNodeType()).isTrue();
         return tools;
     }
 
