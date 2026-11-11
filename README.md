@@ -48,10 +48,11 @@ Jenkins собирает тестируемый сервер из исходни
 Тестовые сценарии и поддерживающая инфраструктура разделены по пакетам:
 
 - `tests/contract`, `tests/transport`, `tests/client`, `tests/session`, `tests/process`, `tests/config`, `tests/support` — только тестовые классы;
-- `mcp` — MCP Client и MCP process session;
+- `mcp` — MCP Client, MCP process session и повторно используемые действия тестового MCP Client;
+- `support/mcp`, `support/session` — действия contract-сценариев и фабрики тестовых MCP-сессий;
 - `process` — запуск и управление процессами, Docker launcher и сбор STDERR;
 - `config` — конфигурация запуска тестового сервера;
-- `support/junit`, `support/diagnostics`, `support/fake` — JUnit extension, безопасная диагностика и fake-серверы;
+- `support/junit`, `support/diagnostics`, `support/fake` — JUnit extension, безопасная диагностика и fake-серверы/процессы;
 - `testdata` — неизменяемые тестовые данные с доступом через getters, MethodSource providers и эталонный публичный MCP contract.
 
 ## Текущая реализация
