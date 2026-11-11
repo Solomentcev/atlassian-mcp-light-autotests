@@ -253,10 +253,10 @@ public final class McpClient implements AutoCloseable {
      */
     public JsonNode discoverStateless(String protocolVersion, Duration timeout) {
         ObjectNode clientInfo = OBJECT_MAPPER.createObjectNode()
-                .put("name", McpTestData.CLIENT_NAME)
-                .put("version", McpTestData.CLIENT_VERSION);
+                .put("name", McpTestData.getClientName())
+                .put("version", McpTestData.getClientVersion());
         return requestStateless(
-                "server/discover",
+                McpTestData.getServerDiscoverMethod(),
                 null,
                 protocolVersion,
                 OBJECT_MAPPER.createObjectNode(),
