@@ -76,7 +76,7 @@ class McpClientTest {
     @Story("Отправка notification без request id")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Передача notification notifications/initialized без request id")
-    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более " + McpTestData.ASYNC_EVENT_TIMEOUT.toMillis() + " ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более 3000 ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
     @Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
         Allure.parameter("Notification method", "notifications/initialized");
