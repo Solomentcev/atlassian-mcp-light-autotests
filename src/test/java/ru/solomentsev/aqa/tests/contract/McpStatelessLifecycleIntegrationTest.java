@@ -337,7 +337,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .isTrue();
             assertThat(firstContent.path("type").asText())
                     .as("Первый элемент MCP tool result должен иметь тип text")
-                    .isEqualTo("text");
+                    .isEqualTo(McpTestData.getTextContentType());
             assertThat(firstContent.has("text"))
                     .as("Текстовый элемент MCP tool result должен содержать text")
                     .isTrue();
