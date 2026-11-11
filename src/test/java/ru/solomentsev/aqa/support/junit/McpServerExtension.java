@@ -36,9 +36,19 @@ public final class McpServerExtension
     public void beforeAll(ExtensionContext context) throws Exception {
         String testClass = context.getRequiredTestClass().getSimpleName();
         LOG.info("Начало тестового класса: {}", testClass);
-        McpProcessSession session = Allure.step(
-                "Запустить отдельный MCP-процесс и выполнить readiness handshake",
-                () -> McpServerConfiguration.fromEnvironment().startSession());
+        McpServerTest testConfiguration = context.getRequiredTestClass()
+                .getAnnotation(McpServerTest.class);
+        McpServerConfiguration configuration = McpServerConfiguration.fromEnvironment();
+        McpProcessSession session;
+        if (testConfiguration.stateless()) {
+            session = Allure.step(
+                    "Запустить отдельный MCP-процесс без classic initialize handshake",
+                    configuration::startStatelessSession);
+        } else {
+            session = Allure.step(
+                    "Запустить отдельный MCP-процесс и выполнить classic readiness handshake",
+                    configuration::startSession);
+        }
         context.getStore(NAMESPACE).put(SESSION_KEY, session);
     }
 
