@@ -325,7 +325,7 @@ class McpClientTest {
     private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
                                              String version, ObjectNode capabilities,
                                              ObjectNode clientInfo, Duration timeout) {
-        return Allure.step("Отправить stateless request: method=" + method + ", protocolVersion=" + version + ", params fields=" + (params == null ? "отсутствуют" : params.fieldNames().toString()), () -> client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
+        return Allure.step("Отправить stateless request: method=" + method + ", protocolVersion=" + version + ", params fields=" + (params == null ? "отсутствуют" : "полей=" + params.size()), () -> client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
     }
 
     private static void respondToSingleRequest(PipedInputStream serverStdin,
