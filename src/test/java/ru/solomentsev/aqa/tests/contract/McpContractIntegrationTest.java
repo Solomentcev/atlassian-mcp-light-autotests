@@ -226,7 +226,8 @@ class McpContractIntegrationTest {
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
         Allure.parameter("MCP method", "tools/call");
         Allure.parameter("Tool name", "aqa_unknown_tool");
-        JsonNode response = callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode());
+        JsonNode response = Allure.step("Вызвать неизвестный инструмент name=aqa_unknown_tool с пустыми arguments",
+                () -> callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode()));
 
         assertToolError(response, "tools/call name=aqa_unknown_tool, arguments={}");
     
@@ -246,7 +247,8 @@ class McpContractIntegrationTest {
         Allure.parameter("MCP tool", "jira_get_issue");
         Allure.parameter("Обязательный аргумент", "issue_key");
         Allure.parameter("Переданные arguments", "{}");
-        JsonNode response = callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode());
+        JsonNode response = Allure.step("Вызвать jira_get_issue без обязательного аргумента issue_key",
+                () -> callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode()));
 
         assertToolError(response, "jira_get_issue без обязательного issue_key (arguments={})");
     
@@ -312,11 +314,15 @@ class McpContractIntegrationTest {
         Allure.parameter("Ожидаемый тип issue_key", "string");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", 42);
-        assertToolError(callTool(client, "jira_get_issue", arguments), "jira_get_issue с issue_key=42 (integer вместо string)");
+        JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=42 (integer вместо string)",
+                () -> callTool(client, "jira_get_issue", arguments));
+        assertToolError(invalidResponse, "jira_get_issue с issue_key=42 (integer вместо string)");
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        assertSuccessfulToolCall(callTool(client, "jira_get_issue", validArguments), "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
+        JsonNode validResponse = Allure.step("Повторить jira_get_issue с валидным строковым issue_key=" + JiraTestData.ISSUE_KEY,
+                () -> callTool(client, "jira_get_issue", validArguments));
+        assertSuccessfulToolCall(validResponse, "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
@@ -335,11 +341,15 @@ class McpContractIntegrationTest {
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", JiraTestData.ISSUE_KEY);
         arguments.put("unexpected", "value");
-        assertToolError(callTool(client, "jira_get_issue", arguments), "jira_get_issue с дополнительным аргументом unexpected=value");
+        JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с неизвестным аргументом unexpected=value",
+                () -> callTool(client, "jira_get_issue", arguments));
+        assertToolError(invalidResponse, "jira_get_issue с дополнительным аргументом unexpected=value");
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        assertSuccessfulToolCall(callTool(client, "jira_get_issue", validArguments), "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
+        JsonNode validResponse = Allure.step("Повторить jira_get_issue без неизвестного аргумента, issue_key=" + JiraTestData.ISSUE_KEY,
+                () -> callTool(client, "jira_get_issue", validArguments));
+        assertSuccessfulToolCall(validResponse, "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
@@ -413,7 +423,9 @@ class McpContractIntegrationTest {
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("page_id", ConfluenceTestData.PAGE_ID);
 
-        assertToolError(callTool(client, "confluence_update_page", arguments), "confluence_update_page с page_id=" + ConfluenceTestData.PAGE_ID + " без title и content");
+        JsonNode response = Allure.step("Вызвать confluence_update_page только с page_id=" + ConfluenceTestData.PAGE_ID + ", без title и content",
+                () -> callTool(client, "confluence_update_page", arguments));
+        assertToolError(response, "confluence_update_page с page_id=" + ConfluenceTestData.PAGE_ID + " без title и content");
     
     
     }
