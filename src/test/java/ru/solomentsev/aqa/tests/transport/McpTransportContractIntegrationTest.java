@@ -288,23 +288,23 @@ class McpTransportContractIntegrationTest {
     
     }
 
-    @Step("Выполнить действие или проверку: sendRawLine")
+    @Step("Отправить необработанную STDIO-строку")
     private static void sendRawLine(McpClient client, String line) {
-        Allure.step("Отправить необработанную STDIO-строку: " + (line.isEmpty() ? "пустая" : line.isBlank() ? "только пробелы" : "непустая JSONL-строка, длина=" + line.length()), () -> client.sendRawLine(line));
+        client.sendRawLine(line);
     }
 
-    @Step("Выполнить действие или проверку: awaitRawResponse")
+    @Step("Дождаться JSON-RPC response после отправки необработанной STDIO-строки")
     private static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
-        return Allure.step("Дождаться JSON-RPC ответа на некорректную STDIO-строку: timeout=" + timeout.toMillis() + " ms", () -> client.awaitRawResponse(timeout));
+        return client.awaitRawResponse(timeout);
     }
 
-    @Step("Выполнить действие или проверку: sendRequest")
+    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
     private static JsonNode sendRequest(
             McpClient client, String method, ObjectNode params, Duration timeout) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
-    @Step("Выполнить действие или проверку: assertJsonRpcError")
+    @Step("Проверить JSON-RPC error response: ожидаемый code={expectedCode}")
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,
                                            int expectedCode) {
         assertThat(response.path("jsonrpc").asText())
