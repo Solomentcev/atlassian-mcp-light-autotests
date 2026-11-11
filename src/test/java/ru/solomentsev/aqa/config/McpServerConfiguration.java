@@ -168,6 +168,11 @@ public final class McpServerConfiguration {
         return mode;
     }
 
+    /** @return уникальный идентификатор тестового запуска, используемый для изоляции Docker-контейнера */
+    public String runId() {
+        return runId;
+    }
+
     private static String value(Map<String, String> environment,
                                 Properties properties,
                                 String propertyName,
