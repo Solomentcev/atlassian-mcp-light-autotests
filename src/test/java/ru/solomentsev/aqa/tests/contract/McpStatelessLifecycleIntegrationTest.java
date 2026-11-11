@@ -298,15 +298,10 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(result.isObject())
                     .as("Успешный tools/call должен вернуть объект result")
                     .isTrue();
-            assertThat(result.has("isError"))
-                    .as("MCP tool result должен содержать isError")
+            assertThat(!result.has("isError")
+                            || (result.path("isError").isBoolean() && !result.path("isError").asBoolean()))
+                    .as("Успешный read-инструмент не должен возвращать MCP tool error; необязательный isError отсутствует или равен false")
                     .isTrue();
-            assertThat(result.path("isError").isBoolean())
-                    .as("MCP tool result.isError должен иметь boolean type")
-                    .isTrue();
-            assertThat(result.path("isError").asBoolean())
-                    .as("Успешный read-инструмент не должен возвращать MCP tool error")
-                    .isFalse();
             assertThat(result.has("resultType"))
                     .as("MCP tool result должен содержать resultType")
                     .isTrue();
