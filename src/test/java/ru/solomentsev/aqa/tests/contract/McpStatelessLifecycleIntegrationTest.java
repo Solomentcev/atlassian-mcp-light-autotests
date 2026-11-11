@@ -69,8 +69,8 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = session.client().discoverStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT);
+            JsonNode response = Allure.step("Выполнить server/discover в stateless-режиме: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> session.client().discoverStateless(
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
@@ -127,8 +127,8 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("Classic initialize", "не выполняется");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = session.client().listToolsStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT);
+            JsonNode response = Allure.step("Выполнить tools/list в stateless-режиме: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> session.client().listToolsStateless(
+                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
@@ -167,14 +167,14 @@ class McpStatelessLifecycleIntegrationTest {
             ObjectNode params = OBJECT_MAPPER.createObjectNode();
             params.put("name", ConfluenceTestData.LIST_SPACES_TOOL);
             params.putObject("arguments").put("limit", McpTestData.DEFAULT_LIMIT);
-            JsonNode response = session.client().requestStateless(
+            JsonNode response = Allure.step("Вызвать stateless tool " + ConfluenceTestData.LIST_SPACES_TOOL + " с arguments.limit=" + McpTestData.DEFAULT_LIMIT, () -> session.client().requestStateless(
                     "tools/call",
                     params,
                     McpTestData.STATELESS_PROTOCOL_VERSION,
                     OBJECT_MAPPER.createObjectNode(),
                     null,
                     REQUEST_TIMEOUT
-            );
+            ));
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
@@ -270,7 +270,7 @@ class McpStatelessLifecycleIntegrationTest {
                                         String method,
                                         ObjectNode params,
                                         Duration timeout) {
-        return client.request(method, params, timeout);
+        return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
     }
 
     private static void assertEmptyPingResult(JsonNode response) {
