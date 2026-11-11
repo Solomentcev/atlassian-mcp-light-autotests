@@ -32,7 +32,7 @@ public final class McpContractTestSupport {
                     McpTestData.getStatelessProtocolVersion(),
                     OBJECT_MAPPER.createObjectNode(),
                     null,
-                    REQUEST_TIMEOUT
+                    McpTestData.getRequestTimeout()
             );
         });
     }
@@ -41,7 +41,7 @@ public final class McpContractTestSupport {
         return Allure.step("Выполнить stateless tools/list",
                 () -> client.listToolsStateless(
                         McpTestData.getStatelessProtocolVersion(),
-                        REQUEST_TIMEOUT
+                        McpTestData.getRequestTimeout()
                 ));
     }
 
