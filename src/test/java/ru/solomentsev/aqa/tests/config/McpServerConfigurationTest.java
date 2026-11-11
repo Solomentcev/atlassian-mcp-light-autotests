@@ -27,7 +27,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Чтение режима запуска из переменных окружения")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Чтение AQA_SERVER_MODE=local и AQA_SERVER_JAR из environment")
+    @DisplayName("AQA_SERVER_MODE=local и AQA_SERVER_JAR=server/target/server.jar из environment выбирают local mode")
     @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")    void shouldReadLocalModeFromEnvironment() {
         Allure.parameter("AQA_SERVER_MODE", "local");
         Allure.parameter("AQA_SERVER_JAR", "server/target/server.jar");
@@ -48,7 +48,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Приоритет системных свойств над переменными окружения")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Приоритет AQA_SERVER_MODE=docker из system properties над environment=local")
+    @DisplayName("System property aqa.server.mode=docker переопределяет environment AQA_SERVER_MODE=local [image=atlassian-mcp-light:test]")
     @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")    void shouldPreferSystemPropertiesToEnvironment() {
         Allure.parameter("Environment AQA_SERVER_MODE", "local");
         Allure.parameter("System property aqa.server.mode", "docker");
@@ -76,7 +76,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Проверка обязательного пути к JAR в local-режиме")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение local mode без AQA_SERVER_JAR")
+    @DisplayName("AQA_SERVER_MODE=local без AQA_SERVER_JAR отклоняется")
     @Description("Предусловия: задан local-режим, но AQA_SERVER_JAR отсутствует.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_SERVER_JAR.")
     @Tag("negative")
     void shouldRequireJarInLocalMode() {
@@ -96,7 +96,7 @@ class McpServerConfigurationTest {
     @Feature("Server Configuration")
     @Story("Проверка обязательных параметров Docker-режима")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение Docker mode без AQA_DOCKER_ENV_FILE")
+    @DisplayName("Docker mode с image=atlassian-mcp-light:test без AQA_DOCKER_ENV_FILE отклоняется")
     @Description("Предусловия: задан Docker-режим и image, но отсутствует env-файл.\nШаги: построить конфигурацию.\nОжидаемый результат: выбрасывается IllegalArgumentException с указанием AQA_DOCKER_ENV_FILE.")
     @Tag("negative")
     void shouldRequireImageAndEnvFileInDockerMode() {
