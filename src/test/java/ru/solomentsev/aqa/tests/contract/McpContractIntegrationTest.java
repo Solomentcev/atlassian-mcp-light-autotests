@@ -415,39 +415,39 @@ class McpContractIntegrationTest {
     
     }
 
-    @Step("Выполнить действие или проверку: sendRequest")
+    @Step("Отправить JSON-RPC request: method={method}")
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method + ", params=" + (params == null ? "отсутствуют" : "полей=" + params.size()), () -> client.request(method, params, REQUEST_TIMEOUT));
+        return client.request(method, params, REQUEST_TIMEOUT);
     }
 
-    @Step("Выполнить действие или проверку: callTool")
+    @Step("Вызвать MCP-инструмент через tools/call: name={name}")
     private static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         params.put("name", name);
         params.set("arguments", arguments);
-        return Allure.step("Вызвать MCP tool: " + name + ", аргументы=" + "количество аргументов=" + arguments.size() + (arguments.has("limit") ? ", limit=" + arguments.path("limit").asInt() : ""), () -> client.requestStateless(
+        return client.requestStateless(
                 "tools/call",
                 params,
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 OBJECT_MAPPER.createObjectNode(),
                 null,
                 REQUEST_TIMEOUT
-        ));
+        );
     }
 
-    @Step("Выполнить действие или проверку: getStatelessTools")
+    @Step("Получить tools/list в stateless-режиме и проверить структуру ответа")
     private static JsonNode getStatelessTools(McpClient client) {
-        JsonNode response = Allure.step("Получить tools/list: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> client.listToolsStateless(
+        JsonNode response = client.listToolsStateless(
                 McpTestData.STATELESS_PROTOCOL_VERSION,
                 REQUEST_TIMEOUT
-        ));
+        );
         assertSuccessfulJsonRpc(response);
         JsonNode tools = response.path("result").path("tools");
         assertThat(tools.isArray()).as("tools/list при protocolVersion=%s должен вернуть массив инструментов, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, tools.getNodeType()).isTrue();
         return tools;
     }
 
-    @Step("Выполнить действие или проверку: assertLimitRejected")
+    @Step("Проверить отклонение limit={limit} для инструмента {toolName}")
     private static void assertLimitRejected(McpClient client,
                                             String toolName,
                                             String queryField,
@@ -459,14 +459,12 @@ class McpContractIntegrationTest {
         }
         arguments.put("limit", limit);
 
-        JsonNode response = Allure.step(
-                "Вызвать " + toolName + " с limit=" + limit,
-                () -> callTool(client, toolName, arguments));
+        JsonNode response = callTool(client, toolName, arguments);
         assertToolError(response, toolName + " с limit=" + limit
                 + " (допустимый диапазон [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "])");
     }
 
-    @Step("Выполнить действие или проверку: assertSuccessfulToolCall")
+    @Step("Проверить успешный результат MCP-инструмента: {context}")
     private static void assertSuccessfulToolCall(JsonNode response, String context) {
         assertSuccessfulJsonRpc(response);
         assertThat(response.path("result").path("isError").asBoolean())
@@ -474,7 +472,7 @@ class McpContractIntegrationTest {
                 .isFalse();
     }
 
-    @Step("Выполнить действие или проверку: assertSuccessfulJsonRpc")
+    @Step("Проверить структуру успешного JSON-RPC response")
     private static void assertSuccessfulJsonRpc(JsonNode response) {
         assertThat(response.path("jsonrpc").asText())
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
@@ -490,7 +488,7 @@ class McpContractIntegrationTest {
                 .isTrue();
     }
 
-    @Step("Выполнить действие или проверку: assertToolError")
+    @Step("Проверить MCP tool error")
     private static void assertToolError(JsonNode response) {
         assertToolError(response, "MCP-инструмент");
     }
@@ -518,7 +516,7 @@ class McpContractIntegrationTest {
                 .isFalse();
     }
 
-    @Step("Выполнить действие или проверку: assertAnnotations")
+    @Step("Проверить annotations инструмента {toolName}")
     private static void assertAnnotations(String toolName, JsonNode annotations, ToolContract expected) {
         assertThat(annotations.path("readOnlyHint").isBoolean()).as("%s: readOnlyHint должен быть boolean", toolName).isTrue();
         assertThat(annotations.path("destructiveHint").isBoolean()).as("%s: destructiveHint должен быть boolean", toolName).isTrue();
