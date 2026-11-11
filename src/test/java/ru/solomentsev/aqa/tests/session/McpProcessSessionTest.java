@@ -9,6 +9,7 @@ import ru.solomentsev.aqa.testdata.McpTestData;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("AQA Test Infrastructure")
     @Tag("unit")
     @Tag("process")
+@Tag("regression")
 class McpProcessSessionTest {
 
     @Test
@@ -126,14 +128,17 @@ class McpProcessSessionTest {
     
     }
 
+    @Step("Выполнить действие или проверку: discoverStateless")
     private static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
         return Allure.step("Выполнить server/discover: protocolVersion=" + version + ", timeout=" + timeout.toMillis() + " ms", () -> client.discoverStateless(version, timeout));
     }
 
+    @Step("Выполнить действие или проверку: listToolsStateless")
     private static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
         return Allure.step("Выполнить tools/list: protocolVersion=" + version + ", timeout=" + timeout.toMillis() + " ms", () -> client.listToolsStateless(version, timeout));
     }
 
+    @Step("Выполнить действие или проверку: startSession")
     private static McpProcessSession startSession(McpServerLauncher launcher,
                                                    Map<String, String> environment,
                                                    Path workingDirectory,
@@ -145,6 +150,7 @@ class McpProcessSessionTest {
                 protocolVersion, clientName, clientVersion, timeout));
     }
 
+    @Step("Выполнить действие или проверку: startStatelessSession")
     private static McpProcessSession startStatelessSession(McpServerLauncher launcher,
                                                            Map<String, String> environment,
                                                            Path workingDirectory) throws Exception {
