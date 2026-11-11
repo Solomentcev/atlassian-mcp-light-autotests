@@ -97,6 +97,11 @@ class McpClientTest {
         } finally {
             serverStdin.close();
             serverStdout.close();
+            clientStdout.close();
+            server.join(McpTestData.getAsyncEventTimeout().toMillis());
+            assertThat(server.isAlive())
+                    .as("Fake MCP endpoint должен завершиться после закрытия STDIO-потоков")
+                    .isFalse();
         }
 
     }
@@ -153,6 +158,11 @@ class McpClientTest {
         } finally {
             serverStdin.close();
             serverStdout.close();
+            clientStdout.close();
+            server.join(McpTestData.getAsyncEventTimeout().toMillis());
+            assertThat(server.isAlive())
+                    .as("Fake MCP endpoint должен завершиться после закрытия STDIO-потоков")
+                    .isFalse();
         }
 
     }
@@ -233,6 +243,11 @@ class McpClientTest {
         } finally {
             serverStdin.close();
             serverStdout.close();
+            clientStdout.close();
+            server.join(McpTestData.getAsyncEventTimeout().toMillis());
+            assertThat(server.isAlive())
+                    .as("Fake MCP endpoint должен завершиться после закрытия STDIO-потоков")
+                    .isFalse();
         }
 
     }
@@ -344,6 +359,11 @@ class McpClientTest {
         } finally {
             serverStdin.close();
             serverStdout.close();
+            clientStdout.close();
+            server.join(McpTestData.getAsyncEventTimeout().toMillis());
+            assertThat(server.isAlive())
+                    .as("Fake MCP endpoint должен завершиться после закрытия STDIO-потоков")
+                    .isFalse();
         }
 
     }
