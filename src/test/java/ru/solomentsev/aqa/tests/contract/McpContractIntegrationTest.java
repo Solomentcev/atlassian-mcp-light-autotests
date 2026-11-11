@@ -288,7 +288,7 @@ class McpContractIntegrationTest {
         JsonNode validResponse = Allure.step(
                 "Вызвать jira_get_issue с валидным issue_key=" + JiraTestData.ISSUE_KEY,
                 () -> callTool(client, "jira_get_issue", validArguments));
-        assertSuccessfulJsonRpc(validResponse);
+        assertSuccessfulToolCall(validResponse, "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
@@ -311,7 +311,7 @@ class McpContractIntegrationTest {
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+        assertSuccessfulToolCall(callTool(client, "jira_get_issue", validArguments), "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
@@ -460,7 +460,7 @@ class McpContractIntegrationTest {
                 + " (допустимый диапазон [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "])");
     }
 
-    private static void assertSuccessfulJsonRpc(JsonNode response) {
+    private static void assertSuccessfulToolCall(JsonNode response, String context) {\n        assertSuccessfulJsonRpc(response);\n        assertThat(response.path("result").path("isError").asBoolean())\n                .as("%s должен завершиться без MCP tool error (result.isError=false)", context)\n                .isFalse();\n    }\n\n    private static void assertSuccessfulJsonRpc(JsonNode response) {
         assertThat(response.path("jsonrpc").asText())
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
                 .isEqualTo("2.0");
