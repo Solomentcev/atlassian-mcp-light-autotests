@@ -233,13 +233,13 @@ class McpTransportContractIntegrationTest {
 
     @Test
     @Feature("Notifications")
-    @Story("MCP-004 — Отправка notifications/initialized без response")
+    @Story("MCP-004 — Передача notifications/initialized без request id и сохранение работоспособности сессии")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-004: notifications/initialized без request id не нарушает обработку следующего ping")
     @Description("Предусловия: MCP STDIO-процесс завершил initialize и находится в READY.\nШаги: отправить notifications/initialized без request id; затем отправить ping с request id.\nОжидаемый результат: notification отправляется без поля id; следующий ping получает успешный JSON-RPC response с объектом result. Отдельное отсутствие ответа на notification этим тестом напрямую не проверяется.")
     @Tag("protocol")
     @Tag("case-MCP-004")
-    void shouldNotRespondToNotifications(McpClient client) {
+    void shouldSendInitializedNotificationWithoutRequestIdAndKeepSessionReady(McpClient client) {
         Allure.parameter("Notification method", "notifications/initialized");
         Allure.parameter("Notification request id", "отсутствует");
         Allure.parameter("Контрольный запрос", "ping");
