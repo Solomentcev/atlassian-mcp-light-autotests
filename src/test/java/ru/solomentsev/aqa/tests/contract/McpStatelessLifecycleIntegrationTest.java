@@ -43,8 +43,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Classic Lifecycle")
     @Story("MCP-017 — Запрос до инициализации")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=" + -32001 + ")")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=" + -32001 + " (сервер ещё не инициализирован); инструменты не перечисляются.")
+    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize отклоняется")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает ошибку состояния «сервер ещё не инициализирован»; инструменты не перечисляются.")
     @Tag("case-MCP-017")
     void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
         Allure.parameter("MCP method", McpTestData.getToolsListMethod());
@@ -206,7 +206,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Story("MCP-036 — Обработка ping до и после READY")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("MCP-036: ping в NEW, INITIALIZING и READY возвращает пустой result; tools/list доступен только в READY")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + "2025-11-25" + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=" + -32001 + "; tools/list в READY возвращает массив tools.")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с classic protocolVersion; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает ошибку состояния; tools/list в READY возвращает массив tools.")
     @Tag("case-MCP-036")
     @Tag("smoke")
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
