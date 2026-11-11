@@ -31,8 +31,8 @@ class ProcessBuilderLauncherTest {
     @Feature("Process Builder Launcher")
     @Story("Запуск процесса и отдельный сбор STDERR")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("ProcessBuilder запускает java -version [timeout=" + McpTestData.JAVA_VERSION_PROCESS_TIMEOUT.toMillis() + " ms], exitCode=0; STDERR собирается отдельно")
-    @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения не более " + McpTestData.JAVA_VERSION_PROCESS_TIMEOUT.toMillis() + " ms; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
+    @DisplayName("ProcessBuilder запускает java -version [timeout=15000 ms], exitCode=0; STDERR собирается отдельно")
+    @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения не более 15000 ms; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
         Allure.parameter("Команда", "java -version");
         Allure.parameter("Process timeout", McpTestData.JAVA_VERSION_PROCESS_TIMEOUT.toMillis() + " ms");
         Allure.parameter("STDERR collection timeout", McpTestData.STDERR_COLLECTION_TIMEOUT.toMillis() + " ms");
