@@ -343,58 +343,51 @@ class McpContractIntegrationTest {
     
     }
 
-    @Test
+    @ParameterizedTest(name = "MCP-028: {0} проверяет границы limit")
+    @MethodSource("limitBoundaryCases")
     @Feature("Tool Validation")
     @Story("MCP-028 — Проверка границ параметра limit")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-028: jira_search, confluence_search и confluence_list_spaces отклоняют limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; принимают limit=" + McpTestData.DEFAULT_LIMIT)
-    @Description("Предусловия: MCP-сервер запущен; доступны jira_search(jql), confluence_search(cql) и confluence_list_spaces.\n" +
-            "Шаги: для каждого инструмента выполнить вызовы с limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; затем повторить с limit=" + McpTestData.DEFAULT_LIMIT + ".\n" +
-            "Ожидаемый результат: значения limit вне диапазона [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "] возвращают MCP tool error (result.isError=true); допустимое limit=" + McpTestData.DEFAULT_LIMIT + " принимается каждым инструментом (result.isError=false).")
+    @DisplayName("MCP-028: инструменты отклоняют limit вне диапазона и принимают допустимое значение")
+    @Description("Предусловия: MCP-сервер запущен; доступны инструменты поиска Jira и Confluence.\\nШаги: для выбранного инструмента выполнить вызовы с limit ниже минимума и выше максимума, затем с допустимым limit.\\nОжидаемый результат: недопустимые значения возвращают MCP tool error (result.isError=true); допустимое значение принимается (result.isError=false).")
     @Tag("negative")
     @Tag("case-MCP-028")
     @Tag("jira")
     @Tag("confluence")
-    void shouldRejectLimitOutsidePublishedBounds(McpClient client) {
+    void shouldRejectLimitOutsidePublishedBounds(String toolName,
+                                                 String queryField,
+                                                 String query,
+                                                 McpClient client) {
+        Allure.parameter("MCP tool", toolName);
+        Allure.parameter("Поле запроса", queryField == null ? "отсутствует" : queryField);
         Allure.parameter("Минимальный допустимый limit", McpTestData.MIN_LIMIT);
         Allure.parameter("Максимальный допустимый limit", McpTestData.MAX_LIMIT);
-        Allure.parameter("Проверяемые значения limit", McpTestData.INVALID_LIMIT_BELOW_MIN + "; " + McpTestData.INVALID_LIMIT_ABOVE_MAX);
         Allure.parameter("Контрольный допустимый limit", McpTestData.DEFAULT_LIMIT);
-        assertLimitRejected(client, "jira_search", "jql", JiraTestData.SEARCH_JQL,
-                McpTestData.INVALID_LIMIT_BELOW_MIN);
-        assertLimitRejected(client, "jira_search", "jql", JiraTestData.SEARCH_JQL,
-                McpTestData.INVALID_LIMIT_ABOVE_MAX);
 
-        for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
-            String queryField = "confluence_search".equals(toolName) ? "cql" : null;
-            String query = queryField == null ? null : ConfluenceTestData.SEARCH_CQL;
-            assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_BELOW_MIN);
-            assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_ABOVE_MAX);
+        assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_BELOW_MIN);
+        assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_ABOVE_MAX);
+
+        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
+        if (queryField != null) {
+            arguments.put(queryField, query);
         }
+        arguments.put("limit", McpTestData.DEFAULT_LIMIT);
 
-        ObjectNode validJiraLimit = OBJECT_MAPPER.createObjectNode();
-        validJiraLimit.put("jql", JiraTestData.SEARCH_JQL);
-        validJiraLimit.put("limit", McpTestData.DEFAULT_LIMIT);
-        JsonNode jiraResponse = callTool(client, "jira_search", validJiraLimit);
-        assertSuccessfulJsonRpc(jiraResponse);
-        assertThat(jiraResponse.path("result").path("isError").asBoolean())
-                .as("jira_search должен принимать допустимый limit=%d", McpTestData.DEFAULT_LIMIT)
+        JsonNode response = Allure.step(
+                "Вызвать " + toolName + " с допустимым limit=" + McpTestData.DEFAULT_LIMIT,
+                () -> callTool(client, toolName, arguments));
+        assertSuccessfulJsonRpc(response);
+        assertThat(response.path("result").path("isError").asBoolean())
+                .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.DEFAULT_LIMIT)
                 .isFalse();
+    }
 
-        for (String toolName : Set.of("confluence_search", "confluence_list_spaces")) {
-            ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-            if ("confluence_search".equals(toolName)) {
-                arguments.put("cql", ConfluenceTestData.SEARCH_CQL);
-            }
-            arguments.put("limit", McpTestData.DEFAULT_LIMIT);
-            JsonNode response = callTool(client, toolName, arguments);
-            assertSuccessfulJsonRpc(response);
-            assertThat(response.path("result").path("isError").asBoolean())
-                    .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.DEFAULT_LIMIT)
-                    .isFalse();
-        }
-    
-    
+    private static Stream<Arguments> limitBoundaryCases() {
+        return Stream.of(
+                Arguments.of("jira_search", "jql", JiraTestData.SEARCH_JQL),
+                Arguments.of("confluence_search", "cql", ConfluenceTestData.SEARCH_CQL),
+                Arguments.of("confluence_list_spaces", null, null)
+        );
     }
 
     @Test
