@@ -34,7 +34,7 @@ import ru.solomentsev.aqa.testdata.McpTestData;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.callTool;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.fieldNames;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.requestStatelessTools;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.listToolsStateless;
 import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
 
@@ -67,7 +67,7 @@ class McpContractIntegrationTest {
     @Tag("smoke")
     void shouldReturnToolsList(McpClient client) {
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
-        JsonNode response = requestStatelessTools(client);
+        JsonNode response = listToolsStateless(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
@@ -96,7 +96,7 @@ class McpContractIntegrationTest {
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
         Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
-        JsonNode response = requestStatelessTools(client);
+        JsonNode response = listToolsStateless(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
@@ -140,7 +140,7 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
-        JsonNode response = requestStatelessTools(client);
+        JsonNode response = listToolsStateless(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
@@ -183,7 +183,7 @@ class McpContractIntegrationTest {
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
         Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
-        JsonNode response = requestStatelessTools(client);
+        JsonNode response = listToolsStateless(client);
         assertThat(response.path("jsonrpc").asText())
                 .as("tools/list должен вернуть JSON-RPC 2.0 response")
                 .isEqualTo(McpTestData.getJsonRpcVersion());
