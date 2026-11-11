@@ -1,13 +1,7 @@
 package ru.solomentsev.aqa.tests.client;
 
-import ru.solomentsev.aqa.mcp.McpClient;
-import ru.solomentsev.aqa.testdata.McpTestData;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.awaitRawResponse;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.initialize;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.requestStateless;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.respondToSingleRequest;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendNotification;
-import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
@@ -16,12 +10,6 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.DisplayName;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,11 +18,22 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.testdata.McpTestData;
+
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.initialize;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.requestStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.respondToSingleRequest;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendNotification;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 @Epic("AQA Test Infrastructure")
