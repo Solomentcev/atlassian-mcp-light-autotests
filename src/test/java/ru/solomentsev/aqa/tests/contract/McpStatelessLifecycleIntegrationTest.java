@@ -35,26 +35,26 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 @Tag("regression")
 class McpStatelessLifecycleIntegrationTest {
 
-    private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
+    private static final Duration REQUEST_TIMEOUT = McpTestData.getRequestTimeout();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
     @Feature("Classic Lifecycle")
     @Story("MCP-017 — Запрос до инициализации")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + ")")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + " (сервер ещё не инициализирован); инструменты не перечисляются.")
+    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=" + -32001 + ")")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=" + -32001 + " (сервер ещё не инициализирован); инструменты не перечисляются.")
     @Tag("case-MCP-017")
     void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
-        Allure.parameter("MCP method", McpTestData.TOOLS_LIST_METHOD);
+        Allure.parameter("MCP method", McpTestData.getToolsListMethod());
         Allure.parameter("Lifecycle state", "NEW; initialize не выполнялся");
-        Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.MCP_SERVER_NOT_INITIALIZED);
+        Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getMcpServerNotInitialized());
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
+            JsonNode response = sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
             assertThat(response.path("error").path("code").asInt())
-                    .as("До initialize сервер должен отклонять tools/list с ошибкой состояния " + McpTestData.MCP_SERVER_NOT_INITIALIZED)
-                    .isEqualTo(McpTestData.MCP_SERVER_NOT_INITIALIZED);
+                    .as("До initialize сервер должен отклонять tools/list с ошибкой состояния " + McpTestData.getMcpServerNotInitialized())
+                    .isEqualTo(McpTestData.getMcpServerNotInitialized());
         }
     
     }
@@ -63,22 +63,22 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-019 — Обнаружение возможностей stateless-режима")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-019: server/discover без initialize [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] возвращает capabilities и serverInfo")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить server/discover с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " и clientCapabilities; проверить supportedVersions, capabilities.tools, ttlMs, cacheScope и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; resultType=complete; supportedVersions содержит три версии в ожидаемом порядке; tools capability объявлена; TTL=" + McpTestData.DISCOVERY_TTL_MS + " ms; cacheScope=" + McpTestData.DISCOVERY_CACHE_SCOPE + "; serverInfo совпадает с метаданными сервера.")
+    @DisplayName("MCP-019: server/discover без initialize [protocolVersion=" + "2026-07-28" + "] возвращает capabilities и serverInfo")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить server/discover с protocolVersion=" + "2026-07-28" + " и clientCapabilities; проверить supportedVersions, capabilities.tools, ttlMs, cacheScope и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; resultType=complete; supportedVersions содержит три версии в ожидаемом порядке; tools capability объявлена; TTL=" + 300_000L + " ms; cacheScope=" + "public" + "; serverInfo совпадает с метаданными сервера.")
     @Tag("case-MCP-019")
     @Tag("smoke")
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
-        Allure.parameter("MCP method", McpTestData.SERVER_DISCOVER_METHOD);
-        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("MCP method", McpTestData.getServerDiscoverMethod());
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
 
         McpProcessSession session = Allure.step(
                 "Запустить новый MCP STDIO-процесс без classic initialize",
                 () -> McpServerConfiguration.fromEnvironment().startStatelessSession());
         try (session) {
             JsonNode response = Allure.step(
-                    "Отправить server/discover: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION,
+                    "Отправить server/discover: protocolVersion=" + McpTestData.getStatelessProtocolVersion(),
                     () -> session.client().discoverStateless(
-                            McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+                            McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
 
             JsonNode result = response.path("result");
             assertFalseStep("JSON-RPC response не содержит error", response.has("error"));
@@ -88,22 +88,22 @@ class McpStatelessLifecycleIntegrationTest {
             assertTrueStep("result.supportedVersions является массивом", supportedVersions.isArray());
             assertEqualsStep("Количество поддерживаемых версий", supportedVersions.size(), 3);
             assertEqualsStep("supportedVersions[0] — stateless protocolVersion",
-                    supportedVersions.get(0).asText(), McpTestData.STATELESS_PROTOCOL_VERSION);
+                    supportedVersions.get(0).asText(), McpTestData.getStatelessProtocolVersion());
             assertEqualsStep("supportedVersions[1] — classic protocolVersion",
-                    supportedVersions.get(1).asText(), McpTestData.CLASSIC_PROTOCOL_VERSION);
+                    supportedVersions.get(1).asText(), McpTestData.getClassicProtocolVersion());
             assertEqualsStep("supportedVersions[2] — legacy protocolVersion",
-                    supportedVersions.get(2).asText(), McpTestData.LEGACY_PROTOCOL_VERSION);
+                    supportedVersions.get(2).asText(), McpTestData.getLegacyProtocolVersion());
 
             boolean toolsCapabilityIsObject = result.path("capabilities").path("tools").isObject();
             assertTrueStep("result.capabilities.tools является объектом", toolsCapabilityIsObject);
-            assertEqualsStep("result.ttlMs", result.path("ttlMs").asLong(), McpTestData.DISCOVERY_TTL_MS);
+            assertEqualsStep("result.ttlMs", result.path("ttlMs").asLong(), McpTestData.getDiscoveryTtlMs());
             assertEqualsStep("result.cacheScope", result.path("cacheScope").asText(),
-                    McpTestData.DISCOVERY_CACHE_SCOPE);
+                    McpTestData.getDiscoveryCacheScope());
 
             JsonNode serverInfo = result.path("_meta").path("io.modelcontextprotocol/serverInfo");
-            assertEqualsStep("serverInfo.name", serverInfo.path("name").asText(), McpTestData.SERVER_NAME);
+            assertEqualsStep("serverInfo.name", serverInfo.path("name").asText(), McpTestData.getServerName());
             assertEqualsStep("serverInfo.version", serverInfo.path("version").asText(),
-                    McpTestData.SERVER_VERSION);
+                    McpTestData.getServerVersion());
         }
     }
 
@@ -111,35 +111,35 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-020 — Вызов tools/list в stateless-режиме без initialize")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-020: stateless tools/list без initialize [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] возвращает " + McpTestData.EXPECTED_TOOL_COUNT + " tools")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools содержит ровно " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов; resultType=complete; serverInfo.name=" + McpTestData.SERVER_NAME + " и serverInfo.version=" + McpTestData.SERVER_VERSION + ".")
+    @DisplayName("MCP-020: stateless tools/list без initialize [protocolVersion=" + "2026-07-28" + "] возвращает " + 13 + " tools")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + "2026-07-28" + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools содержит ровно " + 13 + " инструментов; resultType=complete; serverInfo.name=" + "atlassian-lite" + " и serverInfo.version=" + "1.0.0" + ".")
     @Tag("case-MCP-020")
     @Tag("smoke")
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
-        Allure.parameter("MCP method", McpTestData.TOOLS_LIST_METHOD);
-        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("MCP method", McpTestData.getToolsListMethod());
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         Allure.parameter("Classic initialize", "не выполняется");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
-            JsonNode response = Allure.step("Выполнить tools/list в stateless-режиме: protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> session.client().listToolsStateless(
-                    McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+            JsonNode response = Allure.step("Выполнить tools/list в stateless-режиме: protocolVersion=" + McpTestData.getStatelessProtocolVersion(), () -> session.client().listToolsStateless(
+                    McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
             assertThat(response.path("result").path("tools").size())
                     .as("Stateless tools/list должен вернуть все 13 инструментов контракта")
-                    .isEqualTo(McpTestData.EXPECTED_TOOL_COUNT);
+                    .isEqualTo(McpTestData.getExpectedToolCount());
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("name").asText())
                     .as("Stateless tools/list должен возвращать serverInfo с именем сервера")
-                    .isEqualTo(McpTestData.SERVER_NAME);
+                    .isEqualTo(McpTestData.getServerName());
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("version").asText())
                     .as("Stateless tools/list должен возвращать версию MCP-сервера в serverInfo")
-                    .isEqualTo(McpTestData.SERVER_VERSION);
+                    .isEqualTo(McpTestData.getServerVersion());
         }
     
     }
@@ -148,24 +148,24 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-021 — Вызов tools/call в stateless-режиме")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-021: stateless tools/call " + ConfluenceTestData.LIST_SPACES_TOOL + " [limit=" + McpTestData.DEFAULT_LIMIT + ", protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] без initialize")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; инструмент " + ConfluenceTestData.LIST_SPACES_TOOL + " доступен для чтения.\nШаги: вызвать tools/call с name=" + ConfluenceTestData.LIST_SPACES_TOOL + ", arguments.limit=" + McpTestData.DEFAULT_LIMIT + " и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ".\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит хотя бы один текстовый элемент; serverInfo содержит ожидаемые имя и версию сервера.")
+    @DisplayName("MCP-021: stateless tools/call " + "confluence_list_spaces" + " [limit=" + 1 + ", protocolVersion=" + "2026-07-28" + "] без initialize")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; инструмент " + "confluence_list_spaces" + " доступен для чтения.\nШаги: вызвать tools/call с name=" + "confluence_list_spaces" + ", arguments.limit=" + 1 + " и protocolVersion=" + "2026-07-28" + ".\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит хотя бы один текстовый элемент; serverInfo содержит ожидаемые имя и версию сервера.")
     @Tag("case-MCP-021")
     @Tag("smoke")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
-        Allure.parameter("MCP method", McpTestData.TOOLS_CALL_METHOD);
-        Allure.parameter("MCP tool", ConfluenceTestData.LIST_SPACES_TOOL);
-        Allure.parameter("arguments.limit", McpTestData.DEFAULT_LIMIT);
-        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("MCP method", McpTestData.getToolsCallMethod());
+        Allure.parameter("MCP tool", ConfluenceTestData.getListSpacesTool());
+        Allure.parameter("arguments.limit", McpTestData.getDefaultLimit());
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             ObjectNode params = OBJECT_MAPPER.createObjectNode();
-            params.put("name", ConfluenceTestData.LIST_SPACES_TOOL);
-            params.putObject("arguments").put("limit", McpTestData.DEFAULT_LIMIT);
-            JsonNode response = Allure.step("Вызвать stateless tool " + ConfluenceTestData.LIST_SPACES_TOOL + " с arguments.limit=" + McpTestData.DEFAULT_LIMIT, () -> session.client().requestStateless(
-                    McpTestData.TOOLS_CALL_METHOD,
+            params.put("name", ConfluenceTestData.getListSpacesTool());
+            params.putObject("arguments").put("limit", McpTestData.getDefaultLimit());
+            JsonNode response = Allure.step("Вызвать stateless tool " + ConfluenceTestData.getListSpacesTool() + " с arguments.limit=" + McpTestData.getDefaultLimit(), () -> session.client().requestStateless(
+                    McpTestData.getToolsCallMethod(),
                     params,
-                    McpTestData.STATELESS_PROTOCOL_VERSION,
+                    McpTestData.getStatelessProtocolVersion(),
                     OBJECT_MAPPER.createObjectNode(),
                     null,
                     REQUEST_TIMEOUT
@@ -195,11 +195,11 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("name").asText())
                     .as("Stateless tools/call должен возвращать serverInfo с именем сервера")
-                    .isEqualTo(McpTestData.SERVER_NAME);
+                    .isEqualTo(McpTestData.getServerName());
             assertThat(response.path("result").path("_meta")
                     .path("io.modelcontextprotocol/serverInfo").path("version").asText())
                     .as("Stateless tools/call должен возвращать версию MCP-сервера в serverInfo")
-                    .isEqualTo(McpTestData.SERVER_VERSION);
+                    .isEqualTo(McpTestData.getServerVersion());
         }
     
     }
@@ -209,49 +209,49 @@ class McpStatelessLifecycleIntegrationTest {
     @Story("MCP-036 — Обработка ping до и после READY")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("MCP-036: ping в NEW, INITIALIZING и READY возвращает пустой result; tools/list доступен только в READY")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + "; tools/list в READY возвращает массив tools.")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + "2025-11-25" + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=" + -32001 + "; tools/list в READY возвращает массив tools.")
     @Tag("case-MCP-036")
     @Tag("smoke")
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
-        Allure.parameter("MCP method", McpTestData.PING_METHOD);
+        Allure.parameter("MCP method", McpTestData.getPingMethod());
         Allure.parameter("Lifecycle states", "NEW; INITIALIZING; READY");
         Allure.parameter("Ожидаемый результат ping", "пустой объект");
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode pingBeforeInitialize =
-                    sendRequest(session.client(), McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
             assertEmptyPingResult(pingBeforeInitialize);
 
             ObjectNode initializeParams = OBJECT_MAPPER.createObjectNode();
-            initializeParams.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
+            initializeParams.put("protocolVersion", McpTestData.getClassicProtocolVersion());
             initializeParams.putObject("capabilities");
             initializeParams.putObject("clientInfo")
-                    .put("name", McpTestData.CLIENT_NAME)
-                    .put("version", McpTestData.CLIENT_VERSION);
+                    .put("name", McpTestData.getClientName())
+                    .put("version", McpTestData.getClientVersion());
             JsonNode initialize = sendRequest(session.client(), 
-                    McpTestData.INITIALIZE_METHOD, initializeParams, REQUEST_TIMEOUT);
+                    McpTestData.getInitializeMethod(), initializeParams, REQUEST_TIMEOUT);
             assertThat(initialize.has("error"))
                     .as("Корректный initialize должен завершиться без JSON-RPC error")
                     .isFalse();
 
             JsonNode pingBeforeReady =
-                    sendRequest(session.client(), McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
             assertEmptyPingResult(pingBeforeReady);
 
             JsonNode toolsBeforeReady =
-                    sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
             assertThat(toolsBeforeReady.path("error").path("code").asInt())
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
-                    .isEqualTo(McpTestData.MCP_SERVER_NOT_INITIALIZED);
+                    .isEqualTo(McpTestData.getMcpServerNotInitialized());
 
-            Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification(McpTestData.INITIALIZED_NOTIFICATION_METHOD, null));
+            Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification(McpTestData.getInitializedNotificationMethod(), null));
 
             JsonNode pingAfterReady =
-                    sendRequest(session.client(), McpTestData.PING_METHOD, null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
             assertEmptyPingResult(pingAfterReady);
 
             JsonNode toolsAfterReady =
-                    sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
+                    sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
             assertThat(toolsAfterReady.has("error"))
                     .as("После notifications/initialized tools/list должен выполняться успешно")
                     .isFalse();
