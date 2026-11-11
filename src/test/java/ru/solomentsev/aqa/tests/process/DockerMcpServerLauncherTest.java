@@ -62,13 +62,13 @@ class DockerMcpServerLauncherTest {
     void shouldRejectUnsafeRunId() {
         Allure.parameter("AQA_RUN_ID", "unsafe/run-id");
         Allure.parameter("Ожидаемая проверка", "runId должен содержать только безопасные символы");
-        assertThatThrownBy(() -> new DockerMcpServerLauncher(
+        assertThatThrownBy(() -> Allure.step("Создать Docker launcher с AQA_RUN_ID=unsafe/run-id", () -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
                 Path.of(".runtime.env"),
                 "unsafe/run-id",
                 5
-        )).as("Docker launcher должен отклонять небезопасный runId")
+        ))).as("При AQA_RUN_ID=unsafe/run-id ожидается IllegalArgumentException с указанием runId")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("runId");
     
@@ -85,13 +85,13 @@ class DockerMcpServerLauncherTest {
     void shouldRejectZeroStopTimeout() {
         Allure.parameter("Docker stop timeout, seconds", 0);
         Allure.parameter("Ожидаемая проверка", "stopTimeoutSeconds должен быть больше нуля");
-        assertThatThrownBy(() -> new DockerMcpServerLauncher(
+        assertThatThrownBy(() -> Allure.step("Создать Docker launcher с stopTimeoutSeconds=0", () -> new DockerMcpServerLauncher(
                 "docker",
                 "atlassian-mcp-light:latest",
                 Path.of(".runtime.env"),
                 "run-123",
                 0
-        )).as("Docker launcher должен отклонять нулевой stop timeout")
+        ))).as("При stopTimeoutSeconds=0 ожидается IllegalArgumentException с указанием stopTimeoutSeconds")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("stopTimeoutSeconds");
     
