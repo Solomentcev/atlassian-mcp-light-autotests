@@ -60,9 +60,9 @@ class McpClientTest {
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             JsonNode response = sendRequest(client, "ping", null, McpTestData.SHORT_REQUEST_TIMEOUT);
 
-            assertThat(response.path("jsonrpc").asText()).as("Ответ должен соответствовать JSON-RPC версии 2.0").isEqualTo("2.0");
+            assertThat(response.path("jsonrpc").asText()).as("Для method=ping ожидается jsonrpc=2.0, фактически: %s", response.path("jsonrpc").asText()).isEqualTo("2.0");
             assertThat(response.path("result").isObject()).as("Ответ на ping должен содержать объект result").isTrue();
-            assertThat(response.path("result").path("alive").asBoolean()).as("Fake MCP server должен вернуть alive=true").isTrue();
+            assertThat(response.path("result").path("alive").asBoolean()).as("Ответ на ping должен содержать result.alive=true, фактически: %s", response.path("result").path("alive")).isTrue();
         } finally {
             serverStdin.close();
             serverStdout.close();
@@ -108,7 +108,7 @@ class McpClientTest {
         assertThat(received.get().path("method").asText())
                 .as("Fake MCP server должен получить notifications/initialized")
                 .isEqualTo("notifications/initialized");
-        assertThat(received.get().has("id")).as("MCP notification не должен содержать request id").isFalse();
+        assertThat(received.get().has("id")).as("Notification method=notifications/initialized не должен содержать поле id").isFalse();
     } finally {
         serverStdin.close();
         serverStdout.close();
@@ -264,7 +264,7 @@ class McpClientTest {
                 .path("io.modelcontextprotocol/clientInfo").path("name").asText())
                 .as("В stateless metadata должно передаваться имя MCP-клиента")
                 .isEqualTo("aqa-tests");
-        assertThat(originalParams.has("_meta")).as("MCP Client не должен изменять исходный params при добавлении metadata").isFalse();
+        assertThat(originalParams.has("_meta")).as("После stateless tools/list исходный params.filter=all не должен получить поле _meta").isFalse();
     } finally {
         serverStdin.close();
         serverStdout.close();
@@ -310,22 +310,22 @@ class McpClientTest {
     }
 
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params, Duration timeout) {
-        return client.request(method, params, timeout);
+        return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
     }
 
     private static void sendNotification(McpClient client, String method, ObjectNode params) {
-        client.notification(method, params);
+        Allure.step("Отправить JSON-RPC notification: method=" + method + ", request id отсутствует", () -> client.notification(method, params));
     }
 
     private static JsonNode initialize(McpClient client, String version, String clientName,
                                         String clientVersion, Duration timeout) {
-        return client.initialize(version, clientName, clientVersion, timeout);
+        return Allure.step("Выполнить initialize: protocolVersion=" + version + ", client=" + clientName + "/" + clientVersion, () -> client.initialize(version, clientName, clientVersion, timeout));
     }
 
     private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
                                              String version, ObjectNode capabilities,
                                              ObjectNode clientInfo, Duration timeout) {
-        return client.requestStateless(method, params, version, capabilities, clientInfo, timeout);
+        return Allure.step("Отправить stateless request: method=" + method + ", protocolVersion=" + version + ", params fields=" + (params == null ? "отсутствуют" : params.fieldNames().toString()), () -> client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
     }
 
     private static void respondToSingleRequest(PipedInputStream serverStdin,
