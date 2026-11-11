@@ -40,15 +40,15 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск готовой MCP-сессии и завершение процесса при закрытии")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Classic session [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + ", startupTimeout=15000 ms, shutdownTimeout=3000 ms]: handshake готов, close завершает процесс")
-    @Description("Предусловия: доступен FakeMcpServer, который отвечает на initialize и notifications/initialized.\nШаги: запустить classic McpProcessSession с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + " и startup timeout=15000 ms; убедиться, что процесс активен и MCP Client создан; закрыть сессию.\nОжидаемый результат: start() возвращает только после успешного readiness handshake; после close() процесс завершается в пределах 3000 ms с exit code=0.")
+    @DisplayName("Classic session [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + ", startupTimeout=" + McpTestData.DEFAULT_STARTUP_TIMEOUT_MS + " ms, shutdownTimeout=" + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms]: handshake готов, close завершает процесс")
+    @Description("Предусловия: доступен FakeMcpServer, который отвечает на initialize и notifications/initialized.\nШаги: запустить classic McpProcessSession с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + " и startup timeout=" + McpTestData.DEFAULT_STARTUP_TIMEOUT_MS + " ms; убедиться, что процесс активен и MCP Client создан; закрыть сессию.\nОжидаемый результат: start() возвращает только после успешного readiness handshake; после close() процесс завершается в пределах " + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms с exit code=0.")
     @Tag("process")
     void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
-        Allure.parameter("Session mode", "classic");
+        Allure.parameter("Session mode", McpTestData.CLASSIC_SESSION_MODE);
         Allure.parameter("MCP protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
         Allure.parameter("Client name", McpTestData.CLIENT_NAME);
         Allure.parameter("Client version", McpTestData.CLIENT_VERSION);
-        Allure.parameter("Startup timeout", McpServerConfiguration.DEFAULT_STARTUP_TIMEOUT.toMillis() + " ms");
+        Allure.parameter("Startup timeout", McpTestData.DEFAULT_STARTUP_TIMEOUT.toMillis() + " ms");
         Allure.parameter("Shutdown timeout", McpTestData.PROCESS_SHUTDOWN_TIMEOUT.toMillis() + " ms");
         McpProcessSession session = startSession(
                 launcherFor(FakeMcpServer.class),
@@ -57,7 +57,7 @@ class McpProcessSessionTest {
                 McpTestData.CLASSIC_PROTOCOL_VERSION,
                 McpTestData.CLIENT_NAME,
                 McpTestData.CLIENT_VERSION,
-                McpServerConfiguration.DEFAULT_STARTUP_TIMEOUT
+                McpTestData.DEFAULT_STARTUP_TIMEOUT
         );
         ManagedProcess process = session.process();
 
@@ -80,11 +80,11 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск stateless-сессии без classic initialize")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Stateless session [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", без initialize, shutdownTimeout=3000 ms]: discover и tools/list успешны, close завершает процесс")
-    @Description("Предусловия: доступен FakeStatelessMcpServer, поддерживающий server/discover и tools/list.\nШаги: запустить McpProcessSession без classic handshake; выполнить server/discover и tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; закрыть сессию.\nОжидаемый результат: оба stateless-запроса обрабатываются без initialize; serverInfo.name=fake-stateless-server; tools/list возвращает массив; после close() процесс завершается в пределах 3000 ms с exit code=0.")
+    @DisplayName("Stateless session [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", без initialize, shutdownTimeout=" + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms]: discover и tools/list успешны, close завершает процесс")
+    @Description("Предусловия: доступен FakeStatelessMcpServer, поддерживающий server/discover и tools/list.\nШаги: запустить McpProcessSession без classic handshake; выполнить server/discover и tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; закрыть сессию.\nОжидаемый результат: оба stateless-запроса обрабатываются без initialize; serverInfo.name=fake-stateless-server; tools/list возвращает массив; после close() процесс завершается в пределах " + McpTestData.PROCESS_SHUTDOWN_TIMEOUT_MS + " ms с exit code=0.")
     @Tag("process")
     void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
-        Allure.parameter("Session mode", "stateless");
+        Allure.parameter("Session mode", McpTestData.STATELESS_SESSION_MODE);
         Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         Allure.parameter("Classic initialize", "не выполняется");
         Allure.parameter("Shutdown timeout", McpTestData.PROCESS_SHUTDOWN_TIMEOUT.toMillis() + " ms");
