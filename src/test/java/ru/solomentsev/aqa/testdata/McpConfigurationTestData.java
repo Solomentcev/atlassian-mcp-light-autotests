@@ -18,7 +18,6 @@ public final class McpConfigurationTestData {
 
     public static final String SERVER_JAR_PATH = "server/target/server.jar";
     public static final String SERVER_JAR_NAME = "server.jar";
-    public static final String DOCKER_IMAGE_FROM_ENV_FILE = "atlassian-mcp-light:from-env-file";
     public static final String DOCKER_IMAGE = "atlassian-mcp-light:test";
     public static final String DOCKER_ENV_FILE = ".runtime.env";
 
