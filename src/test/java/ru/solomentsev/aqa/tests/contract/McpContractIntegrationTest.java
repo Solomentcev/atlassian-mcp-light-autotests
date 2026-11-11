@@ -257,8 +257,8 @@ class McpContractIntegrationTest {
     @Feature("Tool Validation")
     @Story("MCP-034 — Валидация пустых и null значений аргументов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-034: jira_get_issue отклоняет issue_key=null, пустую и пробельную строки; валидный ключ=" + JiraTestData.ISSUE_KEY)
-    @Description("Предусловия: MCP-сервер запущен; доступен stateless-вызов jira_get_issue.\nШаги: по отдельности передать issue_key=null, issue_key=\"\" и issue_key из трёх пробелов; после трёх негативных вызовов передать issue_key=" + JiraTestData.ISSUE_KEY + ".\nОжидаемый результат: каждый некорректный аргумент приводит к MCP tool error (result.isError=true); контрольный вызов с валидным ключом возвращает result.isError=false.")
+    @DisplayName("MCP-034: jira_get_issue отклоняет issue_key=null, пустую и пробельную строки")
+    @Description("Предусловия: MCP-сервер запущен; доступен stateless-вызов jira_get_issue.\nШаги: по отдельности передать issue_key=null, issue_key=\"\" и issue_key из трёх пробелов.\nОжидаемый результат: каждый из трёх некорректных аргументов приводит к MCP tool error (result.isError=true); обращения к Jira с корректным ключом для этой проверки не требуется.")
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
@@ -266,7 +266,6 @@ class McpContractIntegrationTest {
         Allure.parameter("MCP tool", "jira_get_issue");
         Allure.parameter("Аргумент", "issue_key");
         Allure.parameter("Проверяемые значения", "null; пустая строка; пробельная строка");
-        Allure.parameter("Контрольное валидное значение", JiraTestData.ISSUE_KEY);
         ObjectNode nullArgument = OBJECT_MAPPER.createObjectNode();
         nullArgument.putNull("issue_key");
         JsonNode nullResponse = Allure.step(
@@ -288,12 +287,6 @@ class McpContractIntegrationTest {
                 () -> callTool(client, "jira_get_issue", blankArgument));
         assertToolError(blankResponse, "jira_get_issue с issue_key из трёх пробелов");
 
-        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        JsonNode validResponse = Allure.step(
-                "Вызвать jira_get_issue с валидным issue_key=" + JiraTestData.ISSUE_KEY,
-                () -> callTool(client, "jira_get_issue", validArguments));
-        assertSuccessfulToolCall(validResponse, "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
@@ -301,8 +294,8 @@ class McpContractIntegrationTest {
     @Feature("Tool Validation")
     @Story("MCP-012 — Вызов инструмента с неверным типом аргумента")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=42 (integer вместо string); валидный ключ=" + JiraTestData.ISSUE_KEY)
-    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=42 (JSON integer); затем повторить вызов с валидным issue_key=" + JiraTestData.ISSUE_KEY + ".\nОжидаемый результат: вызов с числом возвращает MCP tool error (result.isError=true); вызов с валидной строкой возвращает result.isError=false.")
+    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=42 (integer вместо string)")
+    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=42 (JSON integer).\nОжидаемый результат: вызов с аргументом неверного JSON-типа возвращает MCP tool error (result.isError=true); проверка не зависит от наличия конкретной задачи в Jira.")
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
@@ -316,11 +309,6 @@ class McpContractIntegrationTest {
                 () -> callTool(client, "jira_get_issue", arguments));
         assertToolError(invalidResponse, "jira_get_issue с issue_key=42 (integer вместо string)");
 
-        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        JsonNode validResponse = Allure.step("Повторить jira_get_issue с валидным строковым issue_key=" + JiraTestData.ISSUE_KEY,
-                () -> callTool(client, "jira_get_issue", validArguments));
-        assertSuccessfulToolCall(validResponse, "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
@@ -329,7 +317,7 @@ class McpContractIntegrationTest {
     @Story("MCP-013 — Вызов инструмента с неизвестным аргументом")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("MCP-013: jira_get_issue отклоняет неизвестный аргумент unexpected=value")
-    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue содержит только объявленные аргументы issue_key.\nШаги: вызвать jira_get_issue с валидным issue_key и дополнительным unexpected=value; затем повторить вызов без неизвестного аргумента.\nОжидаемый результат: первый вызов возвращает MCP tool error (result.isError=true), так как additionalProperties=false; контрольный вызов возвращает result.isError=false.")
+    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue содержит только объявленный аргумент issue_key.\nШаги: вызвать jira_get_issue с непустым строковым issue_key и дополнительным unexpected=value.\nОжидаемый результат: вызов возвращает MCP tool error (result.isError=true), так как additionalProperties=false; результат не зависит от существования задачи с переданным ключом.")
     @Tag("negative")
     @Tag("case-MCP-013")
     @Tag("jira")
@@ -343,11 +331,6 @@ class McpContractIntegrationTest {
                 () -> callTool(client, "jira_get_issue", arguments));
         assertToolError(invalidResponse, "jira_get_issue с дополнительным аргументом unexpected=value");
 
-        ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
-        validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        JsonNode validResponse = Allure.step("Повторить jira_get_issue без неизвестного аргумента, issue_key=" + JiraTestData.ISSUE_KEY,
-                () -> callTool(client, "jira_get_issue", validArguments));
-        assertSuccessfulToolCall(validResponse, "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
