@@ -1,6 +1,5 @@
 package ru.solomentsev.aqa.support.junit;
 
-import io.qameta.allure.Allure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -39,13 +38,9 @@ public final class McpServerExtension
         McpServerConfiguration configuration = McpServerConfiguration.fromEnvironment();
         McpProcessSession session;
         if (testConfiguration.stateless()) {
-            session = Allure.step(
-                    "Запустить отдельный MCP-процесс без classic initialize handshake",
-                    configuration::startStatelessSession);
+            session = configuration.startStatelessSession();
         } else {
-            session = Allure.step(
-                    "Запустить отдельный MCP-процесс и выполнить classic readiness handshake",
-                    configuration::startSession);
+            session = configuration.startSession();
         }
         context.getStore(NAMESPACE).put(SESSION_KEY, session);
     }
@@ -56,11 +51,10 @@ public final class McpServerExtension
                 .remove(SESSION_KEY, McpProcessSession.class);
         if (session != null) {
             try {
-                Allure.step("Закрыть MCP-сессию тестового класса", session::close);
+                session.close();
                 LOG.info("Завершение тестового класса: {}", context.getRequiredTestClass().getSimpleName());
-            } catch (RuntimeException exception) {
-                AllureDiagnostics.attachStderr(session.stderr());
-                throw new IllegalStateException("Failed to close MCP session after "
+            } catch (java.io.IOException exception) {
+                throw new java.io.IOException("Failed to close MCP session after "
                         + context.getRequiredTestClass().getName(), exception);
             }
         }
