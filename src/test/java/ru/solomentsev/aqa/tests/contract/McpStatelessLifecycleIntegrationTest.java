@@ -40,8 +40,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Classic Lifecycle")
     @Story("MCP-017 — Запрос до инициализации")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-017: Запрос до инициализации")
-    @Description("Предусловия: STDIO-процесс запущен; initialize не отправлялся.\nШаги: вызвать classic tools/list.\nОжидаемый результат: сервер возвращает ошибку состояния протокола -32001 и не выполняет инструмент.")
+    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=-32001")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32001 (сервер ещё не инициализирован); инструменты не перечисляются.")
     @Tag("case-MCP-017")
     void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
         Allure.parameter("MCP method", "tools/list");
@@ -61,8 +61,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-019 — Обнаружение возможностей stateless-режима")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-019: Обнаружение возможностей stateless-режима")
-    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся.\nШаги: вызвать server/discover с корректными stateless metadata.\nОжидаемый результат: сервер возвращает успешный результат обнаружения с supportedVersions, capabilities и serverInfo.")
+    @DisplayName("MCP-019: server/discover без initialize [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] возвращает capabilities и serverInfo")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить server/discover с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " и clientCapabilities; проверить supportedVersions, capabilities.tools, ttlMs, cacheScope и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; resultType=complete; supportedVersions содержит три версии в ожидаемом порядке; tools capability объявлена; TTL=" + McpTestData.DISCOVERY_TTL_MS + " ms; cacheScope=" + McpTestData.DISCOVERY_CACHE_SCOPE + "; serverInfo совпадает с метаданными сервера.")
     @Tag("case-MCP-019")
     void shouldDiscoverStatelessCapabilitiesWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "server/discover");
@@ -118,8 +118,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-020 — Вызов tools/list в stateless-режиме без initialize")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-020: Вызов tools/list в stateless-режиме без initialize")
-    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся.\nШаги: вызвать stateless tools/list с корректными metadata.\nОжидаемый результат: запрос успешно обработан без classic handshake; возвращены 13 инструментов и serverInfo metadata.")
+    @DisplayName("MCP-020: stateless tools/list без initialize [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] возвращает " + McpTestData.EXPECTED_TOOL_COUNT + " tools")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся.\nШаги: отправить stateless tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " и clientCapabilities; проверить result.tools, resultType и serverInfo.\nОжидаемый результат: JSON-RPC error отсутствует; result.tools содержит ровно " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов; resultType=complete; serverInfo.name=" + McpTestData.SERVER_NAME + " и serverInfo.version=" + McpTestData.SERVER_VERSION + ".")
     @Tag("case-MCP-020")
     void shouldListToolsStatelessWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "tools/list");
@@ -154,8 +154,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Stateless Lifecycle")
     @Story("MCP-021 — Вызов tools/call в stateless-режиме")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-021: Вызов tools/call в stateless-режиме")
-    @Description("Предусловия: STDIO-процесс запущен; classic initialize не отправлялся; доступен безопасный read-инструмент.\nШаги: вызвать confluence_list_spaces через stateless tools/call с limit=1.\nОжидаемый результат: запрос выполняется без initialize; ответ содержит MCP tool result с resultType=complete и serverInfo metadata.")
+    @DisplayName("MCP-021: stateless tools/call " + ConfluenceTestData.LIST_SPACES_TOOL + " [limit=" + McpTestData.DEFAULT_LIMIT + ", protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "] без initialize")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; инструмент " + ConfluenceTestData.LIST_SPACES_TOOL + " доступен для чтения.\nШаги: вызвать tools/call с name=" + ConfluenceTestData.LIST_SPACES_TOOL + ", arguments.limit=" + McpTestData.DEFAULT_LIMIT + " и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ".\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит хотя бы один текстовый элемент; serverInfo содержит ожидаемые имя и версию сервера.")
     @Tag("case-MCP-021")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
         Allure.parameter("MCP method", "tools/call");
@@ -213,8 +213,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Classic Lifecycle")
     @Story("MCP-036 — Обработка ping до и после READY")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("MCP-036: Обработка ping до и после READY")
-    @Description("Предусловия: STDIO-процесс запущен и находится в состоянии NEW.\nШаги: вызвать ping до initialize; выполнить initialize; вызвать ping до notifications/initialized; проверить недоступность tools/list; отправить notifications/initialized и повторить ping.\nОжидаемый результат: ping возвращает пустой result и не меняет состояние lifecycle; tools/list недоступен до notifications/initialized и доступен после перехода в READY.")
+    @DisplayName("MCP-036: ping в NEW, INITIALIZING и READY возвращает пустой result; tools/list доступен только в READY")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс в состоянии NEW.\nШаги: (1) вызвать ping в NEW; (2) выполнить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + "; (3) вызвать ping и tools/list в INITIALIZING; (4) отправить notifications/initialized; (5) повторить ping и tools/list в READY.\nОжидаемый результат: все три вызова ping завершаются успешно с пустым объектом result; tools/list в INITIALIZING возвращает error=-32001; tools/list в READY возвращает массив tools.")
     @Tag("case-MCP-036")
     void shouldHandlePingWithoutChangingLifecycleState() throws Exception {
         Allure.parameter("MCP method", "ping");
