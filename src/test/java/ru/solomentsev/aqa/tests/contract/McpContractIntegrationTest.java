@@ -72,8 +72,8 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-006 — Проверка состава инструментов")
     @Severity(SeverityLevel.BLOCKER)
-    @DisplayName("MCP-006: Состав tools/list совпадает с контрактом [ожидается 13 инструментов]")
-    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: возвращено ровно 13 уникальных имён; набор полностью совпадает с 13 инструментами, перечисленными в контракте.")    @Tag("case-MCP-006")
+    @DisplayName("MCP-006: Состав tools/list совпадает с контрактом [ожидается " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов]")
+    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: возвращено ровно " + McpTestData.EXPECTED_TOOL_COUNT + " уникальных имён; набор полностью совпадает с " + McpTestData.EXPECTED_TOOL_COUNT + " инструментами, перечисленными в контракте.")    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -90,7 +90,7 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-007 — Проверка описаний инструментов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-007: У каждого из 13 инструментов есть непустой description")
+    @DisplayName("MCP-007: У каждого из " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов есть непустой description")
     @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -106,8 +106,8 @@ class McpContractIntegrationTest {
     @Feature("Tool Schemas")
     @Story("MCP-008 — Проверка JSON Schema и annotations инструментов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-008: JSON Schema и annotations всех 13 инструментов соответствуют контракту")
-    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый контракт 13 инструментов.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
+    @DisplayName("MCP-008: JSON Schema и annotations всех " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов соответствуют контракту")
+    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый контракт " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
@@ -167,23 +167,23 @@ class McpContractIntegrationTest {
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
         Allure.parameter("Stateless metadata scenarios", "без _meta; без clientCapabilities; без protocolVersion");
-        Allure.parameter("Ожидаемый JSON-RPC error code", -32602);
+        Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.JSON_RPC_INVALID_PARAMS);
         JsonNode missingMetadata = Allure.step("Вызвать server/discover без обязательного params._meta", () -> sendRequest(client, "server/discover", null));
-        assertThat(missingMetadata.path("error").path("code").asInt()).as("server/discover без обязательного _meta должен вернуть JSON-RPC error code=-32602, фактически: %s", missingMetadata.path("error").path("code")).isEqualTo(-32602);
+        assertThat(missingMetadata.path("error").path("code").asInt()).as("server/discover без обязательного _meta должен вернуть JSON-RPC error code=-32602, фактически: %s", missingMetadata.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
         missingCapabilitiesParams.putObject("_meta")
                 .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
         JsonNode missingCapabilities = Allure.step("Вызвать tools/list с protocolVersion, но без clientCapabilities",
                 () -> sendRequest(client, McpTestData.TOOLS_LIST_METHOD, missingCapabilitiesParams));
-        assertThat(missingCapabilities.path("error").path("code").asInt()).as("tools/list с protocolVersion=%s, но без clientCapabilities должен вернуть -32602, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, missingCapabilities.path("error").path("code")).isEqualTo(-32602);
+        assertThat(missingCapabilities.path("error").path("code").asInt()).as("tools/list с protocolVersion=%s, но без clientCapabilities должен вернуть -32602, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, missingCapabilities.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
 
         ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
         missingVersionParams.putObject("_meta")
                 .putObject("io.modelcontextprotocol/clientCapabilities");
         JsonNode missingVersion = Allure.step("Вызвать tools/list с clientCapabilities, но без protocolVersion",
                 () -> sendRequest(client, McpTestData.TOOLS_LIST_METHOD, missingVersionParams));
-        assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(-32602);
+        assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
 
         JsonNode validResponse = Allure.step(
                 "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION,
@@ -214,7 +214,7 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step("Вызвать server/discover с protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION,
                 () -> sendRequest(client, "server/discover", params));
 
-        assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.UNSUPPORTED_PROTOCOL_VERSION).isEqualTo(-32022);
+        assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.UNSUPPORTED_PROTOCOL_VERSION).isEqualTo(McpTestData.MCP_UNSUPPORTED_PROTOCOL_VERSION);
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
                 .containsExactly(McpTestData.STATELESS_PROTOCOL_VERSION);
     
