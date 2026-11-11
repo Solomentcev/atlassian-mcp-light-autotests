@@ -38,13 +38,13 @@ class McpTransportContractIntegrationTest {
 
     @Test
     @Feature("STDIO Transport")
-    @Story("MCP-029 — Игнорирование пустых строк STDIO")
+    @Story("MCP-029 — Пустые строки не мешают обработке следующего STDIO-запроса")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-029: STDIO игнорирует пустую строку и строку из пробелов; следующий ping успешен")
-    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSONL-сообщения.\nШаги: записать в STDIN пустую строку, затем строку из трёх пробелов; после них отправить JSON-RPC request method=ping.\nОжидаемый результат: пустые строки не приводят к JSON-RPC error; сервер продолжает чтение STDIN; контрольный ping получает успешный response с объектом result. Отсутствие отдельного ответа на пустые строки этим тестом напрямую не проверяется.")
+    @DisplayName("MCP-029: после пустой строки и строки из пробелов сервер успешно обрабатывает ping")
+    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSONL-сообщения.\nШаги: записать в STDIN пустую строку, затем строку из трёх пробелов; после них отправить JSON-RPC request method=ping.\nОжидаемый результат: сервер продолжает обрабатывать STDIN и возвращает на контрольный ping успешный response с объектом result. Этот тест подтверждает, что пустые строки не блокируют последующий запрос; отсутствие отдельного ответа на каждую пустую строку напрямую не проверяется.")
     @Tag("negative")
     @Tag("case-MCP-029")
-    void shouldIgnoreBlankAndWhitespaceLines(McpClient client) {
+    void shouldProcessPingAfterBlankAndWhitespaceLines(McpClient client) {
         Allure.parameter("Пустая входная строка", "\"\"");
         Allure.parameter("Строка из пробелов", "\"   \"");
         Allure.parameter("Контрольный запрос", "ping");
