@@ -1,5 +1,6 @@
 package ru.solomentsev.aqa.support.assertions;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.qameta.allure.Allure;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssert;
@@ -222,6 +223,14 @@ public final class AllureAssertions {
     private static String display(Object value) {
         if (value == null) {
             return "null";
+        }
+        if (value instanceof JsonNode node) {
+            if (node.isValueNode()) {
+                return node.isNull() ? "null" : display(node.asText());
+            }
+            return node.isArray()
+                    ? "JSON array, элементов=" + node.size()
+                    : "JSON object, полей=" + node.size();
         }
         if (value instanceof Number || value instanceof Boolean || value instanceof Enum<?> || value instanceof Path) {
             return String.valueOf(value);
