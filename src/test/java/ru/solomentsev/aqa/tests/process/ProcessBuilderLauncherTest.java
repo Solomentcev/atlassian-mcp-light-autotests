@@ -48,7 +48,7 @@ class ProcessBuilderLauncherTest {
                 Map.of(),
                 null
         ));
-        StderrCollector stderrCollector = new StderrCollector(process.stderr(), 8_192);
+        StderrCollector stderrCollector = new StderrCollector(process.stderr(), McpTestData.STDERR_BUFFER_SIZE_BYTES);
 
         try {
             assertThat(Allure.step("Дождаться завершения java -version", () -> process.waitFor(McpTestData.JAVA_VERSION_PROCESS_TIMEOUT)))
