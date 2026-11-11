@@ -7,6 +7,8 @@ public final class ConfluenceTestData {
     public static final String SEARCH_CQL = "type = page";
     public static final String LIST_SPACES_TOOL = "confluence_list_spaces";
 
+    public static String getSearchCql() { return SEARCH_CQL; }
+
     private ConfluenceTestData() {
     }
 }
