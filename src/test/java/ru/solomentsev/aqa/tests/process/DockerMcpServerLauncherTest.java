@@ -21,8 +21,8 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy;
 
 @Epic("AQA Test Infrastructure")
-    @Tag("unit")
-    @Tag("docker")
+@Tag("unit")
+@Tag("docker")
 @Tag("regression")
 class DockerMcpServerLauncherTest {
 
