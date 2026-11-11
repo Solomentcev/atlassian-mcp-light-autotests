@@ -69,8 +69,7 @@ class McpProcessSessionTest {
                 .as("MCP-процесс должен завершиться после закрытия сессии")
                 .isTrue();
         assertThat(process.exitCode()).as("Fake MCP server должен завершиться с кодом 0").isZero();
-    
-    
+
     }
 
     @Test
@@ -95,7 +94,7 @@ class McpProcessSessionTest {
         try {
             assertThat(process.isAlive()).as("После запуска stateless-сессии процесс должен быть активен").isTrue();
 
-            var discovery = discoverStateless(session.client(), 
+            var discovery = discoverStateless(session.client(),
                     McpTestData.getStatelessProtocolVersion(),
                     McpTestData.getProcessShutdownTimeout()
             );
@@ -105,7 +104,7 @@ class McpProcessSessionTest {
                     .as("server/discover должен вернуть metadata fake-stateless-server")
                     .isEqualTo(McpTestData.getFakeStatelessServerName());
 
-            var tools = listToolsStateless(session.client(), 
+            var tools = listToolsStateless(session.client(),
                     McpTestData.getStatelessProtocolVersion(),
                     McpTestData.getProcessShutdownTimeout()
             );
@@ -121,8 +120,7 @@ class McpProcessSessionTest {
                 .as("Stateless MCP-процесс должен завершиться после закрытия сессии")
                 .isTrue();
         assertThat(process.exitCode()).as("Fake stateless MCP server должен завершиться с кодом 0").isZero();
-    
-    
+
     }
 
 }
