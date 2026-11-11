@@ -161,7 +161,7 @@ class McpContractIntegrationTest {
         Allure.parameter("Stateless metadata scenarios", "без _meta; без clientCapabilities; без protocolVersion");
         Allure.parameter("Ожидаемый JSON-RPC error code", -32602);
         JsonNode missingMetadata = sendRequest(client, "server/discover", null);
-        assertThat(missingMetadata.path("error").path("code").asInt()).as("Запрос без stateless metadata должен завершаться ошибкой -32602").isEqualTo(-32602);
+        assertThat(missingMetadata.path("error").path("code").asInt()).as("server/discover без обязательного _meta должен вернуть JSON-RPC error code=-32602, фактически: %s", missingMetadata.path("error").path("code")).isEqualTo(-32602);
 
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
         missingCapabilitiesParams.putObject("_meta")
