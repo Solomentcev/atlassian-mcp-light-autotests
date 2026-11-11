@@ -271,9 +271,9 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-034")
     @Tag("jira")
-    void shouldRejectNullEmptyAndBlankRequiredArguments(McpClient client,
-                                                        String scenario,
-                                                        String value) {
+    void shouldRejectNullEmptyAndBlankRequiredArguments(String scenario,
+                                                        String value,
+                                                        McpClient client) {
         Allure.parameter("MCP tool", "jira_get_issue");
         Allure.parameter("Аргумент", "issue_key");
         Allure.parameter("Проверяемое значение", scenario);
