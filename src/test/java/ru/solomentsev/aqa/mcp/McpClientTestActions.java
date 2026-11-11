@@ -1,10 +1,10 @@
 package ru.solomentsev.aqa.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.qameta.allure.Step;
-import ru.solomentsev.aqa.testdata.McpTestData;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,6 +14,8 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 /**
  * Повторно используемые действия MCP Client для тестовых сценариев.
