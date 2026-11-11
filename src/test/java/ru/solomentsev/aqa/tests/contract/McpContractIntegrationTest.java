@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -23,15 +22,14 @@ import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.testdata.JiraTestData;
 import ru.solomentsev.aqa.testdata.ConfluenceTestData;
+import ru.solomentsev.aqa.testdata.McpContractTestData;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
@@ -53,7 +51,7 @@ class McpContractIntegrationTest {
     private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private static final Map<String, ToolContract> EXPECTED_TOOLS = expectedTools();
+    private static final Map<String, McpContractTestData.ToolContract> EXPECTED_TOOLS = McpContractTestData.getExpectedTools();
 
     @Test
     @Feature("Tools Discovery")
@@ -114,7 +112,7 @@ class McpContractIntegrationTest {
         JsonNode tools = getStatelessTools(client);
         for (JsonNode tool : tools) {
             String name = tool.path("name").asText();
-            ToolContract expected = EXPECTED_TOOLS.get(name);
+            McpContractTestData.ToolContract expected = EXPECTED_TOOLS.get(name);
             assertThat(expected).as("Инструмент %s должен быть объявлен в ожидаемом контракте", name).isNotNull();
 
             JsonNode schema = tool.path("inputSchema");
@@ -158,7 +156,7 @@ class McpContractIntegrationTest {
     }
 
     @ParameterizedTest(name = "MCP-023: отклонение stateless-запроса без {0}")
-    @MethodSource("missingStatelessMetadataCases")
+    @MethodSource("ru.solomentsev.aqa.testdata.McpContractTestData#getMissingStatelessMetadataCases")
     @Feature("Stateless Protocol")
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
@@ -201,14 +199,6 @@ class McpContractIntegrationTest {
         assertThat(validResponse.path("result").path("tools").isArray())
                 .as("Контрольный stateless tools/list должен вернуть массив result.tools после отклонения некорректного запроса")
                 .isTrue();
-    }
-
-    private static Stream<Arguments> missingStatelessMetadataCases() {
-        return Stream.of(
-                Arguments.of("_meta", McpTestData.SERVER_DISCOVER_METHOD),
-                Arguments.of("clientCapabilities", McpTestData.TOOLS_LIST_METHOD),
-                Arguments.of("protocolVersion", McpTestData.TOOLS_LIST_METHOD)
-        );
     }
 
     @Test
@@ -278,7 +268,7 @@ class McpContractIntegrationTest {
     }
 
     @ParameterizedTest(name = "MCP-034: jira_get_issue отклоняет issue_key={0}")
-    @MethodSource("requiredArgumentCases")
+    @MethodSource("ru.solomentsev.aqa.testdata.McpContractTestData#getRequiredArgumentCases")
     @Feature("Tool Validation")
     @Story("MCP-034 — Валидация пустых и null значений аргументов")
     @Severity(SeverityLevel.CRITICAL)
@@ -305,14 +295,6 @@ class McpContractIntegrationTest {
                 "Вызвать jira_get_issue с issue_key=" + scenario,
                 () -> callTool(client, "jira_get_issue", arguments));
         assertToolError(response, "jira_get_issue с issue_key=" + scenario);
-    }
-
-    private static Stream<Arguments> requiredArgumentCases() {
-        return Stream.of(
-                Arguments.of("null", (String) null),
-                Arguments.of("пустая строка", ""),
-                Arguments.of("строка из трёх пробелов", "   ")
-        );
     }
 
     @Test
@@ -360,7 +342,7 @@ class McpContractIntegrationTest {
     }
 
     @ParameterizedTest(name = "MCP-028: {0} проверяет границы limit")
-    @MethodSource("limitBoundaryCases")
+    @MethodSource("ru.solomentsev.aqa.testdata.McpContractTestData#getLimitBoundaryCases")
     @Feature("Tool Validation")
     @Story("MCP-028 — Проверка границ параметра limit")
     @Severity(SeverityLevel.CRITICAL)
@@ -396,14 +378,6 @@ class McpContractIntegrationTest {
         assertThat(response.path("result").path("isError").asBoolean())
                 .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.DEFAULT_LIMIT)
                 .isFalse();
-    }
-
-    private static Stream<Arguments> limitBoundaryCases() {
-        return Stream.of(
-                Arguments.of("jira_search", "jql", JiraTestData.SEARCH_JQL),
-                Arguments.of("confluence_search", "cql", ConfluenceTestData.SEARCH_CQL),
-                Arguments.of("confluence_list_spaces", null, null)
-        );
     }
 
     @Test
@@ -559,97 +533,4 @@ class McpContractIntegrationTest {
         return names;
     }
 
-    private static Map<String, ToolContract> expectedTools() {
-        Map<String, ToolContract> tools = new HashMap<>();
-        add(tools, "jira_get_issue", fields("issue_key", "string"), set("issue_key"), true, false, true);
-        add(tools, "jira_search", fields("jql", "string", "limit", "integer"), set("jql"), true, false, true);
-        add(tools, "jira_create_issue",
-                fields("project_key", "string", "summary", "string", "description", "string", "issue_type", "string"),
-                set("project_key", "summary", "description"), false, false, false);
-        add(tools, "jira_transition",
-                fields("issue_key", "string", "transition_name", "string"),
-                set("issue_key", "transition_name"), false, true, false);
-        add(tools, "jira_add_comment",
-                fields("issue_key", "string", "comment", "string"),
-                set("issue_key", "comment"), false, false, false);
-        add(tools, "jira_get_project", fields("project_key", "string"), set("project_key"), true, false, true);
-        add(tools, "jira_get_user", fields("user_identifier", "string"), set("user_identifier"), true, false, true);
-        add(tools, "confluence_get_page", fields("page_id", "string"), set("page_id"), true, false, true);
-        add(tools, "confluence_list_spaces", fields("limit", "integer"), set(), true, false, true);
-        add(tools, "confluence_get_space", fields("space_key", "string"), set("space_key"), true, false, true);
-        add(tools, "confluence_search", fields("cql", "string", "limit", "integer"), set("cql"), true, false, true);
-        add(tools, "confluence_create_page",
-                fields("space_key", "string", "title", "string", "content", "string", "parent_id", "string"),
-                set("space_key", "title", "content"), false, false, false);
-        add(tools, "confluence_update_page",
-                fields("page_id", "string", "version", "integer", "title", "string", "content", "string"),
-                set("page_id"), false, true, false);
-        return Map.copyOf(tools);
-    }
-
-    private static void add(Map<String, ToolContract> tools,
-                            String name,
-                            Map<String, String> properties,
-                            Set<String> required,
-                            boolean readOnly,
-                            boolean destructive,
-                            boolean idempotent) {
-        tools.put(name, new ToolContract(properties, required, readOnly, destructive, idempotent));
-    }
-
-    private static Map<String, String> fields(String... values) {
-        Map<String, String> fields = new HashMap<>();
-        for (int index = 0; index < values.length; index += 2) {
-            fields.put(values[index], values[index + 1]);
-        }
-        return Map.copyOf(fields);
-    }
-
-    private static Set<String> set(String... values) {
-        return Set.of(values);
-    }
-
-    /**
-     * Ожидаемое описание публичного контракта MCP-инструмента.
-     */
-    private static final class ToolContract {
-
-        private final Map<String, String> propertyTypes;
-        private final Set<String> required;
-        private final boolean readOnly;
-        private final boolean destructive;
-        private final boolean idempotent;
-
-        private ToolContract(Map<String, String> propertyTypes,
-                             Set<String> required,
-                             boolean readOnly,
-                             boolean destructive,
-                             boolean idempotent) {
-            this.propertyTypes = Map.copyOf(propertyTypes);
-            this.required = Set.copyOf(required);
-            this.readOnly = readOnly;
-            this.destructive = destructive;
-            this.idempotent = idempotent;
-        }
-
-        private Map<String, String> getPropertyTypes() {
-            return propertyTypes;
-        }
-
-        private Set<String> getRequired() {
-            return required;
-        }
-
-        private boolean isReadOnly() {
-            return readOnly;
-        }
-
-        private boolean isDestructive() {
-            return destructive;
-        }
-
-        private boolean isIdempotent() {
-            return idempotent;
-        }
-    }
 }
