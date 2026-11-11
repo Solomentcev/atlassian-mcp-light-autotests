@@ -344,8 +344,8 @@ class McpContractIntegrationTest {
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-028: jira_search, confluence_search и confluence_list_spaces отклоняют limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; принимают limit=" + McpTestData.DEFAULT_LIMIT)
     @Description("Предусловия: MCP-сервер запущен; доступны jira_search(jql), confluence_search(cql) и confluence_list_spaces.\n" +
-            "Шаги: передать limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; затем выполнить вызов с допустимым limit=" + McpTestData.DEFAULT_LIMIT + ".\n" +
-            "Ожидаемый результат: значения за пределами диапазона " + McpTestData.MIN_LIMIT + "–" + McpTestData.MAX_LIMIT + " отклоняются с result.isError=true; допустимое значение обрабатывается штатно.")
+            "Шаги: для каждого инструмента выполнить вызовы с limit=" + McpTestData.INVALID_LIMIT_BELOW_MIN + " и limit=" + McpTestData.INVALID_LIMIT_ABOVE_MAX + "; затем повторить с limit=" + McpTestData.DEFAULT_LIMIT + ".\n" +
+            "Ожидаемый результат: значения limit вне диапазона [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "] возвращают MCP tool error (result.isError=true); допустимое limit=" + McpTestData.DEFAULT_LIMIT + " принимается каждым инструментом (result.isError=false).")
     @Tag("negative")
     @Tag("case-MCP-028")
     @Tag("jira")
