@@ -140,7 +140,7 @@ public final class AllureAssertions {
         }
 
         public AllureAssert<T> containsExactlyInAnyOrderElementsOf(Iterable<?> expectedValues) {
-            step("фактически=" + display(actual) + ", ожидается тот же набор элементов",
+            step("фактически=" + display(actual) + ", ожидается=" + display(expectedValues),
                     () -> Assertions.assertThat((Iterable<Object>) actual)
                             .containsExactlyInAnyOrderElementsOf((Iterable<Object>) expectedValues));
             return this;
@@ -225,13 +225,27 @@ public final class AllureAssertions {
             return safe.length() > 160 ? safe.substring(0, 157) + "..." : safe;
         }
         if (value instanceof Collection<?> collection) {
-            return "элементов=" + collection.size();
+            String values = collection.stream()
+                    .limit(12)
+                    .map(AllureAssertions::display)
+                    .toList()
+                    .toString();
+            return collection.size() > 12
+                    ? values.substring(0, values.length() - 1) + ", ...] (всего " + collection.size() + ")"
+                    : values;
         }
         if (value instanceof Map<?, ?> map) {
             return "записей=" + map.size();
         }
-        if (value instanceof Iterable<?>) {
-            return "коллекция";
+        if (value instanceof Iterable<?> iterable) {
+            java.util.List<String> values = new java.util.ArrayList<>();
+            for (Object item : iterable) {
+                if (values.size() == 12) {
+                    break;
+                }
+                values.add(display(item));
+            }
+            return values.toString();
         }
         return typeOf(value);
     }
