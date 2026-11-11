@@ -124,10 +124,10 @@ class McpClientTest {
         });
         server.setDaemon(true);
         server.start();
-    
+
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             sendNotification(client, McpTestData.getInitializedNotificationMethod(), null);
-    
+
             assertThat(notificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
             assertThat(received.get().path("method").asText())
                     .as("Fake MCP server должен получить notifications/initialized")
@@ -137,8 +137,8 @@ class McpClientTest {
             serverStdin.close();
             serverStdout.close();
         }
-    
-        }
+
+    }
 
     @Test
     @Feature("MCP Client")
@@ -184,7 +184,7 @@ class McpClientTest {
         });
         server.setDaemon(true);
         server.start();
-    
+
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             JsonNode response = initialize(client,
                     McpTestData.getClassicProtocolVersion(),
@@ -192,7 +192,7 @@ class McpClientTest {
                     McpTestData.getClientVersion(),
                     McpTestData.getShortRequestTimeout()
             );
-    
+
             assertThat(response.path("result").path("protocolVersion").asText())
                     .as("Initialize должен согласовать ожидаемую версию MCP-протокола")
                     .isEqualTo(McpTestData.getClassicProtocolVersion());
@@ -206,8 +206,8 @@ class McpClientTest {
             serverStdin.close();
             serverStdout.close();
         }
-    
-        }
+
+    }
 
     @Test
     @Feature("MCP Client")
@@ -251,13 +251,13 @@ class McpClientTest {
         });
         server.setDaemon(true);
         server.start();
-    
+
         var originalParams = OBJECT_MAPPER.createObjectNode().put("filter", "all");
         var capabilities = OBJECT_MAPPER.createObjectNode().put("experimental", true);
         var clientInfo = OBJECT_MAPPER.createObjectNode()
                 .put("name", McpTestData.getMockClientName())
                 .put("version", McpTestData.getMockClientVersion());
-    
+
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             JsonNode response = requestStateless(client,
                     McpTestData.getToolsListMethod(),
@@ -267,7 +267,7 @@ class McpClientTest {
                     clientInfo,
                     McpTestData.getShortRequestTimeout()
             );
-    
+
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless MCP-ответ должен иметь resultType=complete")
                     .isEqualTo(McpTestData.getCompleteResultType());
@@ -306,8 +306,8 @@ class McpClientTest {
             serverStdin.close();
             serverStdout.close();
         }
-    
-        }
+
+    }
 
     @Test
     @Feature("MCP Client")
