@@ -52,7 +52,7 @@ class McpTransportContractIntegrationTest {
         sendRawLine(client, "   ");
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после предыдущего некорректного сообщения должен завершиться без error, фактически: %s", ping.path("error"))
                 .isFalse();
         assertThat(ping.path("result").isObject()).as("Ping должен возвращать объект result").isTrue();
     
@@ -270,16 +270,16 @@ class McpTransportContractIntegrationTest {
     }
 
     private static void sendRawLine(McpClient client, String line) {
-        client.sendRawLine(line);
+        Allure.step("Отправить необработанную STDIO-строку: " + (line.isBlank() ? "пустая/пробельная строка" : line.length() > 80 ? line.substring(0, 80) + "…" : line), () -> client.sendRawLine(line));
     }
 
     private static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
-        return client.awaitRawResponse(timeout);
+        return Allure.step("Дождаться JSON-RPC ответа на некорректную STDIO-строку: timeout=" + timeout.toMillis() + " ms", () -> client.awaitRawResponse(timeout));
     }
 
     private static JsonNode sendRequest(
             McpClient client, String method, ObjectNode params, Duration timeout) {
-        return client.request(method, params, timeout);
+        return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
     }
 
     private static void assertJsonRpcError(com.fasterxml.jackson.databind.JsonNode response,
@@ -291,7 +291,7 @@ class McpTransportContractIntegrationTest {
                 .as("Некорректный JSON-RPC запрос должен вернуть объект error")
                 .isTrue();
         assertThat(response.path("error").path("code").asInt())
-                .as("JSON-RPC ошибка должна иметь код %s", expectedCode)
+                .as("Для некорректного сообщения ожидается JSON-RPC error code=%s, фактически: %s", expectedCode, response.path("error").path("code"))
                 .isEqualTo(expectedCode);
     }
 }
