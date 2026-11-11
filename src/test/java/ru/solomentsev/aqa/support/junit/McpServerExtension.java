@@ -1,5 +1,6 @@
 package ru.solomentsev.aqa.support.junit;
 
+import io.qameta.allure.Allure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -35,7 +36,9 @@ public final class McpServerExtension
     public void beforeAll(ExtensionContext context) throws Exception {
         String testClass = context.getRequiredTestClass().getSimpleName();
         LOG.info("Начало тестового класса: {}", testClass);
-        McpProcessSession session = McpServerConfiguration.fromEnvironment().startSession();
+        McpProcessSession session = Allure.step(
+                "Запустить отдельный MCP-процесс и выполнить readiness handshake",
+                () -> McpServerConfiguration.fromEnvironment().startSession());
         context.getStore(NAMESPACE).put(SESSION_KEY, session);
     }
 
@@ -45,7 +48,7 @@ public final class McpServerExtension
                 .remove(SESSION_KEY, McpProcessSession.class);
         if (session != null) {
             try {
-                session.close();
+                Allure.step("Закрыть MCP-сессию тестового класса", session::close);
                 LOG.info("Завершение тестового класса: {}", context.getRequiredTestClass().getSimpleName());
             } catch (IOException exception) {
                 AllureDiagnostics.attachStderr(session.stderr());
