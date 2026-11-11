@@ -22,7 +22,7 @@ import ru.solomentsev.aqa.testdata.ConfluenceTestData;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
 /**
  * Проверяет отдельные сценарии stateless и classic MCP lifecycle.
