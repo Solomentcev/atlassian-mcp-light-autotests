@@ -26,7 +26,7 @@ public final class FakeStatelessMcpServer {
              BufferedWriter writer = new BufferedWriter(
                      new OutputStreamWriter(System.out, StandardCharsets.UTF_8))) {
             JsonNode discoveryRequest = OBJECT_MAPPER.readTree(reader.readLine());
-            if (!"server/discover".equals(discoveryRequest.path("method").asText())
+            if (!McpTestData.SERVER_DISCOVER_METHOD.equals(discoveryRequest.path("method").asText())
                     || !McpTestData.STATELESS_PROTOCOL_VERSION.equals(discoveryRequest.path("params").path("_meta")
                     .path("io.modelcontextprotocol/protocolVersion").asText())) {
                 System.exit(2);
@@ -34,7 +34,7 @@ public final class FakeStatelessMcpServer {
             writeResponse(writer, discoveryRequest, discoveryResult());
 
             JsonNode toolsRequest = OBJECT_MAPPER.readTree(reader.readLine());
-            if (!"tools/list".equals(toolsRequest.path("method").asText())) {
+            if (!McpTestData.TOOLS_LIST_METHOD.equals(toolsRequest.path("method").asText())) {
                 System.exit(3);
             }
             var toolsResult = OBJECT_MAPPER.createObjectNode();
@@ -54,13 +54,13 @@ public final class FakeStatelessMcpServer {
         result.putArray("supportedVersions")
                 .add(McpTestData.STATELESS_PROTOCOL_VERSION)
                 .add(McpTestData.CLASSIC_PROTOCOL_VERSION)
-                .add("2024-11-05");
+                .add(McpTestData.LEGACY_PROTOCOL_VERSION);
         result.putObject("capabilities").putObject("tools");
         result.putObject("_meta").putObject("io.modelcontextprotocol/serverInfo")
-                .put("name", "fake-stateless-server")
-                .put("version", "1.0");
-        result.put("ttlMs", 300_000);
-        result.put("cacheScope", "public");
+                .put("name", McpTestData.FAKE_STATELESS_SERVER_NAME)
+                .put("version", McpTestData.FAKE_STATELESS_SERVER_VERSION);
+        result.put("ttlMs", McpTestData.DISCOVERY_TTL_MS);
+        result.put("cacheScope", McpTestData.DISCOVERY_CACHE_SCOPE);
         return result;
     }
 
@@ -68,7 +68,7 @@ public final class FakeStatelessMcpServer {
                                       JsonNode request,
                                       JsonNode result) throws Exception {
         var response = OBJECT_MAPPER.createObjectNode();
-        response.put("jsonrpc", "2.0");
+        response.put("jsonrpc", McpTestData.JSON_RPC_VERSION);
         response.set("id", request.get("id"));
         response.set("result", result);
         writer.write(OBJECT_MAPPER.writeValueAsString(response));
