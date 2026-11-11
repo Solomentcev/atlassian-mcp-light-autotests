@@ -118,14 +118,17 @@ class McpClientTest {
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         CountDownLatch notificationReceived = new CountDownLatch(1);
         AtomicReference<JsonNode> received = new AtomicReference<>();
+        AtomicReference<Throwable> serverFailure = new AtomicReference<>();
 
         Thread server = new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(serverStdin, StandardCharsets.UTF_8))) {
                 received.set(OBJECT_MAPPER.readTree(reader.readLine()));
                 notificationReceived.countDown();
-            } catch (Exception ignored) {
-                // The assertion below reports a missing notification.
+            } catch (Exception exception) {
+                serverFailure.set(exception);
+            } finally {
+                notificationReceived.countDown();
             }
         });
         server.setDaemon(true);
@@ -134,7 +137,15 @@ class McpClientTest {
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             sendNotification(client, McpTestData.getInitializedNotificationMethod(), null);
 
-            assertThat(notificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
+            assertThat(notificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS))
+                    .as("Fake MCP server должен получить notification в пределах timeout")
+                    .isTrue();
+            assertThat(serverFailure.get())
+                    .as("Fake MCP endpoint не должен завершаться с ошибкой при чтении notification")
+                    .isNull();
+            assertThat(received.get())
+                    .as("Fake MCP endpoint должен сохранить полученный notification")
+                    .isNotNull();
             assertThat(received.get().path("method").asText())
                     .as("Fake MCP server должен получить notifications/initialized")
                     .isEqualTo(McpTestData.getInitializedNotificationMethod());
@@ -164,6 +175,7 @@ class McpClientTest {
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         CountDownLatch initializedNotificationReceived = new CountDownLatch(1);
         AtomicReference<JsonNode> initializedNotification = new AtomicReference<>();
+        AtomicReference<Throwable> serverFailure = new AtomicReference<>();
 
         Thread server = new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(
@@ -184,8 +196,10 @@ class McpClientTest {
 
                 initializedNotification.set(OBJECT_MAPPER.readTree(reader.readLine()));
                 initializedNotificationReceived.countDown();
-            } catch (Exception ignored) {
-                // The assertions below report a failed handshake.
+            } catch (Exception exception) {
+                serverFailure.set(exception);
+            } finally {
+                initializedNotificationReceived.countDown();
             }
         });
         server.setDaemon(true);
@@ -202,7 +216,15 @@ class McpClientTest {
             assertThat(response.path("result").path("protocolVersion").asText())
                     .as("Initialize должен согласовать ожидаемую версию MCP-протокола")
                     .isEqualTo(McpTestData.getClassicProtocolVersion());
-            assertThat(initializedNotificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("После initialize клиент должен отправить notifications/initialized").isTrue();
+            assertThat(initializedNotificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS))
+                    .as("После initialize клиент должен отправить notifications/initialized")
+                    .isTrue();
+            assertThat(serverFailure.get())
+                    .as("Fake MCP endpoint не должен завершаться с ошибкой при classic initialize")
+                    .isNull();
+            assertThat(initializedNotification.get())
+                    .as("Fake MCP endpoint должен получить initialized notification")
+                    .isNotNull();
             assertThat(initializedNotification.get().path("method").asText())
                     .as("После initialize клиент должен отправить notifications/initialized")
                     .isEqualTo(McpTestData.getInitializedNotificationMethod());
@@ -235,6 +257,7 @@ class McpClientTest {
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         AtomicReference<JsonNode> received = new AtomicReference<>();
         CountDownLatch requestReceived = new CountDownLatch(1);
+        AtomicReference<Throwable> serverFailure = new AtomicReference<>();
 
         Thread server = new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(
@@ -251,8 +274,10 @@ class McpClientTest {
                 writer.write(OBJECT_MAPPER.writeValueAsString(response));
                 writer.newLine();
                 writer.flush();
-            } catch (Exception ignored) {
-                // The assertions below report a failed exchange.
+            } catch (Exception exception) {
+                serverFailure.set(exception);
+            } finally {
+                requestReceived.countDown();
             }
         });
         server.setDaemon(true);
@@ -277,7 +302,15 @@ class McpClientTest {
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless MCP-ответ должен иметь resultType=complete")
                     .isEqualTo(McpTestData.getCompleteResultType());
-            assertThat(requestReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
+            assertThat(requestReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS))
+                    .as("Fake MCP server должен получить stateless-запрос в пределах timeout")
+                    .isTrue();
+            assertThat(serverFailure.get())
+                    .as("Fake MCP endpoint не должен завершаться с ошибкой при stateless-запросе")
+                    .isNull();
+            assertThat(received.get())
+                    .as("Fake MCP endpoint должен сохранить полученный stateless-запрос")
+                    .isNotNull();
             assertThat(received.get().path("params").path("filter").asText())
                     .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo(McpClientTestData.getFilterValue());
             assertThat(received.get().path("params").path("_meta")
