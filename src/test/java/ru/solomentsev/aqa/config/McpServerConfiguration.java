@@ -23,7 +23,7 @@ public final class McpServerConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpServerConfiguration.class);
 
-    public static final Duration DEFAULT_STARTUP_TIMEOUT = McpTestData.DEFAULT_STARTUP_TIMEOUT;
+    public static final Duration DEFAULT_STARTUP_TIMEOUT = McpTestData.getDefaultStartupTimeout();
     private static final int DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS = 10;
 
     private final String mode;
@@ -64,7 +64,7 @@ public final class McpServerConfiguration {
         runId = createRunId(value(environment, properties,
                 "aqa.run.id", "AQA_RUN_ID", "local"));
         protocolVersion = value(environment, properties,
-                "aqa.mcp.protocolVersion", "AQA_MCP_PROTOCOL_VERSION", McpTestData.CLASSIC_PROTOCOL_VERSION);
+                "aqa.mcp.protocolVersion", "AQA_MCP_PROTOCOL_VERSION", McpTestData.getClassicProtocolVersion());
         startupTimeout = Duration.ofSeconds(parsePositiveLong(value(environment, properties,
                 "aqa.server.startupTimeoutSeconds", "AQA_SERVER_STARTUP_TIMEOUT_SECONDS",
                 Long.toString(DEFAULT_STARTUP_TIMEOUT.toSeconds())),
@@ -157,8 +157,8 @@ public final class McpServerConfiguration {
                 processEnvironment,
                 workingDirectory,
                 protocolVersion,
-                McpTestData.CLIENT_NAME,
-                McpTestData.CLIENT_VERSION,
+                McpTestData.getClientName(),
+                McpTestData.getClientVersion(),
                 startupTimeout
         );
     }
