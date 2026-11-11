@@ -86,7 +86,7 @@ class McpContractIntegrationTest {
     @Story("MCP-006 — Проверка состава инструментов")
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-006: Состав tools/list совпадает с контрактом")
-    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: количество и набор уникальных имён полностью совпадают с публичным контрактом.")    @Tag("case-MCP-006")
+    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с эталонным публичным контрактом.\nОжидаемый результат: количество и набор уникальных имён полностью совпадают с публичным контрактом.")    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
         Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
@@ -109,6 +109,15 @@ class McpContractIntegrationTest {
                 .isTrue();
         Set<String> actualNames = new HashSet<>();
         for (JsonNode tool : tools) {
+            assertThat(tool.has("name"))
+                    .as("Каждый инструмент должен содержать поле name")
+                    .isTrue();
+            assertThat(tool.path("name").isTextual())
+                    .as("Имя каждого инструмента должно быть строкой")
+                    .isTrue();
+            assertThat(tool.path("name").asText())
+                    .as("Имя инструмента не должно быть пустым")
+                    .isNotBlank();
             actualNames.add(tool.path("name").asText());
         }
         assertThat(tools.size()).as("Ожидалось %d инструментов по контракту, фактически получено %d", EXPECTED_TOOLS.size(), tools.size()).isEqualTo(EXPECTED_TOOLS.size());
@@ -142,8 +151,15 @@ class McpContractIntegrationTest {
                 .as("tools/list должен вернуть массив tools")
                 .isTrue();
         for (JsonNode tool : tools) {
+            String name = tool.path("name").asText();
+            assertThat(tool.has("description"))
+                    .as("Инструмент %s должен содержать description", name)
+                    .isTrue();
+            assertThat(tool.path("description").isTextual())
+                    .as("Описание инструмента %s должно быть строкой", name)
+                    .isTrue();
             assertThat(tool.path("description").asText())
-                    .as("Инструмент %s должен содержать непустое описание", tool.path("name").asText())
+                    .as("Инструмент %s должен содержать непустое описание", name)
                     .isNotBlank();
         }
     
@@ -177,7 +193,16 @@ class McpContractIntegrationTest {
                 .as("tools/list должен вернуть массив tools")
                 .isTrue();
         for (JsonNode tool : tools) {
+            assertThat(tool.has("name"))
+                    .as("Каждый инструмент должен содержать поле name")
+                    .isTrue();
+            assertThat(tool.path("name").isTextual())
+                    .as("Имя каждого инструмента должно быть строкой")
+                    .isTrue();
             String name = tool.path("name").asText();
+            assertThat(name)
+                    .as("Имя инструмента не должно быть пустым")
+                    .isNotBlank();
             McpContractTestData.ToolContract expected = EXPECTED_TOOLS.get(name);
             assertThat(expected).as("Инструмент %s должен быть объявлен в ожидаемом контракте", name).isNotNull();
 
