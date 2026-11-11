@@ -38,7 +38,7 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск готовой MCP-сессии и завершение процесса при закрытии")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Classic session [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + ", startupTimeout=15000 ms]: handshake готов, close завершает процесс")
+    @DisplayName("Classic session [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + ", startupTimeout=15000 ms, shutdownTimeout=3000 ms]: handshake готов, close завершает процесс")
     @Description("Предусловия: доступен FakeMcpServer, который отвечает на initialize и notifications/initialized.\nШаги: запустить classic McpProcessSession с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + " и startup timeout=15000 ms; убедиться, что процесс активен и MCP Client создан; закрыть сессию.\nОжидаемый результат: start() возвращает только после успешного readiness handshake; после close() процесс завершается в пределах 3000 ms с exit code=0.")
     @Tag("process")
     void shouldStartReadySessionAndStopProcessOnClose() throws Exception {
@@ -78,7 +78,7 @@ class McpProcessSessionTest {
     @Feature("Process Session Lifecycle")
     @Story("Запуск stateless-сессии без classic initialize")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Stateless session [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", без initialize]: discover и tools/list успешны, close завершает процесс")
+    @DisplayName("Stateless session [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", без initialize, shutdownTimeout=3000 ms]: discover и tools/list успешны, close завершает процесс")
     @Description("Предусловия: доступен FakeStatelessMcpServer, поддерживающий server/discover и tools/list.\nШаги: запустить McpProcessSession без classic handshake; выполнить server/discover и tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; закрыть сессию.\nОжидаемый результат: оба stateless-запроса обрабатываются без initialize; serverInfo.name=fake-stateless-server; tools/list возвращает массив; после close() процесс завершается в пределах 3000 ms с exit code=0.")
     @Tag("process")
     void shouldStartStatelessSessionWithoutClassicInitialize() throws Exception {
