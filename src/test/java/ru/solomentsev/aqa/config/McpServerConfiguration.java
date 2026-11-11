@@ -224,6 +224,6 @@ public final class McpServerConfiguration {
         if (safeBase.length() > 42) {
             safeBase = safeBase.substring(0, 42);
         }
-        return safeBase + "-" + UUID.randomUUID().toString().substring(0, 8);
+        return safeBase + "-" + UUID.randomUUID().toString().substring(0, 16);
     }
 }
