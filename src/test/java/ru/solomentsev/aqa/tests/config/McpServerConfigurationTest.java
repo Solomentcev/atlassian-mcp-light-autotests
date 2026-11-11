@@ -1,7 +1,5 @@
 package ru.solomentsev.aqa.tests.config;
 
-import ru.solomentsev.aqa.config.McpServerConfiguration;
-import ru.solomentsev.aqa.testdata.McpConfigurationTestData;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -9,16 +7,20 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import ru.solomentsev.aqa.config.McpServerConfiguration;
+import ru.solomentsev.aqa.testdata.McpConfigurationTestData;
 
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy;
