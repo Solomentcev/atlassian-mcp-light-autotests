@@ -15,8 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
+import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy;
 
 @Epic("AQA Test Infrastructure")
     @Tag("unit")
