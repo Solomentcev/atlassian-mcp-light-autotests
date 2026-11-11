@@ -44,8 +44,8 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Отправка запроса и сопоставление ответа по request id")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отправка ping и сопоставление ответа по request id [method=ping, timeout=3000 ms]")
-    @Description("Предусловия: MCP Client подключён к имитации сервера через отдельные STDIN/STDOUT-потоки.\nШаги: отправить JSON-RPC request с method=ping; дождаться ответа в пределах 3000 ms.\nОжидаемый результат: ответ имеет jsonrpc=2.0, request id совпадает с отправленным, result является объектом и содержит alive=true.")
+    @DisplayName("Отправка ping и сопоставление ответа по request id [method=ping, timeout=" + McpTestData.SHORT_REQUEST_TIMEOUT_MS + " ms]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через отдельные STDIN/STDOUT-потоки.\nШаги: отправить JSON-RPC request с method=ping; дождаться ответа в пределах " + McpTestData.SHORT_REQUEST_TIMEOUT_MS + " ms.\nОжидаемый результат: ответ имеет jsonrpc=2.0, request id совпадает с отправленным, result является объектом и содержит alive=true.")
     @Tag("protocol")
     void shouldSendRequestAndMatchResponseById() throws Exception {
         Allure.parameter("JSON-RPC method", McpTestData.PING_METHOD);
@@ -78,7 +78,7 @@ class McpClientTest {
     @Story("Отправка notification без request id")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Передача notification notifications/initialized без request id")
-    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более 3000 ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более " + McpTestData.ASYNC_EVENT_TIMEOUT_MS + " ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
     @Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
         Allure.parameter("Notification method", McpTestData.INITIALIZED_NOTIFICATION_METHOD);
