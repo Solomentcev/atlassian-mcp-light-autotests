@@ -46,8 +46,13 @@ class DockerMcpServerLauncherTest {
                 "docker", "run", "--rm", "--name", "aml-build_123",
                 "--label", "aqa.run-id=build_123", "-i", "--env-file"
         );
-        assertThat(command).as("Docker run должен передавать именно файл .runtime.env после --env-file")
-                .containsSubsequence("--env-file", ".runtime.env");
+        int envFileOptionIndex = command.indexOf("--env-file");
+        assertThat(envFileOptionIndex)
+                .as("Docker run должен содержать опцию --env-file")
+                .isGreaterThanOrEqualTo(0);
+        assertThat(Path.of(command.get(envFileOptionIndex + 1)).toAbsolutePath().normalize())
+                .as("Docker run должен передавать абсолютный путь к заданному файлу .runtime.env")
+                .isEqualTo(Path.of(".runtime.env").toAbsolutePath().normalize());
         assertThat(command).as("Docker run должен использовать заданный image=atlassian-mcp-light:latest")
                 .contains("atlassian-mcp-light:latest");
         assertThat(command).as("STDIO-контейнер нельзя запускать с TTY или опубликованными портами").doesNotContain("-t", "-p", "--publish");
