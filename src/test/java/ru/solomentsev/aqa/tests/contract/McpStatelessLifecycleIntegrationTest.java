@@ -283,15 +283,15 @@ class McpStatelessLifecycleIntegrationTest {
                 .isFalse();
     }
 
-    @Step("Выполнить действие или проверку: sendRequest")
+    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
     private static JsonNode sendRequest(ru.solomentsev.aqa.mcp.McpClient client,
                                         String method,
                                         ObjectNode params,
                                         Duration timeout) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
-    @Step("Выполнить действие или проверку: assertEmptyPingResult")
+    @Step("Проверить, что ping возвращает пустой объект result")
     private static void assertEmptyPingResult(JsonNode response) {
         assertThat(response.has("error"))
                         .as("Ping должен завершаться без JSON-RPC error")
