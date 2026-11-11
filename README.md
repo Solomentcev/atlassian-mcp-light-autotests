@@ -107,7 +107,7 @@ AQA_RUN_ID=${BUILD_TAG:-local} \
 mvn test
 ```
 
-В локальном режиме процесс наследует environment Jenkins agent. В Docker-режиме переменные тестируемого приложения передаются через указанный env-файл. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
+В локальном режиме дочерний процесс сервера наследует environment Jenkins agent и дополнительно получает значения из `.env`. В Docker-режиме переменные тестируемого приложения передаются внутрь контейнера через `AQA_DOCKER_ENV_FILE`; значения из `.env` конфигурируют сам запуск AQA и Docker CLI, но не заменяют env-файл контейнера. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
 
 Вся AQA-инфраструктура размещена в `src/test/java`; Jackson также подключён с `test` scope, production-код и отдельный runtime JAR не создаются. Проверяется в том числе ошибка cleanup, если процесс остаётся жив после `destroyForcibly()`. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
 
