@@ -61,7 +61,7 @@ class McpTransportContractIntegrationTest {
                 .as("Контрольный ping после предыдущего некорректного сообщения должен завершиться без error, фактически: %s", ping.path("error"))
                 .isFalse();
         assertThat(ping.path("result").isObject()).as("Ping должен возвращать объект result").isTrue();
-    
+
     }
 
     @Test
@@ -105,7 +105,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после предыдущего запроса должен вернуть объект result")
                 .isTrue();
-    
+
     }
 
     @Test
@@ -149,7 +149,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-    
+
     }
 
     @Test
@@ -193,7 +193,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-    
+
     }
 
     @Test
@@ -241,7 +241,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-    
+
     }
 
     @Test
@@ -284,7 +284,7 @@ class McpTransportContractIntegrationTest {
         var tools = sendRequest(client, McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
         assertThat(tools.has("error")).as("После некорректной строки tools/list должен завершиться успешно").isFalse();
         assertThat(tools.path("result").path("tools").isArray()).as("tools/list должен вернуть массив инструментов").isTrue();
-    
+
     }
 
     @Test
@@ -326,8 +326,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-    
-    
+
     }
 
     @Test
@@ -368,8 +367,7 @@ class McpTransportContractIntegrationTest {
         assertThat(response.path("error").path("message").asText())
                 .as("Сообщение ошибки должно содержать имя неизвестного метода")
                 .contains("неизвестный-метод");
-    
-    
+
     }
 
     @Test
@@ -395,8 +393,7 @@ class McpTransportContractIntegrationTest {
         assertThat(ping.path("result").isObject())
                 .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
                 .isTrue();
-    
-    
+
     }
 
     @Test
@@ -445,8 +442,7 @@ class McpTransportContractIntegrationTest {
         var tools = sendRequest(client, McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
         assertThat(tools.has("error")).as("После некорректного запроса tools/list должен завершиться без JSON-RPC error").isFalse();
         assertThat(tools.path("result").path("tools").isArray()).as("Успешный tools/list должен вернуть массив инструментов").isTrue();
-    
-    
+
     }
 
 }
