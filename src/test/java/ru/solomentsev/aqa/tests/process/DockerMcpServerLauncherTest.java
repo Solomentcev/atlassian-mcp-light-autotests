@@ -22,7 +22,7 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatT
 
 @Epic("AQA Test Infrastructure")
     @Tag("unit")
-    @Tag("docker" )
+    @Tag("docker")
 @Tag("regression")
 class DockerMcpServerLauncherTest {
 
@@ -100,8 +100,8 @@ class DockerMcpServerLauncherTest {
                 DockerTestData.EXECUTABLE,
                 DockerTestData.IMAGE,
                 DockerTestData.ENV_FILE,
-                "run-123",
-                0
+                DockerTestData.SAFE_RUN_ID,
+                DockerTestData.INVALID_STOP_TIMEOUT_SECONDS
         ))).as("При stopTimeoutSeconds=0 ожидается IllegalArgumentException с указанием stopTimeoutSeconds")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("stopTimeoutSeconds");
