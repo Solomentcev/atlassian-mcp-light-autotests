@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Epic("AQA Test Infrastructure")
     @Tag("unit")
     @Tag("docker")
+@Tag("regression")
 class DockerMcpServerLauncherTest {
 
     @Test
