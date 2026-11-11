@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import ru.solomentsev.aqa.support.diagnostics.AllureDiagnostics;
+import ru.solomentsev.aqa.testdata.AllureDiagnosticsTestData;
 
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 
@@ -30,16 +31,16 @@ class AllureDiagnosticsTest {
     @Description("Проверяет, что диагностические вложения не раскрывают Basic и Bearer credentials.")
     void shouldMaskAuthorizationHeaders() {
         Allure.parameter("Проверяемые заголовки", "Authorization: Basic; Authorization: Bearer");
-        Allure.parameter("Ожидаемый маркер маскирования", "[REDACTED]");
-        String source = "Authorization: Basic dXNlcjp0b2tlbg\nAuthorization: Bearer secret-value";
+        Allure.parameter("Ожидаемый маркер маскирования", AllureDiagnosticsTestData.getRedactedMarker());
+        String source = AllureDiagnosticsTestData.getAuthorizationHeaders();
 
         String masked = Allure.step("Замаскировать Basic и Bearer credentials", () -> AllureDiagnostics.maskSecrets(source));
 
         assertThat(masked)
                 .as("Authorization Basic и Bearer должны быть замаскированы в диагностике")
-                .contains("Authorization: Basic [REDACTED]")
-                .contains("Authorization: Bearer [REDACTED]")
-                .doesNotContain("dXNlcjp0b2tlbg", "secret-value");
+                .contains(AllureDiagnosticsTestData.getMaskedBasicHeader())
+                .contains(AllureDiagnosticsTestData.getMaskedBearerHeader())
+                .doesNotContain(AllureDiagnosticsTestData.getBasicCredential(), AllureDiagnosticsTestData.getBearerCredential());
 
     }
 
@@ -51,17 +52,18 @@ class AllureDiagnosticsTest {
     void shouldMaskSensitiveEnvironmentValues() {
         Allure.parameter("Проверяемые секретные поля", "TOKEN; PASSWORD; SECRET; access_token");
         Allure.parameter("Ожидаемый маркер маскирования", "[REDACTED]");
-        String source = "JIRA_TOKEN=token-value\nAQA_PASSWORD=pass-value\nsecret: another-value\n{\"access_token\":\"json-secret\"}";
+        String source = AllureDiagnosticsTestData.getSensitiveEnvironmentValues();
 
         String masked = Allure.step("Замаскировать значения секретных переменных и JSON-полей", () -> AllureDiagnostics.maskSecrets(source));
 
         assertThat(masked)
                 .as("Значения секретных переменных окружения и JSON-полей должны быть замаскированы")
-                .contains("JIRA_TOKEN=[REDACTED]")
-                .contains("AQA_PASSWORD=[REDACTED]")
-                .contains("secret: [REDACTED]")
-                .contains("\"access_token\":\"[REDACTED]\"")
-                .doesNotContain("token-value", "pass-value", "another-value", "json-secret");
+                .contains(AllureDiagnosticsTestData.getMaskedToken())
+                .contains(AllureDiagnosticsTestData.getMaskedPassword())
+                .contains(AllureDiagnosticsTestData.getMaskedSecret())
+                .contains(AllureDiagnosticsTestData.getMaskedJsonSecret())
+                .doesNotContain(AllureDiagnosticsTestData.getTokenValue(), AllureDiagnosticsTestData.getPasswordValue(),
+                        AllureDiagnosticsTestData.getSecretValue(), AllureDiagnosticsTestData.getJsonSecretValue());
 
     }
 
@@ -72,7 +74,7 @@ class AllureDiagnosticsTest {
     @Description("Проверяет, что маскирование не изменяет обычные сообщения STDERR.")
     void shouldPreserveNonSensitiveDiagnostics() {
         Allure.parameter("Тип диагностики", "обычное несекретное сообщение STDERR");
-        String source = "MCP server started; request handled successfully";
+        String source = AllureDiagnosticsTestData.getNonSensitiveDiagnostic();
 
         String masked = Allure.step("Проверить обработку обычной диагностики", () -> AllureDiagnostics.maskSecrets(source));
         assertThat(masked)
