@@ -248,7 +248,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
                     .isEqualTo(-32001);
 
-            session.client().notification("notifications/initialized", null);
+            Allure.step("Отправить notifications/initialized для перехода lifecycle в READY", () -> session.client().notification("notifications/initialized", null));
 
             JsonNode pingAfterReady =
                     sendRequest(session.client(), "ping", null, REQUEST_TIMEOUT);
