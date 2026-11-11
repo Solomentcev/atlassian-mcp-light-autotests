@@ -65,7 +65,7 @@ public final class AllureAssertions {
 
         public AllureAssert<T> isZero() {
             step("фактически=" + display(actual) + ", ожидается=0",
-                    () -> Assertions.assertThat((Number) actual).isZero());
+                    () -> Assertions.assertThat((Integer) actual).isZero());
             return this;
         }
 
