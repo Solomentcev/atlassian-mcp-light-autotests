@@ -62,7 +62,9 @@ class McpClientTest {
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
 
         AtomicReference<JsonNode> requestReceived = new AtomicReference<>();
-        Thread server = new Thread(() -> respondToSingleRequest(serverStdin, serverStdout, requestReceived));
+        AtomicReference<Throwable> serverFailure = new AtomicReference<>();
+        Thread server = new Thread(() -> respondToSingleRequest(
+                serverStdin, serverStdout, requestReceived, serverFailure));
         server.setDaemon(true);
         server.start();
 
@@ -87,8 +89,11 @@ class McpClientTest {
                     .as("Поле result.alive должно иметь boolean type")
                     .isTrue();
             assertThat(response.path("result").path("alive").asBoolean())
-                    .as("Ответ на ping должен содержать result.alive=true")
-                    .isTrue();
+                    .as("Ответ на ping должен содержать ожидаемое значение result.alive")
+                    .isEqualTo(McpClientTestData.isAliveValue());
+            assertThat(serverFailure.get())
+                    .as("Fake MCP endpoint не должен завершаться с ошибкой")
+                    .isNull();
         } finally {
             serverStdin.close();
             serverStdout.close();
