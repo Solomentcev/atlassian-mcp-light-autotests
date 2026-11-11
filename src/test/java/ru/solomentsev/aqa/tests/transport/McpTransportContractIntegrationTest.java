@@ -2,9 +2,11 @@ package ru.solomentsev.aqa.mcp;
 
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.awaitRawResponse;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRawLine;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -443,22 +445,6 @@ class McpTransportContractIntegrationTest {
         assertThat(tools.path("result").path("tools").isArray()).as("Успешный tools/list должен вернуть массив инструментов").isTrue();
     
     
-    }
-
-    @Step("Отправить необработанную STDIO-строку")
-    private static void sendRawLine(McpClient client, String line) {
-        client.sendRawLine(line);
-    }
-
-    @Step("Дождаться JSON-RPC response после отправки необработанной STDIO-строки")
-    private static JsonNode awaitRawResponse(McpClient client, Duration timeout) {
-        return client.awaitRawResponse(timeout);
-    }
-
-    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
-    private static JsonNode sendRequest(
-            McpClient client, String method, ObjectNode params, Duration timeout) {
-        return client.request(method, params, timeout);
     }
 
 }
