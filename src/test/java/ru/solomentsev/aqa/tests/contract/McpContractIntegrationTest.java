@@ -88,7 +88,7 @@ class McpContractIntegrationTest {
         JsonNode tools = getStatelessTools(client);
         for (JsonNode tool : tools) {
             assertThat(tool.path("description").asText())
-                    .as("description of %s", tool.path("name").asText())
+                    .as("Инструмент %s должен содержать непустое описание", tool.path("name").asText())
                     .isNotBlank();
         }
     
@@ -107,7 +107,7 @@ class McpContractIntegrationTest {
         for (JsonNode tool : tools) {
             String name = tool.path("name").asText();
             ToolContract expected = EXPECTED_TOOLS.get(name);
-            assertThat(expected).as("Unexpected tool: %s", name).isNotNull();
+            assertThat(expected).as("Инструмент %s должен быть объявлен в ожидаемом контракте", name).isNotNull();
 
             JsonNode schema = tool.path("inputSchema");
             assertThat(schema.path("type").asText()).as("%s: корень inputSchema должен иметь type=object", name).isEqualTo("object");
@@ -154,7 +154,7 @@ class McpContractIntegrationTest {
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-023: Stateless-запросы без _meta, clientCapabilities или protocolVersion отклоняются с error=-32602")
-    @Description("Предусловия: MCP STDIO-процесс запущен; classic initialize для stateless-проверок не требуется.\nШаги: вызвать server/discover без params._meta; вызвать tools/list с protocolVersion, но без clientCapabilities; вызвать tools/list с clientCapabilities, но без protocolVersion; затем выполнить корректный tools/list.\nОжидаемый результат: каждый из трёх некорректных запросов возвращает JSON-RPC error code=-32602; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
+    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize; проверяются обязательные metadata отдельных stateless-запросов.\nШаги: вызвать server/discover без params._meta; вызвать tools/list с protocolVersion, но без clientCapabilities; вызвать tools/list с clientCapabilities, но без protocolVersion; затем выполнить корректный tools/list.\nОжидаемый результат: каждый из трёх некорректных запросов возвращает JSON-RPC error code=-32602; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
@@ -192,7 +192,7 @@ class McpContractIntegrationTest {
     @Story("MCP-022 — Отклонение неподдерживаемой stateless protocolVersion")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-022: server/discover отклоняет protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION + " [error=-32022]")
-    @Description("Предусловия: STDIO-процесс запущен\nШаги: 1. Отправить stateless-запрос с неподдерживаемой версией `" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION + "`.\nОжидаемый результат: Получен JSON-RPC error `-32022 Unsupported protocol version`; в `error.data.supportedVersions` присутствует `" + McpTestData.STATELESS_PROTOCOL_VERSION + "`.")
+    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSON-RPC запросы.\nШаги: вызвать server/discover с protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION + " и непустым clientCapabilities.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32022; error.data.supportedVersions содержит поддерживаемую версию " + McpTestData.STATELESS_PROTOCOL_VERSION + ".")
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
@@ -203,10 +203,8 @@ class McpContractIntegrationTest {
         metadata.put("io.modelcontextprotocol/protocolVersion", McpTestData.UNSUPPORTED_PROTOCOL_VERSION);
         metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
-        JsonNode response = sendRequest(client, 
-                "server/discover",
-                params
-        );
+        JsonNode response = Allure.step("Вызвать server/discover с protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION,
+                () -> sendRequest(client, "server/discover", params));
 
         assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.UNSUPPORTED_PROTOCOL_VERSION).isEqualTo(-32022);
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
