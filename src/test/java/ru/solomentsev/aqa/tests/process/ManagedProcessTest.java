@@ -48,8 +48,7 @@ class ManagedProcessTest {
         process.setAlive(false);
         Allure.step("Повторно закрыть ManagedProcess после фактического завершения дочернего процесса", managedProcess::close);
         assertThat(managedProcess.isAlive()).as("После завершения процесса ManagedProcess должен сообщать isAlive=false").isFalse();
-    
-    
+
     }
 
 }
