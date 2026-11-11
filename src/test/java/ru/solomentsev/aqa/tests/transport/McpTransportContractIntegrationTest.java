@@ -52,14 +52,6 @@ class McpTransportContractIntegrationTest {
         Allure.parameter("Контрольный запрос", McpTestData.getPingMethod());
         sendRawLine(client, "");
         sendRawLine(client, "   ");
-        assertThat(error.path("id").asInt())
-                .as("Некорректный запрос с id=1 должен вернуть исходный request id")
-                .isEqualTo(1);
-
-        assertThat(response.has("id"))
-                .as("Ответ на неизвестный метод должен содержать исходный request id")
-                .isTrue();
-
         var ping = sendRequest(client, McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
                 .as("Контрольный ping после предыдущего некорректного сообщения должен завершиться без error, фактически: %s", ping.path("error"))
@@ -233,6 +225,10 @@ class McpTransportContractIntegrationTest {
         assertThat(jsonRpcError.path("code").asInt())
                 .as("JSON-RPC error.code должен соответствовать ожидаемому значению")
                 .isEqualTo(McpTestData.getJsonRpcInvalidRequest());
+
+        assertThat(error.path("id").asInt())
+                .as("Некорректный запрос с id=1 должен вернуть исходный request id")
+                .isEqualTo(1);
 
         var ping = sendRequest(client, McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
