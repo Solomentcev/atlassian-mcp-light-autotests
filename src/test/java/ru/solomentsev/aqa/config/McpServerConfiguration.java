@@ -23,7 +23,7 @@ public final class McpServerConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpServerConfiguration.class);
 
-    public static final Duration DEFAULT_STARTUP_TIMEOUT = Duration.ofSeconds(15);
+    public static final Duration DEFAULT_STARTUP_TIMEOUT = McpTestData.DEFAULT_STARTUP_TIMEOUT;
     private static final int DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS = 10;
 
     private final String mode;
