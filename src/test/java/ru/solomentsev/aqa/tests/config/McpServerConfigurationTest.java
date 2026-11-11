@@ -58,9 +58,7 @@ class McpServerConfigurationTest {
     @Story("Генерация уникального run id для изоляции параллельных сессий")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("Каждая конфигурация получает уникальный run id")
-    @Description("Предусловия: Создаются две независимые конфигурации запуска MCP-сервера.
-Шаги: получить run id каждой конфигурации.
-Ожидаемый результат: идентификаторы различаются, поэтому параллельные Docker-сессии не используют одно имя контейнера.")
+    @Description("Предусловия: Создаются две независимые конфигурации запуска MCP-сервера.\nШаги: получить run id каждой конфигурации.\nОжидаемый результат: идентификаторы различаются, поэтому параллельные Docker-сессии не используют одно имя контейнера.")
     void shouldGenerateUniqueRunIdForEachConfiguration() {
         Map<String, String> environment = Map.of(
                 McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode(),
