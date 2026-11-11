@@ -1,6 +1,5 @@
-package ru.solomentsev.aqa.tests.transport;
+package ru.solomentsev.aqa.mcp;
 
-import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
