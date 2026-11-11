@@ -29,14 +29,15 @@ AQA не импортирует внутренние классы сервера
                   |
             McpProcessSession
              /          \
-    McpClient          McpServerLauncher
-        |                    |
-    STDIN/STDOUT       Local Java process
-        |               or Docker CLI
-        |                    |
-        +---------- Atlassian MCP Light
-                             |
-                       Jira / Confluence API
+        McpClient    McpServerLauncher
+            |              |
+            |        ManagedProcess
+            |              |
+            +-- STDIN/STDOUT --+
+                    |
+            Atlassian MCP Light
+                    |
+              Jira / Confluence API
 ```
 
 - `McpClient` выполняет JSON-RPC обмен по STDIN/STDOUT, сопоставляет request ID и поддерживает classic и stateless запросы.
