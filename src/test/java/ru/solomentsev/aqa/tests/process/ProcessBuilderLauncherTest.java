@@ -35,7 +35,8 @@ class ProcessBuilderLauncherTest {
     @Story("Запуск процесса и отдельный сбор STDERR")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("ProcessBuilder запускает java -version; STDERR собирается отдельно")
-    @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения в пределах настроенного timeout; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
+    @Description("Предусловия: доступен исполняемый файл java из текущего java.home.\nШаги: запустить команду java -version через ProcessBuilderLauncher; ожидать завершения в пределах настроенного timeout; дождаться чтения STDERR.\nОжидаемый результат: процесс завершается в заданный timeout с exit code=0; STDERR collector завершается и содержит строку версии Java; поток ошибок читается отдельно от STDOUT.")
+    void shouldLaunchProcessAndCaptureStderrSeparately() throws Exception {
         Allure.parameter("Команда", "java -version");
         Allure.parameter("Process timeout", McpTestData.getJavaVersionProcessTimeout().toMillis() + " ms");
         Allure.parameter("STDERR collection timeout", McpTestData.getStderrCollectionTimeout().toMillis() + " ms");
@@ -65,8 +66,7 @@ class ProcessBuilderLauncherTest {
             Allure.step("Закрыть запущенный процесс", process::close);
             Allure.step("Закрыть STDERR collector", stderrCollector::close);
         }
-    
-    
+
     }
 
 }
