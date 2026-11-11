@@ -1,8 +1,10 @@
 # Техническая спецификация AQA-фреймворка
 
+Документ описывает фактическую архитектуру AQA и целевые компоненты, которые ещё предстоит реализовать. Статус каждой меры приведён отдельно; наличие требования в этой спецификации не является доказательством его реализации.
+
 ## 1. Назначение
 
-Документ определяет целевую архитектуру внешнего AQA-проекта для Atlassian MCP Light.
+AQA — внешний black-box проект для проверки Atlassian MCP Light.
 
 AQA проверяет собранное приложение через публичный MCP/JSON-RPC интерфейс и штатный STDIO транспорт. Тесты не импортируют внутренние классы основного проекта, не используют его как Maven dependency и не обращаются напрямую к Jira/Confluence REST API для проверки функциональности MCP-инструментов.
 
@@ -17,6 +19,25 @@ AQA проверяет собранное приложение через пуб
 - отсутствие промежуточного сетевого сервиса между AQA и STDIO.
 
 Описанное целевое поведение не считается реализованным до появления кода и подтверждающих тестов.
+
+### 1.1. Статус реализации на 11.11.2026
+
+| Область | Состояние | Подтверждение / ограничение |
+|---|---|---|
+| Java/Maven/JUnit/AssertJ/Jackson | Реализовано | Maven компилирует test sources с `--release 17` |
+| MCP Client и STDIO | Реализовано | Unit- и integration-тесты request/response, notifications, JSON-RPC и framing |
+| Classic и stateless session | Реализовано | `McpProcessSession`, JUnit extension и отдельные stateless lifecycle tests |
+| Local JAR launcher | Реализовано | Launcher и управление процессом входят в unit/integration инфраструктуру |
+| Docker launcher | Частично | Проверяется построение безопасной `docker run -i --rm` команды; запуск реального контейнера и его cleanup не подтверждены |
+| Конфигурация AQA | Реализовано | Environment, system properties, `.env`, режимы local/docker, таймауты и уникальный run ID |
+| Allure diagnostics | Частично | Есть маскирование и unit-тесты; end-to-end проверка canary-секретов во всех CI-артефактах не выполнена |
+| MCP tools contract | Реализовано | Сравнение состава, описаний, JSON Schema и annotations с эталонными TestData |
+| Jira/Confluence CRUD integration | Не реализовано | Реальные создание/чтение/изменение бизнес-объектов не покрыты отдельным набором AQA |
+| Test data registry / write safety | Не реализовано | Нет устойчивого WRITE_INTENT/UNKNOWN_OUTCOME журнала и retry-policy adapter |
+| Jenkins Pipeline | Не реализовано | В репозитории нет подтверждённого Pipeline, описана только целевая схема |
+| Реальный Docker runtime в CI | Не проверено | Нужен отдельный прогон на агенте с Docker Engine |
+
+Последняя локальная проверка, подтверждённая в текущей рабочей ветке: `mvn -Pintegration -DskipTests test-compile` завершилась `BUILD SUCCESS` и скомпилировала 42 test source files под release 17. Это подтверждает компиляцию, но не выполнение тестов. Ранее выполнялся integration-прогон с 57 тестами без failures/errors; после последующих изменений контрактных TestData полный прогон необходимо повторить.
 
 ## 2. Репозитории и стек
 
@@ -49,7 +70,7 @@ AQA проверяет собранное приложение через пуб
 | STDERR collector | Независимое чтение и сохранение диагностического потока |
 | JUnit 5 | Управление тестами и lifecycle extensions |
 | Allure | Отчёты, вложения и диагностический контекст |
-| Test data registry | Устойчивый учёт write-намерений и созданных Atlassian-объектов |
+| Test data registry | Целевой компонент; устойчивый журнал write-намерений и созданных объектов пока не реализован |
 
 Bridge, TCP endpoint, control channel и отдельный контейнер-посредник в архитектуру не входят.
 
@@ -234,6 +255,8 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 ## 10. Jenkins Pipeline
 
+**Статус: не реализован.** Ниже приведена целевая последовательность этапов, а не описание существующего Jenkinsfile.
+
 Рекомендуемые логические этапы:
 
 1. **Checkout AQA** — получить AQA repository.
@@ -259,7 +282,7 @@ AQA взаимодействует с Jira/Confluence только через MC
 
 ### 11.1. Формат и восстановление реестра
 
-TestDataManager ведёт append-only JSONL event log. Каждая запись содержит как минимум `event`, `timestamp`, `operationId`, `AQA_RUN_ID`, `testId` и `toolName`. Для write-операций дополнительно сохраняются тип/ключ целевого объекта и уникальный marker. Полный payload запроса, credentials, Authorization headers и иные секреты в реестр не записываются.
+**Целевой дизайн; TestDataManager в текущем коде отсутствует.** После реализации он должен вести append-only JSONL event log. Каждая запись содержит как минимум `event`, `timestamp`, `operationId`, `AQA_RUN_ID`, `testId` и `toolName`. Для write-операций дополнительно сохраняются тип/ключ целевого объекта и уникальный marker. Полный payload запроса, credentials, Authorization headers и иные секреты в реестр не записываются.
 
 До отправки write-запроса синхронно сохраняется newline-terminated `WRITE_INTENT`; запись сбрасывается на диск до отправки запроса. После однозначного успешного ответа записывается `WRITE_CONFIRMED`, после однозначного отказа без побочного эффекта — `WRITE_REJECTED`. Если запрос мог быть отправлен, но подтверждение не получено, записывается `UNKNOWN_OUTCOME`. Незавершённый intent при восстановлении также считается `UNKNOWN_OUTCOME`, а не подтверждённой операцией.
 
@@ -309,7 +332,7 @@ STDOUT тестируемого процесса является MCP data strea
 - forced termination timeout;
 - Docker stop timeout.
 
-Значения по умолчанию фиксируются при реализации и проверяются тестами. Process startup timeout не заменяет MCP readiness check. При EOF, process exit или timeout MCP Client возвращает контролируемую ошибку с диагностическим контекстом.
+Часть таймаутов уже задаётся конфигурацией AQA; остальные параметры и сценарии отказоустойчивости должны быть закреплены при дальнейшей реализации. Process startup timeout не заменяет MCP readiness check. При EOF, process exit или timeout MCP Client возвращает контролируемую ошибку с диагностическим контекстом.
 
 STDERR collector должен продолжать чтение независимо от того, читает ли тест ответы MCP. Если collector завершился с ошибкой, это должно быть видно в диагностике, но не должно незаметно блокировать процесс.
 
