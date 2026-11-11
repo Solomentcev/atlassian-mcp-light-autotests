@@ -261,9 +261,16 @@ class McpClientTest {
                 .as("В stateless metadata должны передаваться client capabilities")
                 .isTrue();
         assertThat(received.get().path("params").path("_meta")
-                .path("io.modelcontextprotocol/clientInfo").path("name").asText())
+                 .path("io.modelcontextprotocol/clientInfo").path("name").asText())
                 .as("В stateless metadata должно передаваться имя MCP-клиента")
-                .isEqualTo("aqa-tests");
+                .isEqualTo(McpTestData.MOCK_CLIENT_NAME);
+        assertThat(received.get().path("params").path("_meta")
+                .path("io.modelcontextprotocol/clientInfo").path("version").asText())
+                .as("В stateless metadata должна передаваться версия MCP-клиента")
+                .isEqualTo(McpTestData.MOCK_CLIENT_VERSION);
+        assertThat(originalParams.path("filter").asText())
+                .as("Исходный params.filter должен остаться равным all после отправки запроса")
+                .isEqualTo("all");
         assertThat(originalParams.has("_meta")).as("После stateless tools/list исходный params.filter=all не должен получить поле _meta").isFalse();
     } finally {
         serverStdin.close();
@@ -304,6 +311,9 @@ class McpClientTest {
                     ))).as("Stateless tools/list с уже существующим params._meta должен быть отклонён до отправки")
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("_meta");
+            assertThat(serverStdin.available())
+                    .as("При наличии params._meta MCP Client не должен записывать JSON-RPC запрос в STDIN")
+                    .isZero();
         } finally {
             clientStdout.close();
             serverStdin.close();
