@@ -8,7 +8,6 @@ public final class JiraTestData {
     private static final String PROJECT_KEY = "AQA";
     private static final String SEARCH_JQL = "project = " + PROJECT_KEY;
 
-    public static String getSearchJql() { return SEARCH_JQL; }
 
     public static String getIssueKey() {
         return ISSUE_KEY;
