@@ -1,17 +1,19 @@
 package ru.solomentsev.aqa.support.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.qameta.allure.Step;
-import ru.solomentsev.aqa.mcp.McpClient;
-import ru.solomentsev.aqa.testdata.McpTestData;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.testdata.McpTestData;
 
 /** Действия и преобразования данных для MCP contract сценариев. */
 public final class McpContractTestSupport {
