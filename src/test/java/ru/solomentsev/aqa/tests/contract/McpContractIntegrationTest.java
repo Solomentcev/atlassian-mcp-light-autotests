@@ -177,8 +177,13 @@ class McpContractIntegrationTest {
                 () -> sendRequest(client, "tools/list", missingVersionParams));
         assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(-32602);
 
-        assertSuccessfulJsonRpc(Allure.step("Повторить tools/list с корректным protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> client.listToolsStateless(
-                McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT)));
+        JsonNode validResponse = Allure.step(
+                "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION,
+                () -> client.listToolsStateless(McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+        assertSuccessfulJsonRpc(validResponse);
+        assertThat(validResponse.path("result").path("tools").isArray())
+                .as("Контрольный stateless tools/list должен вернуть массив result.tools после трёх отклонённых запросов")
+                .isTrue();
     
     }
 
