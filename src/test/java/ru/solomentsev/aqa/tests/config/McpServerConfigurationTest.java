@@ -61,7 +61,7 @@ class McpServerConfigurationTest {
         Files.writeString(envFile, """
                 # Локальный запуск AQA
                 AQA_SERVER_MODE=local
-                AQA_SERVER_JAR=McpConfigurationTestData.SERVER_JAR_PATH # путь к артефакту
+                AQA_SERVER_JAR="server/target/server.jar" # путь к артефакту
                 """);
 
         McpServerConfiguration configuration = Allure.step(
