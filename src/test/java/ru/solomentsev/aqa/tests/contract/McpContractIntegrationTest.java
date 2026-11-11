@@ -475,7 +475,14 @@ class McpContractIntegrationTest {
                 + " (допустимый диапазон [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "])");
     }
 
-    private static void assertSuccessfulToolCall(JsonNode response, String context) {\n        assertSuccessfulJsonRpc(response);\n        assertThat(response.path("result").path("isError").asBoolean())\n                .as("%s должен завершиться без MCP tool error (result.isError=false)", context)\n                .isFalse();\n    }\n\n    private static void assertSuccessfulJsonRpc(JsonNode response) {
+    private static void assertSuccessfulToolCall(JsonNode response, String context) {
+        assertSuccessfulJsonRpc(response);
+        assertThat(response.path("result").path("isError").asBoolean())
+                .as("%s должен завершиться без MCP tool error (result.isError=false)", context)
+                .isFalse();
+    }
+
+    private static void assertSuccessfulJsonRpc(JsonNode response) {
         assertThat(response.path("jsonrpc").asText())
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
                 .isEqualTo("2.0");
