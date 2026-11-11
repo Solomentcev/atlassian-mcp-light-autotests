@@ -26,6 +26,7 @@ public final class McpTestData {
     private static final List<String> SUPPORTED_PROTOCOL_VERSIONS = List.of(
             STATELESS_PROTOCOL_VERSION, CLASSIC_PROTOCOL_VERSION, LEGACY_PROTOCOL_VERSION);
     private static final String COMPLETE_RESULT_TYPE = "complete";
+    private static final String TEXT_CONTENT_TYPE = "text";
 
     private static final String JSON_RPC_VERSION = "2.0";
     private static final String INITIALIZE_METHOD = "initialize";
@@ -126,6 +127,10 @@ public final class McpTestData {
 
     public static String getCompleteResultType() {
         return COMPLETE_RESULT_TYPE;
+    }
+
+    public static String getTextContentType() {
+        return TEXT_CONTENT_TYPE;
     }
 
     public static String getJsonRpcVersion() {
