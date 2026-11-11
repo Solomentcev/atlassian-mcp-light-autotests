@@ -28,6 +28,10 @@ public final class McpTestData {
     public static final String PING_METHOD = "ping";
     public static final String TOOLS_LIST_METHOD = "tools/list";
     public static final String INITIALIZED_NOTIFICATION_METHOD = "notifications/initialized";
+    public static final String SERVER_DISCOVER_METHOD = "server/discover";
+    public static final String TOOLS_CALL_METHOD = "tools/call";
+    public static final String FAKE_STATELESS_SERVER_NAME = "fake-stateless-server";
+    public static final String FAKE_STATELESS_SERVER_VERSION = "1.0";
 
     public static final int JSON_RPC_PARSE_ERROR = -32700;
     public static final int JSON_RPC_INVALID_REQUEST = -32600;
