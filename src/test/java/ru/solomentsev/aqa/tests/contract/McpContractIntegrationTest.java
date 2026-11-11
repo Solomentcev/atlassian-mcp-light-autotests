@@ -61,10 +61,24 @@ class McpContractIntegrationTest {
     @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с protocolVersion=" + "2026-07-28" + ".\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
     @Tag("smoke")
     void shouldReturnToolsList(McpClient client) {
-        JsonNode tools = getStatelessTools(client);
-        assertThat(tools.isArray()).as("tools/list должен вернуть массив tools").isTrue();
-    
-    }
+        JsonNode response = requestStatelessTools(client);
+        assertThat(response.path("jsonrpc").asText())
+                .as("tools/list должен вернуть JSON-RPC 2.0 response")
+                .isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id"))
+                .as("tools/list response должен содержать request id")
+                .isTrue();
+        assertThat(response.has("error"))
+                .as("Успешный tools/list не должен содержать JSON-RPC error")
+                .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Успешный tools/list должен вернуть объект result")
+                .isTrue();
+        JsonNode tools = response.path("result").path("tools");
+        assertThat(tools.isArray())
+                .as("tools/list должен вернуть массив tools")
+                .isTrue();
+}
 
     @Test
     @Feature("Tools Discovery")
@@ -74,7 +88,23 @@ class McpContractIntegrationTest {
     @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: возвращено ровно " + 13 + " уникальных имён; набор полностью совпадает с " + 13 + " инструментами, перечисленными в контракте.")    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
-        JsonNode tools = getStatelessTools(client);
+        JsonNode response = requestStatelessTools(client);
+        assertThat(response.path("jsonrpc").asText())
+                .as("tools/list должен вернуть JSON-RPC 2.0 response")
+                .isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id"))
+                .as("tools/list response должен содержать request id")
+                .isTrue();
+        assertThat(response.has("error"))
+                .as("Успешный tools/list не должен содержать JSON-RPC error")
+                .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Успешный tools/list должен вернуть объект result")
+                .isTrue();
+        JsonNode tools = response.path("result").path("tools");
+        assertThat(tools.isArray())
+                .as("tools/list должен вернуть массив tools")
+                .isTrue();
         Set<String> actualNames = new HashSet<>();
         for (JsonNode tool : tools) {
             actualNames.add(tool.path("name").asText());
@@ -91,7 +121,23 @@ class McpContractIntegrationTest {
     @DisplayName("MCP-007: У каждого из " + 13 + " инструментов есть непустой description")
     @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
-        JsonNode tools = getStatelessTools(client);
+        JsonNode response = requestStatelessTools(client);
+        assertThat(response.path("jsonrpc").asText())
+                .as("tools/list должен вернуть JSON-RPC 2.0 response")
+                .isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id"))
+                .as("tools/list response должен содержать request id")
+                .isTrue();
+        assertThat(response.has("error"))
+                .as("Успешный tools/list не должен содержать JSON-RPC error")
+                .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Успешный tools/list должен вернуть объект result")
+                .isTrue();
+        JsonNode tools = response.path("result").path("tools");
+        assertThat(tools.isArray())
+                .as("tools/list должен вернуть массив tools")
+                .isTrue();
         for (JsonNode tool : tools) {
             assertThat(tool.path("description").asText())
                     .as("Инструмент %s должен содержать непустое описание", tool.path("name").asText())
@@ -109,48 +155,141 @@ class McpContractIntegrationTest {
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
-        JsonNode tools = getStatelessTools(client);
+        JsonNode response = requestStatelessTools(client);
+        assertThat(response.path("jsonrpc").asText())
+                .as("tools/list должен вернуть JSON-RPC 2.0 response")
+                .isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id"))
+                .as("tools/list response должен содержать request id")
+                .isTrue();
+        assertThat(response.has("error"))
+                .as("Успешный tools/list не должен содержать JSON-RPC error")
+                .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Успешный tools/list должен вернуть объект result")
+                .isTrue();
+        JsonNode tools = response.path("result").path("tools");
+        assertThat(tools.isArray())
+                .as("tools/list должен вернуть массив tools")
+                .isTrue();
         for (JsonNode tool : tools) {
             String name = tool.path("name").asText();
             McpContractTestData.ToolContract expected = EXPECTED_TOOLS.get(name);
             assertThat(expected).as("Инструмент %s должен быть объявлен в ожидаемом контракте", name).isNotNull();
 
+            assertThat(tool.has("inputSchema"))
+                    .as("%s: inputSchema должен присутствовать", name)
+                    .isTrue();
             JsonNode schema = tool.path("inputSchema");
-            assertThat(schema.path("type").asText()).as("%s: корень inputSchema должен иметь type=object", name).isEqualTo("object");
-            assertThat(schema.path("additionalProperties").asBoolean()).as("%s: additionalProperties должен быть false", name).isFalse();
+            assertThat(schema.isObject())
+                    .as("%s: inputSchema должен быть объектом", name)
+                    .isTrue();
+            assertThat(schema.has("type"))
+                    .as("%s: inputSchema.type должен присутствовать", name)
+                    .isTrue();
+            assertThat(schema.path("type").isTextual())
+                    .as("%s: inputSchema.type должен быть строкой", name)
+                    .isTrue();
+            assertThat(schema.path("type").asText())
+                    .as("%s: корень inputSchema должен иметь type=object", name)
+                    .isEqualTo("object");
+            assertThat(schema.has("additionalProperties"))
+                    .as("%s: additionalProperties должен присутствовать", name)
+                    .isTrue();
+            assertThat(schema.path("additionalProperties").isBoolean())
+                    .as("%s: additionalProperties должен иметь boolean type", name)
+                    .isTrue();
+            assertThat(schema.path("additionalProperties").asBoolean())
+                    .as("%s: additionalProperties должен быть false", name)
+                    .isFalse();
             assertThat(schema.path("properties").isObject()).as("%s: inputSchema должен содержать объект properties", name).isTrue();
             assertThat(fieldNames(schema.path("properties"))).as("%s: набор аргументов должен совпадать с контрактом", name)
                     .containsExactlyInAnyOrderElementsOf(expected.getPropertyTypes().keySet());
 
             if (expected.getRequired().isEmpty()) {
-                assertThat(schema.has("required")).as("%s: поле required не должно присутствовать при пустом ожидаемом списке", name).isFalse();
+                assertThat(schema.has("required"))
+                        .as("%s: поле required не должно присутствовать при пустом ожидаемом списке", name)
+                        .isFalse();
             } else {
-                assertThat(textValues(schema.path("required"))).as("%s: список required должен совпадать с контрактом", name)
+                assertThat(schema.has("required"))
+                        .as("%s: поле required должно присутствовать", name)
+                        .isTrue();
+                assertThat(schema.path("required").isArray())
+                        .as("%s: поле required должно быть массивом", name)
+                        .isTrue();
+                for (JsonNode requiredValue : schema.path("required")) {
+                    assertThat(requiredValue.isTextual())
+                            .as("%s: каждый элемент required должен быть строкой", name)
+                            .isTrue();
+                }
+                assertThat(textValues(schema.path("required")))
+                        .as("%s: список required должен совпадать с контрактом", name)
                         .containsExactlyInAnyOrderElementsOf(expected.getRequired());
             }
 
             for (Map.Entry<String, String> property : expected.getPropertyTypes().entrySet()) {
                 JsonNode definition = schema.path("properties").path(property.getKey());
+                assertThat(definition.isObject())
+                        .as("%s.%s: определение аргумента должно быть объектом", name, property.getKey())
+                        .isTrue();
+                assertThat(definition.has("type"))
+                        .as("%s.%s: type должен присутствовать", name, property.getKey())
+                        .isTrue();
+                assertThat(definition.path("type").isTextual())
+                        .as("%s.%s: type должен быть строкой", name, property.getKey())
+                        .isTrue();
                 assertThat(definition.path("type").asText())
                         .as("%s.%s: ожидаемый type=%s", name, property.getKey(), property.getValue())
                         .isEqualTo(property.getValue());
                 if ("string".equals(property.getValue())) {
+                    assertThat(definition.has("minLength"))
+                            .as("%s.%s: minLength должен присутствовать", name, property.getKey())
+                            .isTrue();
+                    assertThat(definition.path("minLength").isIntegralNumber())
+                            .as("%s.%s: minLength должен быть целым числом", name, property.getKey())
+                            .isTrue();
                     assertThat(definition.path("minLength").asInt())
                             .as("%s.%s: ожидаемый minLength=%d", name, property.getKey(), McpTestData.getMinStringLength())
                             .isEqualTo(McpTestData.getMinStringLength());
                 }
                 if ("integer".equals(property.getValue())) {
+                    assertThat(definition.has("minimum"))
+                            .as("%s.%s: minimum должен присутствовать", name, property.getKey())
+                            .isTrue();
+                    assertThat(definition.path("minimum").isIntegralNumber())
+                            .as("%s.%s: minimum должен быть целым числом", name, property.getKey())
+                            .isTrue();
                     assertThat(definition.path("minimum").asInt())
                             .as("%s.%s: ожидаемый minimum=%d", name, property.getKey(), McpTestData.getMinLimit())
                             .isEqualTo(McpTestData.getMinLimit());
                     if ("limit".equals(property.getKey())) {
+                        assertThat(definition.has("maximum"))
+                                .as("%s.%s: maximum должен присутствовать", name, property.getKey())
+                                .isTrue();
+                        assertThat(definition.path("maximum").isIntegralNumber())
+                                .as("%s.%s: maximum должен быть целым числом", name, property.getKey())
+                                .isTrue();
                         assertThat(definition.path("maximum").asInt())
                                 .as("%s.%s: ожидаемый maximum=%d", name, property.getKey(), McpTestData.getMaxLimit())
                                 .isEqualTo(McpTestData.getMaxLimit());
                     }
                 }
             }
-            assertAnnotations(name, tool.path("annotations"), expected);
+            JsonNode annotations = tool.path("annotations");
+            assertThat(tool.has("annotations")).as("%s: annotations должны присутствовать", name).isTrue();
+            assertThat(annotations.isObject()).as("%s: annotations должны быть объектом", name).isTrue();
+            assertThat(annotations.has("readOnlyHint")).as("%s: readOnlyHint должен присутствовать", name).isTrue();
+            assertThat(annotations.path("readOnlyHint").isBoolean()).as("%s: readOnlyHint должен иметь boolean type", name).isTrue();
+            assertThat(annotations.path("readOnlyHint").asBoolean()).as("%s: readOnlyHint должен соответствовать контракту", name).isEqualTo(expected.isReadOnly());
+            assertThat(annotations.has("destructiveHint")).as("%s: destructiveHint должен присутствовать", name).isTrue();
+            assertThat(annotations.path("destructiveHint").isBoolean()).as("%s: destructiveHint должен иметь boolean type", name).isTrue();
+            assertThat(annotations.path("destructiveHint").asBoolean()).as("%s: destructiveHint должен соответствовать контракту", name).isEqualTo(expected.isDestructive());
+            assertThat(annotations.has("idempotentHint")).as("%s: idempotentHint должен присутствовать", name).isTrue();
+            assertThat(annotations.path("idempotentHint").isBoolean()).as("%s: idempotentHint должен иметь boolean type", name).isTrue();
+            assertThat(annotations.path("idempotentHint").asBoolean()).as("%s: idempotentHint должен соответствовать контракту", name).isEqualTo(expected.isIdempotent());
+            assertThat(annotations.has("openWorldHint")).as("%s: openWorldHint должен присутствовать", name).isTrue();
+            assertThat(annotations.path("openWorldHint").isBoolean()).as("%s: openWorldHint должен иметь boolean type", name).isTrue();
+            assertThat(annotations.path("openWorldHint").asBoolean()).as("%s: openWorldHint должен быть true", name).isTrue();
         }
     
     }
@@ -195,7 +334,18 @@ class McpContractIntegrationTest {
         JsonNode validResponse = Allure.step(
                 "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.getStatelessProtocolVersion(),
                 () -> client.listToolsStateless(McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
-        assertSuccessfulJsonRpc(validResponse);
+        assertThat(validResponse.path("jsonrpc").asText())
+                .as("Контрольный tools/list: response должен соответствовать JSON-RPC 2.0")
+                .isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(validResponse.has("id"))
+                .as("Контрольный tools/list: response должен содержать request id")
+                .isTrue();
+        assertThat(validResponse.has("error"))
+                .as("Контрольный tools/list: успешный response не должен содержать error")
+                .isFalse();
+        assertThat(validResponse.path("result").isObject())
+                .as("Контрольный tools/list: response должен содержать объект result")
+                .isTrue();
         assertThat(validResponse.path("result").path("tools").isArray())
                 .as("Контрольный stateless tools/list должен вернуть массив result.tools после отклонения некорректного запроса")
                 .isTrue();
@@ -241,7 +391,17 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step("Вызвать неизвестный инструмент name=aqa_unknown_tool с пустыми arguments",
                 () -> callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode()));
 
-        assertToolError(response, "tools/call name=aqa_unknown_tool, arguments={}");
+                JsonNode toolErrorResult = response.path("result");
+        assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
+        assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
+        assertThat(toolErrorResult.isObject()).as("Проверка MCP tool error: response должен содержать объект result").isTrue();
+        assertThat(toolErrorResult.path("isError").isBoolean()).as("Проверка MCP tool error: result.isError должен иметь boolean type").isTrue();
+        assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
+        assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
+        assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
     
     
     }
@@ -262,7 +422,17 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step("Вызвать jira_get_issue без обязательного аргумента issue_key",
                 () -> callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode()));
 
-        assertToolError(response, "jira_get_issue без обязательного issue_key (arguments={})");
+                JsonNode toolErrorResult = response.path("result");
+        assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
+        assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
+        assertThat(toolErrorResult.isObject()).as("Проверка MCP tool error: response должен содержать объект result").isTrue();
+        assertThat(toolErrorResult.path("isError").isBoolean()).as("Проверка MCP tool error: result.isError должен иметь boolean type").isTrue();
+        assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
+        assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
+        assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
     
     
     }
@@ -294,7 +464,17 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step(
                 "Вызвать jira_get_issue с issue_key=" + scenario,
                 () -> callTool(client, "jira_get_issue", arguments));
-        assertToolError(response, "jira_get_issue с issue_key=" + scenario);
+                JsonNode toolErrorResult = response.path("result");
+        assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
+        assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
+        assertThat(toolErrorResult.isObject()).as("Проверка MCP tool error: response должен содержать объект result").isTrue();
+        assertThat(toolErrorResult.path("isError").isBoolean()).as("Проверка MCP tool error: result.isError должен иметь boolean type").isTrue();
+        assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
+        assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
+        assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
     }
 
     @Test
@@ -314,7 +494,17 @@ class McpContractIntegrationTest {
         arguments.put("issue_key", JiraTestData.getInvalidIssueKeyNumber());
         JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=" + JiraTestData.getInvalidIssueKeyNumber() + " (integer вместо string)",
                 () -> callTool(client, "jira_get_issue", arguments));
-        assertToolError(invalidResponse, "jira_get_issue с issue_key=" + JiraTestData.getInvalidIssueKeyNumber() + " (integer вместо string)");
+                JsonNode toolErrorResult = invalidResponse.path("result");
+        assertThat(invalidResponse.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(invalidResponse.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
+        assertThat(invalidResponse.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
+        assertThat(toolErrorResult.isObject()).as("Проверка MCP tool error: response должен содержать объект result").isTrue();
+        assertThat(toolErrorResult.path("isError").isBoolean()).as("Проверка MCP tool error: result.isError должен иметь boolean type").isTrue();
+        assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
+        assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
+        assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     
     }
@@ -336,7 +526,17 @@ class McpContractIntegrationTest {
         arguments.put("unexpected", "value");
         JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с неизвестным аргументом unexpected=value",
                 () -> callTool(client, "jira_get_issue", arguments));
-        assertToolError(invalidResponse, "jira_get_issue с дополнительным аргументом unexpected=value");
+                JsonNode toolErrorResult = invalidResponse.path("result");
+        assertThat(invalidResponse.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(invalidResponse.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
+        assertThat(invalidResponse.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
+        assertThat(toolErrorResult.isObject()).as("Проверка MCP tool error: response должен содержать объект result").isTrue();
+        assertThat(toolErrorResult.path("isError").isBoolean()).as("Проверка MCP tool error: result.isError должен иметь boolean type").isTrue();
+        assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
+        assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
+        assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     
     }
@@ -362,8 +562,34 @@ class McpContractIntegrationTest {
         Allure.parameter("Максимальный допустимый limit", McpTestData.getMaxLimit());
         Allure.parameter("Контрольный допустимый limit", McpTestData.getDefaultLimit());
 
-        assertLimitRejected(client, toolName, queryField, query, McpTestData.getInvalidLimitBelowMin());
-        assertLimitRejected(client, toolName, queryField, query, McpTestData.getInvalidLimitAboveMax());
+        for (int invalidLimit : List.of(
+                McpTestData.getInvalidLimitBelowMin(),
+                McpTestData.getInvalidLimitAboveMax())) {
+            ObjectNode invalidArguments = OBJECT_MAPPER.createObjectNode();
+            if (queryField != null) {
+                invalidArguments.put(queryField, query);
+            }
+            invalidArguments.put("limit", invalidLimit);
+            JsonNode invalidResponse = Allure.step(
+                    "Вызвать " + toolName + " с недопустимым limit=" + invalidLimit,
+                    () -> callTool(client, toolName, invalidArguments));
+            JsonNode invalidResult = invalidResponse.path("result");
+            assertThat(invalidResponse.has("error"))
+                    .as("%s с limit=%d не должен возвращать JSON-RPC error", toolName, invalidLimit)
+                    .isFalse();
+            assertThat(invalidResult.path("isError").isBoolean())
+                    .as("%s: result.isError должен иметь boolean type", toolName)
+                    .isTrue();
+            assertThat(invalidResult.path("isError").asBoolean())
+                    .as("%s должен отклонять limit=%d", toolName, invalidLimit)
+                    .isTrue();
+            assertThat(invalidResult.path("content").isArray())
+                    .as("%s должен возвращать массив content при отклонении limit=%d", toolName, invalidLimit)
+                    .isTrue();
+            assertThat(invalidResult.path("content").size())
+                    .as("%s должен возвращать диагностическое сообщение при limit=%d", toolName, invalidLimit)
+                    .isGreaterThan(0);
+        }
 
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         if (queryField != null) {
@@ -374,7 +600,18 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step(
                 "Вызвать " + toolName + " с допустимым limit=" + McpTestData.getDefaultLimit(),
                 () -> callTool(client, toolName, arguments));
-        assertSuccessfulJsonRpc(response);
+        assertThat(response.path("jsonrpc").asText())
+                .as("Вызов MCP-инструмента: response должен соответствовать JSON-RPC 2.0")
+                .isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id"))
+                .as("Вызов MCP-инструмента: response должен содержать request id")
+                .isTrue();
+        assertThat(response.has("error"))
+                .as("Вызов MCP-инструмента: успешный response не должен содержать error")
+                .isFalse();
+        assertThat(response.path("result").isObject())
+                .as("Вызов MCP-инструмента: response должен содержать объект result")
+                .isTrue();
         assertThat(response.path("result").path("isError").asBoolean())
                 .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.getDefaultLimit())
                 .isFalse();
@@ -398,7 +635,17 @@ class McpContractIntegrationTest {
 
         JsonNode response = Allure.step("Вызвать confluence_update_page только с page_id=" + ConfluenceTestData.getPageId() + ", без title и content",
                 () -> callTool(client, "confluence_update_page", arguments));
-        assertToolError(response, "confluence_update_page с page_id=" + ConfluenceTestData.getPageId() + " без title и content");
+                JsonNode toolErrorResult = response.path("result");
+        assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
+        assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
+        assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
+        assertThat(toolErrorResult.isObject()).as("Проверка MCP tool error: response должен содержать объект result").isTrue();
+        assertThat(toolErrorResult.path("isError").isBoolean()).as("Проверка MCP tool error: result.isError должен иметь boolean type").isTrue();
+        assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
+        assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
+        assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
     
     
     }
@@ -423,100 +670,12 @@ class McpContractIntegrationTest {
         );
     }
 
-    @Step("Получить tools/list в stateless-режиме и проверить структуру ответа")
-    private static JsonNode getStatelessTools(McpClient client) {
-        JsonNode response = client.listToolsStateless(
+    @Step("Выполнить stateless tools/list")
+    private static JsonNode requestStatelessTools(McpClient client) {
+        return client.listToolsStateless(
                 McpTestData.getStatelessProtocolVersion(),
                 REQUEST_TIMEOUT
         );
-        assertSuccessfulJsonRpc(response);
-        JsonNode tools = response.path("result").path("tools");
-        assertThat(tools.isArray()).as("tools/list при protocolVersion=%s должен вернуть массив инструментов, фактически: %s", McpTestData.getStatelessProtocolVersion(), tools.getNodeType()).isTrue();
-        return tools;
-    }
-
-    @Step("Проверить отклонение limit={limit} для инструмента {toolName}")
-    private static void assertLimitRejected(McpClient client,
-                                            String toolName,
-                                            String queryField,
-                                            String query,
-                                            int limit) {
-        ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        if (queryField != null) {
-            arguments.put(queryField, query);
-        }
-        arguments.put("limit", limit);
-
-        JsonNode response = callTool(client, toolName, arguments);
-        assertToolError(response, toolName + " с limit=" + limit
-                + " (допустимый диапазон [" + McpTestData.getMinLimit() + ", " + McpTestData.getMaxLimit() + "])");
-    }
-
-    @Step("Проверить успешный результат MCP-инструмента: {context}")
-    private static void assertSuccessfulToolCall(JsonNode response, String context) {
-        assertSuccessfulJsonRpc(response);
-        assertThat(response.path("result").path("isError").asBoolean())
-                .as("%s должен завершиться без MCP tool error (result.isError=false)", context)
-                .isFalse();
-    }
-
-    @Step("Проверить структуру успешного JSON-RPC response")
-    private static void assertSuccessfulJsonRpc(JsonNode response) {
-        assertThat(response.path("jsonrpc").asText())
-                .as("Ответ должен соответствовать JSON-RPC версии 2.0")
-                .isEqualTo(McpTestData.getJsonRpcVersion());
-        assertThat(response.has("id"))
-                .as("Ответ на запрос должен содержать исходный request id")
-                .isTrue();
-        assertThat(response.has("error"))
-                .as("Успешный JSON-RPC ответ не должен содержать поле error")
-                .isFalse();
-        assertThat(response.path("result").isObject())
-                .as("Успешный JSON-RPC ответ должен содержать объект result")
-                .isTrue();
-    }
-
-        private static void assertToolError(JsonNode response) {
-        assertToolError(response, "MCP-инструмент");
-    }
-
-    @Step("Проверить MCP tool error для сценария: {context}")
-    private static void assertToolError(JsonNode response, String context) {
-        assertSuccessfulJsonRpc(response);
-        JsonNode result = response.path("result");
-        assertThat(result.path("isError").asBoolean())
-                .as("%s должен вернуть isError=true", context)
-                .isTrue();
-        assertThat(result.path("content").isArray())
-                .as("%s должен вернуть массив content", context)
-                .isTrue();
-        assertThat(result.path("content").size())
-                .as("%s должен вернуть диагностическое сообщение", context)
-                .isGreaterThan(0);
-        assertThat(result.path("content").get(0).path("type").asText())
-                .as("%s: элемент content должен иметь type=text", context)
-                .isEqualTo("text");
-        assertThat(result.path("content").get(0).path("text").asText())
-                .as("%s: текст ошибки должен начинаться с «Ошибка: »", context)
-                .startsWith("Ошибка: ");
-        assertThat(result.has("error"))
-                .as("%s: ошибка должна находиться в result, а не в JSON-RPC error", context)
-                .isFalse();
-    }
-
-    @Step("Проверить annotations инструмента {toolName}")
-    private static void assertAnnotations(String toolName, JsonNode annotations, ToolContract expected) {
-        assertThat(annotations.path("readOnlyHint").isBoolean()).as("%s: readOnlyHint должен быть boolean", toolName).isTrue();
-        assertThat(annotations.path("destructiveHint").isBoolean()).as("%s: destructiveHint должен быть boolean", toolName).isTrue();
-        assertThat(annotations.path("idempotentHint").isBoolean()).as("%s: idempotentHint должен быть boolean", toolName).isTrue();
-        assertThat(annotations.path("openWorldHint").isBoolean()).as("%s: openWorldHint должен быть boolean", toolName).isTrue();
-        assertThat(annotations.path("readOnlyHint").asBoolean()).as("%s: readOnlyHint должен быть %s", toolName, expected.isReadOnly())
-                .isEqualTo(expected.isReadOnly());
-        assertThat(annotations.path("destructiveHint").asBoolean()).as("%s: destructiveHint должен быть %s", toolName, expected.isDestructive())
-                .isEqualTo(expected.isDestructive());
-        assertThat(annotations.path("idempotentHint").asBoolean()).as("%s: idempotentHint должен быть %s", toolName, expected.isIdempotent())
-                .isEqualTo(expected.isIdempotent());
-        assertThat(annotations.path("openWorldHint").asBoolean()).as("%s: openWorldHint должен быть true", toolName).isTrue();
     }
 
     private static List<String> textValues(JsonNode array) {
