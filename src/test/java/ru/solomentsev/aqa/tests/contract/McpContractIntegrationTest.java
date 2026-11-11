@@ -654,15 +654,12 @@ class McpContractIntegrationTest {
         assertThat(response.path("result").isObject())
                 .as("Вызов MCP-инструмента: response должен содержать объект result")
                 .isTrue();
-        assertThat(response.path("result").has("isError"))
-                .as("%s должен возвращать result.isError", toolName)
+        JsonNode result = response.path("result");
+        assertThat(!result.has("isError")
+                        || (result.path("isError").isBoolean() && !result.path("isError").asBoolean()))
+                .as("%s должен принимать допустимый limit=%d; необязательный result.isError отсутствует или равен false",
+                        toolName, McpTestData.getDefaultLimit())
                 .isTrue();
-        assertThat(response.path("result").path("isError").isBoolean())
-                .as("%s: result.isError должен иметь boolean type", toolName)
-                .isTrue();
-        assertThat(response.path("result").path("isError").asBoolean())
-                .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.getDefaultLimit())
-                .isFalse();
     }
 
     @Test
