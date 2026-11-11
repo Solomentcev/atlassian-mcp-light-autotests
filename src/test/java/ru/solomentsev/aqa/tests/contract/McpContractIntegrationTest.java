@@ -157,42 +157,57 @@ class McpContractIntegrationTest {
     
     }
 
-    @Test
+    @ParameterizedTest(name = "MCP-023: отклонение stateless-запроса без {0}")
+    @MethodSource("missingStatelessMetadataCases")
     @Feature("Stateless Protocol")
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-023: Stateless-запросы без _meta, clientCapabilities или protocolVersion отклоняются с error=-32602")
-    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize; проверяются обязательные metadata отдельных stateless-запросов.\nШаги: вызвать server/discover без params._meta; вызвать tools/list с protocolVersion, но без clientCapabilities; вызвать tools/list с clientCapabilities, но без protocolVersion; затем выполнить корректный tools/list.\nОжидаемый результат: каждый из трёх некорректных запросов возвращает JSON-RPC error code=-32602; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
+    @DisplayName("MCP-023: Stateless-запрос без обязательного metadata отклоняется")
+    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=" + McpTestData.JSON_RPC_INVALID_PARAMS + "; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
     @Tag("negative")
     @Tag("case-MCP-023")
-    void shouldRejectMissingRequiredStatelessMetadata(McpClient client) {
-        Allure.parameter("Stateless metadata scenarios", "без _meta; без clientCapabilities; без protocolVersion");
+    void shouldRejectMissingRequiredStatelessMetadata(String missingField,
+                                                      String method,
+                                                      McpClient client) {
+        Allure.parameter("MCP method", method);
+        Allure.parameter("Отсутствующее metadata поле", missingField);
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.JSON_RPC_INVALID_PARAMS);
-        JsonNode missingMetadata = Allure.step("Вызвать server/discover без обязательного params._meta", () -> sendRequest(client, McpTestData.SERVER_DISCOVER_METHOD, null));
-        assertThat(missingMetadata.path("error").path("code").asInt()).as("server/discover без обязательного _meta должен вернуть JSON-RPC error code=-32602, фактически: %s", missingMetadata.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
 
-        ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
-        missingCapabilitiesParams.putObject("_meta")
-                .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
-        JsonNode missingCapabilities = Allure.step("Вызвать tools/list с protocolVersion, но без clientCapabilities",
-                () -> sendRequest(client, McpTestData.TOOLS_LIST_METHOD, missingCapabilitiesParams));
-        assertThat(missingCapabilities.path("error").path("code").asInt()).as("tools/list с protocolVersion=%s, но без clientCapabilities должен вернуть -32602, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, missingCapabilities.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
+        ObjectNode params = null;
+        if ("clientCapabilities".equals(missingField)) {
+            params = OBJECT_MAPPER.createObjectNode();
+            params.putObject("_meta")
+                    .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        } else if ("protocolVersion".equals(missingField)) {
+            params = OBJECT_MAPPER.createObjectNode();
+            params.putObject("_meta")
+                    .putObject("io.modelcontextprotocol/clientCapabilities");
+        }
 
-        ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
-        missingVersionParams.putObject("_meta")
-                .putObject("io.modelcontextprotocol/clientCapabilities");
-        JsonNode missingVersion = Allure.step("Вызвать tools/list с clientCapabilities, но без protocolVersion",
-                () -> sendRequest(client, McpTestData.TOOLS_LIST_METHOD, missingVersionParams));
-        assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
+        JsonNode invalidResponse = Allure.step(
+                "Вызвать " + method + " без обязательного " + missingField,
+                () -> sendRequest(client, method, params));
+        assertThat(invalidResponse.path("error").path("code").asInt())
+                .as("%s без обязательного %s должен вернуть JSON-RPC error code=%d, фактически: %s",
+                        method, missingField, McpTestData.JSON_RPC_INVALID_PARAMS,
+                        invalidResponse.path("error").path("code"))
+                .isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
 
         JsonNode validResponse = Allure.step(
                 "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION,
                 () -> client.listToolsStateless(McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
         assertSuccessfulJsonRpc(validResponse);
         assertThat(validResponse.path("result").path("tools").isArray())
-                .as("Контрольный stateless tools/list должен вернуть массив result.tools после трёх отклонённых запросов")
+                .as("Контрольный stateless tools/list должен вернуть массив result.tools после отклонения некорректного запроса")
                 .isTrue();
-    
+    }
+
+    private static Stream<Arguments> missingStatelessMetadataCases() {
+        return Stream.of(
+                Arguments.of("_meta", McpTestData.SERVER_DISCOVER_METHOD),
+                Arguments.of("clientCapabilities", McpTestData.TOOLS_LIST_METHOD),
+                Arguments.of("protocolVersion", McpTestData.TOOLS_LIST_METHOD)
+        );
     }
 
     @Test
