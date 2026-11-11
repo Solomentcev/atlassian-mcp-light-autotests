@@ -5,11 +5,14 @@ import ru.solomentsev.aqa.mcp.McpProcessSession;
 import ru.solomentsev.aqa.support.fake.FakeMcpServer;
 import ru.solomentsev.aqa.support.fake.FakeStatelessMcpServer;
 import ru.solomentsev.aqa.testdata.McpTestData;
-import ru.solomentsev.aqa.support.OperatingSystem;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.discoverStateless;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.listToolsStateless;
+import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.launcherFor;
+import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startSession;
+import static ru.solomentsev.aqa.support.session.McpProcessSessionTestSupport.startStatelessSession;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -20,12 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.DisplayName;
 import ru.solomentsev.aqa.process.ManagedProcess;
-import ru.solomentsev.aqa.process.McpServerLauncher;
-import ru.solomentsev.aqa.process.ProcessBuilderLauncher;
 
-import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 
 import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
@@ -126,55 +125,6 @@ class McpProcessSessionTest {
         assertThat(process.exitCode()).as("Fake stateless MCP server должен завершиться с кодом 0").isZero();
     
     
-    }
-
-    @Step("Выполнить server/discover: protocolVersion={version}, timeout={timeout}")
-    private static JsonNode discoverStateless(McpClient client, String version, Duration timeout) {
-        return client.discoverStateless(version, timeout);
-    }
-
-    @Step("Выполнить stateless tools/list: protocolVersion={version}, timeout={timeout}")
-    private static JsonNode listToolsStateless(McpClient client, String version, Duration timeout) {
-        return client.listToolsStateless(version, timeout);
-    }
-
-    @Step("Запустить classic MCP-сессию: protocolVersion={protocolVersion}")
-    private static McpProcessSession startSession(McpServerLauncher launcher,
-                                                   Map<String, String> environment,
-                                                   Path workingDirectory,
-                                                   String protocolVersion,
-                                                   String clientName,
-                                                   String clientVersion,
-                                                   Duration timeout) throws Exception {
-        return McpProcessSession.start(launcher, environment, workingDirectory,
-                protocolVersion, clientName, clientVersion, timeout);
-    }
-
-    @Step("Запустить stateless MCP-сессию без classic initialize")
-    private static McpProcessSession startStatelessSession(McpServerLauncher launcher,
-                                                           Map<String, String> environment,
-                                                           Path workingDirectory) throws Exception {
-        return McpProcessSession.startWithoutHandshake(launcher, environment, workingDirectory);
-    }
-
-    private static McpServerLauncher launcherFor(Class<?> serverClass) {
-        String javaExecutable = Path.of(
-                System.getProperty("java.home"),
-                "bin",
-                OperatingSystem.isWindows() ? "java.exe" : "java"
-        ).toString();
-        String testClasspath = System.getProperty(
-                "surefire.test.class.path",
-                System.getProperty("java.class.path")
-        );
-        List<String> command = List.of(
-                javaExecutable,
-                "-cp",
-                testClasspath,
-                serverClass.getName()
-        );
-        return (environment, workingDirectory) ->
-                new ProcessBuilderLauncher().launch(command, environment, workingDirectory);
     }
 
 }
