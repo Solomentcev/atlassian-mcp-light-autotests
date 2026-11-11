@@ -79,7 +79,7 @@ class McpContractIntegrationTest {
         assertThat(tools.isArray())
                 .as("tools/list должен вернуть массив tools")
                 .isTrue();
-}
+    }
 
     @Test
     @Feature("Tools Discovery")
@@ -395,7 +395,7 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step("Вызвать неизвестный инструмент name=aqa_unknown_tool с пустыми arguments",
                 () -> callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode()));
 
-                JsonNode toolErrorResult = response.path("result");
+        JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
         assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
@@ -426,7 +426,7 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step("Вызвать jira_get_issue без обязательного аргумента issue_key",
                 () -> callTool(client, "jira_get_issue", OBJECT_MAPPER.createObjectNode()));
 
-                JsonNode toolErrorResult = response.path("result");
+        JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
         assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
@@ -468,7 +468,7 @@ class McpContractIntegrationTest {
         JsonNode response = Allure.step(
                 "Вызвать jira_get_issue с issue_key=" + scenario,
                 () -> callTool(client, "jira_get_issue", arguments));
-                JsonNode toolErrorResult = response.path("result");
+        JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
         assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
@@ -498,7 +498,7 @@ class McpContractIntegrationTest {
         arguments.put("issue_key", JiraTestData.getInvalidIssueKeyNumber());
         JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=" + JiraTestData.getInvalidIssueKeyNumber() + " (integer вместо string)",
                 () -> callTool(client, "jira_get_issue", arguments));
-                JsonNode toolErrorResult = invalidResponse.path("result");
+        JsonNode toolErrorResult = invalidResponse.path("result");
         assertThat(invalidResponse.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(invalidResponse.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
         assertThat(invalidResponse.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
@@ -530,7 +530,7 @@ class McpContractIntegrationTest {
         arguments.put("unexpected", "value");
         JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с неизвестным аргументом unexpected=value",
                 () -> callTool(client, "jira_get_issue", arguments));
-                JsonNode toolErrorResult = invalidResponse.path("result");
+        JsonNode toolErrorResult = invalidResponse.path("result");
         assertThat(invalidResponse.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(invalidResponse.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
         assertThat(invalidResponse.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
@@ -639,7 +639,7 @@ class McpContractIntegrationTest {
 
         JsonNode response = Allure.step("Вызвать confluence_update_page только с page_id=" + ConfluenceTestData.getPageId() + ", без title и content",
                 () -> callTool(client, "confluence_update_page", arguments));
-                JsonNode toolErrorResult = response.path("result");
+        JsonNode toolErrorResult = response.path("result");
         assertThat(response.path("jsonrpc").asText()).as("Проверка MCP tool error: response должен соответствовать JSON-RPC 2.0").isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id")).as("Проверка MCP tool error: response должен содержать request id").isTrue();
         assertThat(response.has("error")).as("Проверка MCP tool error: MCP tool error не должен быть JSON-RPC error").isFalse();
