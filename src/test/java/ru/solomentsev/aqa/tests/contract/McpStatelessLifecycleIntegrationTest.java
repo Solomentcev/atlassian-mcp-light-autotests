@@ -60,7 +60,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("До initialize сервер должен отклонять tools/list с ошибкой состояния " + McpTestData.getMcpServerNotInitialized())
                     .isEqualTo(McpTestData.getMcpServerNotInitialized());
         }
-    
+
     }
 
     @Test
@@ -141,7 +141,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("Stateless tools/list должен возвращать версию MCP-сервера в serverInfo")
                     .isEqualTo(McpTestData.getServerVersion());
         }
-    
+
     }
 
     @Test
@@ -201,7 +201,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("Stateless tools/call должен возвращать версию MCP-сервера в serverInfo")
                     .isEqualTo(McpTestData.getServerVersion());
         }
-    
+
     }
 
     @Test
@@ -236,7 +236,7 @@ class McpStatelessLifecycleIntegrationTest {
             initializeParams.putObject("clientInfo")
                     .put("name", McpTestData.getClientName())
                     .put("version", McpTestData.getClientVersion());
-            JsonNode initialize = sendRequest(session.client(), 
+            JsonNode initialize = sendRequest(session.client(),
                     McpTestData.getInitializeMethod(), initializeParams, REQUEST_TIMEOUT);
             assertThat(initialize.has("error"))
                     .as("Корректный initialize должен завершиться без JSON-RPC error")
@@ -283,7 +283,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .as("После перехода в READY сервер должен вернуть массив инструментов")
                     .isTrue();
         }
-    
+
     }
 
 }
