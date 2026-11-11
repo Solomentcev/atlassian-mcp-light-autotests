@@ -50,9 +50,9 @@ class McpClientTest {
     void shouldSendRequestAndMatchResponseById() throws Exception {
         Allure.parameter("JSON-RPC method", McpTestData.PING_METHOD);
         Allure.parameter("Request timeout", McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms");
-        PipedInputStream clientStdout = new PipedInputStream(8_192);
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(8_192);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
 
         Thread server = new Thread(() -> respondToSingleRequest(serverStdin, serverStdout));
@@ -84,9 +84,9 @@ class McpClientTest {
         Allure.parameter("Notification method", McpTestData.INITIALIZED_NOTIFICATION_METHOD);
         Allure.parameter("Request id", "отсутствует");
         Allure.parameter("Ожидание получения", McpTestData.ASYNC_EVENT_TIMEOUT.toMillis() + " ms");
-        PipedInputStream clientStdout = new PipedInputStream(8_192);
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(8_192);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         CountDownLatch notificationReceived = new CountDownLatch(1);
         AtomicReference<JsonNode> received = new AtomicReference<>();
@@ -131,9 +131,9 @@ class McpClientTest {
         Allure.parameter("Client name", McpTestData.CLIENT_NAME);
         Allure.parameter("Client version", McpTestData.CLIENT_VERSION);
         Allure.parameter("Request timeout", McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms");
-        PipedInputStream clientStdout = new PipedInputStream(8_192);
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(8_192);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         CountDownLatch initializedNotificationReceived = new CountDownLatch(1);
         AtomicReference<JsonNode> initializedNotification = new AtomicReference<>();
@@ -203,9 +203,9 @@ class McpClientTest {
         Allure.parameter("clientCapabilities.experimental", true);
         Allure.parameter("clientInfo.name", McpTestData.MOCK_CLIENT_NAME);
         Allure.parameter("clientInfo.version", McpTestData.MOCK_CLIENT_VERSION);
-        PipedInputStream clientStdout = new PipedInputStream(8_192);
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(8_192);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         AtomicReference<JsonNode> received = new AtomicReference<>();
         CountDownLatch requestReceived = new CountDownLatch(1);
