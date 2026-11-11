@@ -102,8 +102,11 @@ class McpTransportContractIntegrationTest {
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
+        assertThat(ping.path("result").isObject())
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
+                .isTrue();
     
     }
 
@@ -125,8 +128,11 @@ class McpTransportContractIntegrationTest {
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
+        assertThat(ping.path("result").isObject())
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
+                .isTrue();
     
     }
 
@@ -148,8 +154,11 @@ class McpTransportContractIntegrationTest {
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
+        assertThat(ping.path("result").isObject())
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
+                .isTrue();
     
     }
 
@@ -191,9 +200,12 @@ class McpTransportContractIntegrationTest {
 
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
-        assertThat(ping.path("result").isObject()).as("Контрольный ping после notification должен вернуть объект result").isTrue();
+        assertThat(ping.path("result").isObject())
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
+                .isTrue();
+        assertThat(ping.path("result").isObject()).as("Контрольный ping после предыдущего запроса должен вернуть объект result").isTrue();
     
     
     }
@@ -236,9 +248,12 @@ class McpTransportContractIntegrationTest {
         var ping = sendRequest(client, "ping", null, REQUEST_TIMEOUT);
 
         assertThat(ping.has("error"))
-                .as("После предыдущего сообщения сервер должен продолжать обрабатывать новые запросы")
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен завершиться без error")
                 .isFalse();
-        assertThat(ping.path("result").isObject()).as("После ошибочного сообщения сервер должен вернуть объект result на ping").isTrue();
+        assertThat(ping.path("result").isObject())
+                .as("Контрольный ping после некорректного JSON-RPC сообщения должен вернуть объект result")
+                .isTrue();
+        assertThat(ping.path("result").isObject()).as("Контрольный ping после notification должен вернуть объект result").isTrue();
     
     
     }
