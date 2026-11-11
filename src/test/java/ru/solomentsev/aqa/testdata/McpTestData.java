@@ -16,6 +16,8 @@ public final class McpTestData {
     public static final String UNSUPPORTED_PROTOCOL_VERSION = "2099-01-01";
     public static final String CLIENT_NAME = "atlassian-mcp-light-autotests";
     public static final String CLIENT_VERSION = "1.0";
+    public static final String CLASSIC_SESSION_MODE = "classic";
+    public static final String STATELESS_SESSION_MODE = "stateless";
     public static final String MOCK_CLIENT_NAME = "aqa-tests";
     public static final String MOCK_CLIENT_VERSION = "1.0";
     public static final String SERVER_NAME = "atlassian-lite";
