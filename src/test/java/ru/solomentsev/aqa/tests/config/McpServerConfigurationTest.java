@@ -36,7 +36,8 @@ class McpServerConfigurationTest {
     @Story("Чтение режима запуска из переменных окружения")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("AQA_SERVER_MODE=local и AQA_SERVER_JAR=server/target/server.jar из environment выбирают local mode")
-    @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")    void shouldReadLocalModeFromEnvironment() {
+    @Description("Предусловия: Переданы AQA_SERVER_MODE=local и AQA_SERVER_JAR.\nШаги: построить конфигурацию из переменных окружения.\nОжидаемый результат: конфигурация выбирает режим local.")
+    void shouldReadLocalModeFromEnvironment() {
         Allure.parameter("AQA_SERVER_MODE", "local");
         Allure.parameter("AQA_SERVER_JAR", "server/target/server.jar");
         McpServerConfiguration configuration = Allure.step("Построить конфигурацию: AQA_SERVER_MODE=local, AQA_SERVER_JAR задан", () -> McpServerConfiguration.from(
@@ -48,8 +49,7 @@ class McpServerConfigurationTest {
         ));
 
         assertThat(configuration.mode()).as("При AQA_SERVER_MODE=local конфигурация должна выбрать local mode").isEqualTo(McpConfigurationTestData.getLocalMode());
-    
-    
+
     }
 
     @Test
@@ -110,7 +110,8 @@ class McpServerConfigurationTest {
     @Story("Приоритет системных свойств над переменными окружения")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("System property aqa.server.mode=docker переопределяет environment AQA_SERVER_MODE=local [image=atlassian-mcp-light:test]")
-    @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")    void shouldPreferSystemPropertiesToEnvironment() {
+    @Description("Предусловия: Environment задаёт local, system properties задают docker и параметры Docker.\nШаги: построить конфигурацию с обоими источниками.\nОжидаемый результат: системное свойство имеет приоритет; выбран режим docker.")
+    void shouldPreferSystemPropertiesToEnvironment() {
         Allure.parameter("Environment AQA_SERVER_MODE", "local");
         Allure.parameter("System property aqa.server.mode", "docker");
         Allure.parameter("Docker image", "atlassian-mcp-light:test");
@@ -129,8 +130,7 @@ class McpServerConfigurationTest {
         ));
 
         assertThat(configuration.mode()).as("Системное свойство должно иметь приоритет и выбирать docker mode").isEqualTo("docker");
-    
-    
+
     }
 
     @Test
@@ -149,8 +149,7 @@ class McpServerConfigurationTest {
         ))).as("При AQA_SERVER_MODE=local без AQA_SERVER_JAR ожидается IllegalArgumentException с именем AQA_SERVER_JAR")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(McpConfigurationTestData.getServerJarEnv());
-    
-    
+
     }
 
     @Test
@@ -173,8 +172,7 @@ class McpServerConfigurationTest {
         ))).as("При AQA_SERVER_MODE=docker без AQA_DOCKER_ENV_FILE ожидается IllegalArgumentException")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(McpConfigurationTestData.getDockerEnvFileEnv());
-    
-    
+
     }
 
     @Test
@@ -192,7 +190,6 @@ class McpServerConfigurationTest {
         ))).as("При AQA_SERVER_MODE=remote ожидается IllegalArgumentException с именем AQA_SERVER_MODE")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(McpConfigurationTestData.getServerModeEnv());
-    
-    
+
     }
 }
