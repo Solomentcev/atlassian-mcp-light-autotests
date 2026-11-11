@@ -184,9 +184,10 @@ class McpContractIntegrationTest {
                     .putObject("io.modelcontextprotocol/clientCapabilities");
         }
 
+        ObjectNode requestParams = params;
         JsonNode invalidResponse = Allure.step(
                 "Вызвать " + method + " без обязательного " + missingField,
-                () -> sendRequest(client, method, params));
+                () -> sendRequest(client, method, requestParams));
         assertThat(invalidResponse.path("error").path("code").asInt())
                 .as("%s без обязательного %s должен вернуть JSON-RPC error code=%d, фактически: %s",
                         method, missingField, McpTestData.JSON_RPC_INVALID_PARAMS,
