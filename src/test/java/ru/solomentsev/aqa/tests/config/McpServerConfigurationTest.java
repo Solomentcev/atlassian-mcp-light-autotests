@@ -55,6 +55,36 @@ class McpServerConfigurationTest {
 
     @Test
     @Feature("Server Configuration")
+    @Story("Генерация уникального run id для изоляции параллельных сессий")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("Каждая конфигурация получает уникальный run id")
+    @Description("Предусловия: Создаются две независимые конфигурации запуска MCP-сервера.
+Шаги: получить run id каждой конфигурации.
+Ожидаемый результат: идентификаторы различаются, поэтому параллельные Docker-сессии не используют одно имя контейнера.")
+    void shouldGenerateUniqueRunIdForEachConfiguration() {
+        Map<String, String> environment = Map.of(
+                McpConfigurationTestData.getServerModeEnv(), McpConfigurationTestData.getLocalMode(),
+                McpConfigurationTestData.getServerJarEnv(), McpConfigurationTestData.getServerJarName()
+        );
+
+        McpServerConfiguration first = Allure.step(
+                "Создать первую конфигурацию MCP-сервера",
+                () -> McpServerConfiguration.from(environment, new Properties())
+        );
+        McpServerConfiguration second = Allure.step(
+                "Создать вторую независимую конфигурацию MCP-сервера",
+                () -> McpServerConfiguration.from(environment, new Properties())
+        );
+
+        Allure.parameter("Первый run id", first.runId());
+        Allure.parameter("Второй run id", second.runId());
+        assertThat(first.runId())
+                .as("Независимые конфигурации должны получать разные run id для изоляции Docker-контейнеров")
+                .isNotEqualTo(second.runId());
+    }
+
+    @Test
+    @Feature("Server Configuration")
     @Story("Загрузка настроек из dotenv-файла")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Параметры AQA_SERVER_MODE и AQA_SERVER_JAR автоматически загружаются из .env")
