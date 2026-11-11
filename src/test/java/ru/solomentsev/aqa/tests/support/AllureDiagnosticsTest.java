@@ -40,7 +40,7 @@ class AllureDiagnosticsTest {
                 .contains("Authorization: Basic [REDACTED]")
                 .contains("Authorization: Bearer [REDACTED]")
                 .doesNotContain("dXNlcjp0b2tlbg", "secret-value");
-    
+
     }
 
     @Test
@@ -62,7 +62,7 @@ class AllureDiagnosticsTest {
                 .contains("secret: [REDACTED]")
                 .contains("\"access_token\":\"[REDACTED]\"")
                 .doesNotContain("token-value", "pass-value", "another-value", "json-secret");
-    
+
     }
 
     @Test
@@ -78,6 +78,6 @@ class AllureDiagnosticsTest {
         assertThat(masked)
                 .as("Обычные диагностические сообщения не должны изменяться маскированием")
                 .isEqualTo(source);
-    
+
     }
 }
