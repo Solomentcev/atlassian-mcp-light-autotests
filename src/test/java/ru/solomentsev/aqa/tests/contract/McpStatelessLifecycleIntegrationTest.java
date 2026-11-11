@@ -53,8 +53,9 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("MCP method", McpTestData.getToolsListMethod());
         Allure.parameter("Lifecycle state", "NEW; initialize не выполнялся");
         Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getMcpServerNotInitialized());
-        try (McpProcessSession session =
-                     McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+        try (McpProcessSession session = Allure.step(
+                "Запустить новый MCP STDIO-процесс без classic initialize",
+                () -> McpServerConfiguration.fromEnvironment().startStatelessSession())) {
             JsonNode response = sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
             assertThat(response.has("error"))
                     .as("До initialize сервер должен вернуть JSON-RPC error")
@@ -133,8 +134,9 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         Allure.parameter("Ожидаемое количество инструментов", McpContractTestData.getExpectedTools().size());
         Allure.parameter("Classic initialize", "не выполняется");
-        try (McpProcessSession session =
-                     McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+        try (McpProcessSession session = Allure.step(
+                "Запустить новый MCP STDIO-процесс без classic initialize",
+                () -> McpServerConfiguration.fromEnvironment().startStatelessSession())) {
             JsonNode response = Allure.step("Выполнить tools/list в stateless-режиме: protocolVersion=" + McpTestData.getStatelessProtocolVersion(), () -> session.client().listToolsStateless(
                     McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
             assertThat(response.has("error"))
@@ -171,8 +173,9 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("MCP tool", ConfluenceTestData.getListSpacesTool());
         Allure.parameter("arguments.limit", McpTestData.getDefaultLimit());
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
-        try (McpProcessSession session =
-                     McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+        try (McpProcessSession session = Allure.step(
+                "Запустить новый MCP STDIO-процесс без classic initialize",
+                () -> McpServerConfiguration.fromEnvironment().startStatelessSession())) {
             ObjectNode params = OBJECT_MAPPER.createObjectNode();
             params.put("name", ConfluenceTestData.getListSpacesTool());
             params.putObject("arguments").put("limit", McpTestData.getDefaultLimit());
@@ -236,8 +239,9 @@ class McpStatelessLifecycleIntegrationTest {
         Allure.parameter("MCP method", McpTestData.getPingMethod());
         Allure.parameter("Lifecycle states", "NEW; INITIALIZING; READY");
         Allure.parameter("Ожидаемый результат ping", "пустой объект");
-        try (McpProcessSession session =
-                     McpServerConfiguration.fromEnvironment().startStatelessSession()) {
+        try (McpProcessSession session = Allure.step(
+                "Запустить новый MCP STDIO-процесс без classic initialize",
+                () -> McpServerConfiguration.fromEnvironment().startStatelessSession())) {
             JsonNode pingBeforeInitialize =
                     sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
             assertThat(pingBeforeInitialize.has("error"))
