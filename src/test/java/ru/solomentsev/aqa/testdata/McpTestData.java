@@ -68,6 +68,9 @@ public final class McpTestData {
     public static final Duration STDERR_COLLECTION_TIMEOUT = Duration.ofSeconds(3);
     public static final Duration PROCESS_SHUTDOWN_TIMEOUT = Duration.ofMillis(PROCESS_SHUTDOWN_TIMEOUT_MS);
 
+    public static String getServerDiscoverMethod() { return SERVER_DISCOVER_METHOD; }
+    public static String getToolsListMethod() { return TOOLS_LIST_METHOD; }
+
     private McpTestData() {
     }
 }
