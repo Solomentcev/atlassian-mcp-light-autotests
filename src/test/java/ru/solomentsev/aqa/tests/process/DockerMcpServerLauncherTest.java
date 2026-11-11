@@ -2,6 +2,7 @@ package ru.solomentsev.aqa.tests.process;
 
 
 import ru.solomentsev.aqa.process.DockerMcpServerLauncher;
+import ru.solomentsev.aqa.testdata.DockerTestData;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -21,7 +22,7 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatT
 
 @Epic("AQA Test Infrastructure")
     @Tag("unit")
-    @Tag("docker")
+    @Tag(DockerTestData.EXECUTABLE)
 @Tag("regression")
 class DockerMcpServerLauncherTest {
 
@@ -33,19 +34,19 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: Заданы Docker executable, run id, env-файл и image.\nШаги: сформировать docker run command.\nОжидаемый результат: команда содержит --rm, --name, label текущего прогона, -i и --env-file; не содержит TTY и публикацию портов.")
     @Tag("process")
     void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {
-        Allure.parameter("Docker executable", "docker");
-        Allure.parameter("AQA_RUN_ID", "build_123");
-        Allure.parameter("Docker env file", ".runtime.env");
-        Allure.parameter("Docker image", "atlassian-mcp-light:latest");
+        Allure.parameter("Docker executable", DockerTestData.EXECUTABLE);
+        Allure.parameter("AQA_RUN_ID", DockerTestData.RUN_ID);
+        Allure.parameter("Docker env file", DockerTestData.ENV_FILE.toString());
+        Allure.parameter("Docker image", DockerTestData.IMAGE);
         List<String> command = Allure.step("Сформировать команду запуска Docker для STDIO", () -> DockerMcpServerLauncher.buildRunCommand(
-                "docker",
-                "aml-build_123",
-                Path.of(".runtime.env"),
-                "atlassian-mcp-light:latest"
+                DockerTestData.EXECUTABLE,
+                DockerTestData.CONTAINER_NAME,
+                DockerTestData.ENV_FILE,
+                DockerTestData.IMAGE
         ));
 
         assertThat(command).as("Docker run должен включать параметры интерактивного STDIO-запуска без TTY").containsSubsequence(
-                "docker", "run", "--rm", "--name", "aml-build_123",
+                DockerTestData.EXECUTABLE, "run", "--rm", "--name", DockerTestData.CONTAINER_NAME,
                 "--label", "aqa.run-id=build_123", "-i", "--env-file"
         );
         int envFileOptionIndex = command.indexOf("--env-file");
@@ -54,9 +55,9 @@ class DockerMcpServerLauncherTest {
                 .isGreaterThanOrEqualTo(0);
         assertThat(Path.of(command.get(envFileOptionIndex + 1)).toAbsolutePath().normalize())
                 .as("Docker run должен передавать абсолютный путь к заданному файлу .runtime.env")
-                .isEqualTo(Path.of(".runtime.env").toAbsolutePath().normalize());
+                .isEqualTo(DockerTestData.ENV_FILE.toAbsolutePath().normalize());
         assertThat(command).as("Docker run должен использовать заданный image=atlassian-mcp-light:latest")
-                .contains("atlassian-mcp-light:latest");
+                .contains(DockerTestData.IMAGE);
         assertThat(command).as("STDIO-контейнер нельзя запускать с TTY или опубликованными портами").doesNotContain("-t", "-p", "--publish");
     
     
@@ -70,13 +71,13 @@ class DockerMcpServerLauncherTest {
     @Description("Предусловия: Передан run id с недопустимым символом /.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием runId.")
     @Tag("negative")
     void shouldRejectUnsafeRunId() {
-        Allure.parameter("AQA_RUN_ID", "unsafe/run-id");
+        Allure.parameter("AQA_RUN_ID", DockerTestData.UNSAFE_RUN_ID);
         Allure.parameter("Ожидаемая проверка", "runId должен содержать только безопасные символы");
         assertThatThrownBy(() -> Allure.step("Создать Docker launcher с AQA_RUN_ID=unsafe/run-id", () -> new DockerMcpServerLauncher(
-                "docker",
-                "atlassian-mcp-light:latest",
-                Path.of(".runtime.env"),
-                "unsafe/run-id",
+                DockerTestData.EXECUTABLE,
+                DockerTestData.IMAGE,
+                DockerTestData.ENV_FILE,
+                DockerTestData.UNSAFE_RUN_ID,
                 5
         ))).as("При AQA_RUN_ID=unsafe/run-id ожидается IllegalArgumentException с указанием runId")
                 .isInstanceOf(IllegalArgumentException.class)
@@ -96,9 +97,9 @@ class DockerMcpServerLauncherTest {
         Allure.parameter("Docker stop timeout, seconds", 0);
         Allure.parameter("Ожидаемая проверка", "stopTimeoutSeconds должен быть больше нуля");
         assertThatThrownBy(() -> Allure.step("Создать Docker launcher с stopTimeoutSeconds=0", () -> new DockerMcpServerLauncher(
-                "docker",
-                "atlassian-mcp-light:latest",
-                Path.of(".runtime.env"),
+                DockerTestData.EXECUTABLE,
+                DockerTestData.IMAGE,
+                DockerTestData.ENV_FILE,
                 "run-123",
                 0
         ))).as("При stopTimeoutSeconds=0 ожидается IllegalArgumentException с указанием stopTimeoutSeconds")
