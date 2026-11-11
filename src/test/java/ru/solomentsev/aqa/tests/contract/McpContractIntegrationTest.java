@@ -166,15 +166,15 @@ class McpContractIntegrationTest {
         ObjectNode missingCapabilitiesParams = OBJECT_MAPPER.createObjectNode();
         missingCapabilitiesParams.putObject("_meta")
                 .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
-        JsonNode missingCapabilities = sendRequest(client, 
-                "tools/list", missingCapabilitiesParams);
+        JsonNode missingCapabilities = Allure.step("Вызвать tools/list с protocolVersion, но без clientCapabilities",
+                () -> sendRequest(client, "tools/list", missingCapabilitiesParams));
         assertThat(missingCapabilities.path("error").path("code").asInt()).as("tools/list с protocolVersion=%s, но без clientCapabilities должен вернуть -32602, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, missingCapabilities.path("error").path("code")).isEqualTo(-32602);
 
         ObjectNode missingVersionParams = OBJECT_MAPPER.createObjectNode();
         missingVersionParams.putObject("_meta")
                 .putObject("io.modelcontextprotocol/clientCapabilities");
-        JsonNode missingVersion = sendRequest(client, 
-                "tools/list", missingVersionParams);
+        JsonNode missingVersion = Allure.step("Вызвать tools/list с clientCapabilities, но без protocolVersion",
+                () -> sendRequest(client, "tools/list", missingVersionParams));
         assertThat(missingVersion.path("error").path("code").asInt()).as("tools/list без protocolVersion должен вернуть -32602, фактически: %s", missingVersion.path("error").path("code")).isEqualTo(-32602);
 
         assertSuccessfulJsonRpc(Allure.step("Повторить tools/list с корректным protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION, () -> client.listToolsStateless(
