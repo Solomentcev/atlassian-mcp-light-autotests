@@ -31,8 +31,8 @@ class ManagedProcessTest {
     @Feature("Managed Process")
     @Story("Диагностика процесса, не завершившегося после принудительной остановки")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Диагностика процесса, не завершившегося после принудительной остановки")
-    @Description("Предусловия: Используется имитация процесса, который остаётся жив после destroyForcibly.\nШаги: вызвать close; проверить результат принудительной остановки; затем смоделировать завершение процесса и повторить close.\nОжидаемый результат: первая попытка сообщает IOException о незавершённом процессе; после фактического завершения повторный close проходит успешно.")
+    @DisplayName("close() сообщает IOException, если процесс остаётся alive после destroyForcibly(); повторный close после завершения успешен")
+    @Description("Предусловия: вместо ОС-процесса используется тестовая реализация Process; waitFor(timeout) сообщает timeout, destroyForcibly() вызывается, но isAlive() остаётся true.\nШаги: вызвать ManagedProcess.close(); проверить IOException и факт вызова destroyForcibly(); изменить состояние fake-процесса на завершённое и повторить close().\nОжидаемый результат: первая попытка завершается IOException с диагностикой незавершённого процесса; после isAlive=false повторный close() завершается без ошибки, ManagedProcess.isAlive() возвращает false.")
     @Tag("process")
     void shouldReportFailureWhenProcessSurvivesForcedTermination() throws IOException {
         Allure.parameter("Состояние процесса после destroyForcibly", "остаётся запущенным");
