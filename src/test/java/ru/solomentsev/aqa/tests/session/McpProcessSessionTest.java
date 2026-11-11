@@ -105,7 +105,7 @@ class McpProcessSessionTest {
                     .path("io.modelcontextprotocol/serverInfo")
                     .path("name").asText())
                     .as("server/discover должен вернуть metadata fake-stateless-server")
-                    .isEqualTo("fake-stateless-server");
+                    .isEqualTo(McpTestData.FAKE_STATELESS_SERVER_NAME);
 
             var tools = listToolsStateless(session.client(), 
                     McpTestData.STATELESS_PROTOCOL_VERSION,
