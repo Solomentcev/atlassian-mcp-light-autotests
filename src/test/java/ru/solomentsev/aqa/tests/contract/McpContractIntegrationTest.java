@@ -35,7 +35,7 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.callTool;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.fieldNames;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.requestStatelessTools;
-import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.sendRequest;
+import static ru.solomentsev.aqa.mcp.McpClientTestActions.sendRequest;
 import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
 
 /**
