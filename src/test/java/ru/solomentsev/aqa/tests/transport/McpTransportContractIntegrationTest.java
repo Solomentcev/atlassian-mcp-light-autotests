@@ -263,8 +263,8 @@ class McpTransportContractIntegrationTest {
     @Feature("Classic Lifecycle")
     @Story("MCP-025 — Повторный initialize")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-025: Повторный initialize [protocolVersion=" + "параметр" + "] отклоняется с error=-32600; исходная сессия сохраняет tools/list")
-    @Description("Предусловия: MCP STDIO-процесс завершил classic initialize и notifications/initialized; lifecycle находится в READY.\nШаги: повторно отправить initialize с protocolVersion=" + "параметр" + " и новым request id; затем вызвать tools/list в исходной сессии.\nОжидаемый результат: повторный initialize отклоняется с JSON-RPC error=-32600; tools/list по-прежнему возвращает успешный response с массивом инструментов.")
+    @DisplayName("MCP-025: Повторный initialize отклоняется с error=-32600; исходная сессия сохраняет tools/list")
+    @Description("Предусловия: MCP STDIO-процесс завершил classic initialize и notifications/initialized; lifecycle находится в READY.\nШаги: повторно отправить initialize с новым request id; затем вызвать tools/list в исходной сессии.\nОжидаемый результат: повторный initialize отклоняется с JSON-RPC error=-32600; tools/list по-прежнему возвращает успешный response с массивом инструментов.")
     @Tag("negative")
     @Tag("case-MCP-025")
     void shouldRejectSecondClassicInitialize(McpClient client) {
