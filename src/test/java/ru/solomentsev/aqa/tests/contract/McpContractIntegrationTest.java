@@ -48,7 +48,7 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 @Tag("regression")
 class McpContractIntegrationTest {
 
-    private static final Duration REQUEST_TIMEOUT = McpTestData.REQUEST_TIMEOUT;
+    private static final Duration REQUEST_TIMEOUT = McpTestData.getRequestTimeout();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final Map<String, McpContractTestData.ToolContract> EXPECTED_TOOLS = McpContractTestData.getExpectedTools();
@@ -57,8 +57,8 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-005 — Получение списка инструментов")
     @Severity(SeverityLevel.BLOCKER)
-    @DisplayName("MCP-005: tools/list возвращает массив инструментов [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "]")
-    @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ".\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
+    @DisplayName("MCP-005: tools/list возвращает массив инструментов [protocolVersion=" + "2026-07-28" + "]")
+    @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с protocolVersion=" + "2026-07-28" + ".\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
     @Tag("smoke")
     void shouldReturnToolsList(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -70,8 +70,8 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-006 — Проверка состава инструментов")
     @Severity(SeverityLevel.BLOCKER)
-    @DisplayName("MCP-006: Состав tools/list совпадает с контрактом [ожидается " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов]")
-    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: возвращено ровно " + McpTestData.EXPECTED_TOOL_COUNT + " уникальных имён; набор полностью совпадает с " + McpTestData.EXPECTED_TOOL_COUNT + " инструментами, перечисленными в контракте.")    @Tag("case-MCP-006")
+    @DisplayName("MCP-006: Состав tools/list совпадает с контрактом [ожидается " + 13 + " инструментов]")
+    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с EXPECTED_TOOLS.\nОжидаемый результат: возвращено ровно " + 13 + " уникальных имён; набор полностью совпадает с " + 13 + " инструментами, перечисленными в контракте.")    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -88,7 +88,7 @@ class McpContractIntegrationTest {
     @Feature("Tools Discovery")
     @Story("MCP-007 — Проверка описаний инструментов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-007: У каждого из " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов есть непустой description")
+    @DisplayName("MCP-007: У каждого из " + 13 + " инструментов есть непустой description")
     @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         JsonNode tools = getStatelessTools(client);
@@ -104,8 +104,8 @@ class McpContractIntegrationTest {
     @Feature("Tool Schemas")
     @Story("MCP-008 — Проверка JSON Schema и annotations инструментов")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-008: JSON Schema и annotations всех " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов соответствуют контракту")
-    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый контракт " + McpTestData.EXPECTED_TOOL_COUNT + " инструментов.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
+    @DisplayName("MCP-008: JSON Schema и annotations всех " + 13 + " инструментов соответствуют контракту")
+    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый контракт " + 13 + " инструментов.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
@@ -136,17 +136,17 @@ class McpContractIntegrationTest {
                         .isEqualTo(property.getValue());
                 if ("string".equals(property.getValue())) {
                     assertThat(definition.path("minLength").asInt())
-                            .as("%s.%s: ожидаемый minLength=%d", name, property.getKey(), McpTestData.MIN_STRING_LENGTH)
-                            .isEqualTo(McpTestData.MIN_STRING_LENGTH);
+                            .as("%s.%s: ожидаемый minLength=%d", name, property.getKey(), McpTestData.getMinStringLength())
+                            .isEqualTo(McpTestData.getMinStringLength());
                 }
                 if ("integer".equals(property.getValue())) {
                     assertThat(definition.path("minimum").asInt())
-                            .as("%s.%s: ожидаемый minimum=%d", name, property.getKey(), McpTestData.MIN_LIMIT)
-                            .isEqualTo(McpTestData.MIN_LIMIT);
+                            .as("%s.%s: ожидаемый minimum=%d", name, property.getKey(), McpTestData.getMinLimit())
+                            .isEqualTo(McpTestData.getMinLimit());
                     if ("limit".equals(property.getKey())) {
                         assertThat(definition.path("maximum").asInt())
-                                .as("%s.%s: ожидаемый maximum=%d", name, property.getKey(), McpTestData.MAX_LIMIT)
-                                .isEqualTo(McpTestData.MAX_LIMIT);
+                                .as("%s.%s: ожидаемый maximum=%d", name, property.getKey(), McpTestData.getMaxLimit())
+                                .isEqualTo(McpTestData.getMaxLimit());
                     }
                 }
             }
@@ -161,7 +161,7 @@ class McpContractIntegrationTest {
     @Story("MCP-023 — Проверка обязательных stateless metadata")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-023: Stateless-запрос без обязательного metadata отклоняется")
-    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=" + McpTestData.JSON_RPC_INVALID_PARAMS + "; контрольный tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + " выполняется успешно и возвращает массив tools.")
+    @Description("Предусловия: MCP STDIO-процесс запущен и прошёл classic initialize.\nШаги: отправить stateless-запрос без одного из обязательных metadata-полей; затем выполнить корректный tools/list.\nОжидаемый результат: запрос без обязательного metadata возвращает JSON-RPC error code=" + -32602 + "; контрольный tools/list с protocolVersion=" + "2026-07-28" + " выполняется успешно и возвращает массив tools.")
     @Tag("negative")
     @Tag("case-MCP-023")
     void shouldRejectMissingRequiredStatelessMetadata(String missingField,
@@ -169,13 +169,13 @@ class McpContractIntegrationTest {
                                                       McpClient client) {
         Allure.parameter("MCP method", method);
         Allure.parameter("Отсутствующее metadata поле", missingField);
-        Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.JSON_RPC_INVALID_PARAMS);
+        Allure.parameter("Ожидаемый JSON-RPC error code", McpTestData.getJsonRpcInvalidParams());
 
         ObjectNode params = null;
         if ("clientCapabilities".equals(missingField)) {
             params = OBJECT_MAPPER.createObjectNode();
             params.putObject("_meta")
-                    .put("io.modelcontextprotocol/protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+                    .put("io.modelcontextprotocol/protocolVersion", McpTestData.getStatelessProtocolVersion());
         } else if ("protocolVersion".equals(missingField)) {
             params = OBJECT_MAPPER.createObjectNode();
             params.putObject("_meta")
@@ -188,13 +188,13 @@ class McpContractIntegrationTest {
                 () -> sendRequest(client, method, requestParams));
         assertThat(invalidResponse.path("error").path("code").asInt())
                 .as("%s без обязательного %s должен вернуть JSON-RPC error code=%d, фактически: %s",
-                        method, missingField, McpTestData.JSON_RPC_INVALID_PARAMS,
+                        method, missingField, McpTestData.getJsonRpcInvalidParams(),
                         invalidResponse.path("error").path("code"))
-                .isEqualTo(McpTestData.JSON_RPC_INVALID_PARAMS);
+                .isEqualTo(McpTestData.getJsonRpcInvalidParams());
 
         JsonNode validResponse = Allure.step(
-                "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION,
-                () -> client.listToolsStateless(McpTestData.STATELESS_PROTOCOL_VERSION, REQUEST_TIMEOUT));
+                "Повторить tools/list с обязательными metadata и protocolVersion=" + McpTestData.getStatelessProtocolVersion(),
+                () -> client.listToolsStateless(McpTestData.getStatelessProtocolVersion(), REQUEST_TIMEOUT));
         assertSuccessfulJsonRpc(validResponse);
         assertThat(validResponse.path("result").path("tools").isArray())
                 .as("Контрольный stateless tools/list должен вернуть массив result.tools после отклонения некорректного запроса")
@@ -205,24 +205,24 @@ class McpContractIntegrationTest {
     @Feature("Stateless Protocol")
     @Story("MCP-022 — Отклонение неподдерживаемой stateless protocolVersion")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-022: server/discover отклоняет protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION + " [error=-32022]")
-    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSON-RPC запросы.\nШаги: вызвать server/discover с protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION + " и непустым clientCapabilities.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32022; error.data.supportedVersions содержит поддерживаемую версию " + McpTestData.STATELESS_PROTOCOL_VERSION + ".")
+    @DisplayName("MCP-022: server/discover отклоняет protocolVersion=" + "2099-01-01" + " [error=-32022]")
+    @Description("Предусловия: MCP STDIO-процесс запущен и готов принимать JSON-RPC запросы.\nШаги: вызвать server/discover с protocolVersion=" + "2099-01-01" + " и непустым clientCapabilities.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32022; error.data.supportedVersions содержит поддерживаемую версию " + "2026-07-28" + ".")
     @Tag("negative")
     @Tag("case-MCP-022")
     void shouldRejectUnsupportedStatelessProtocolVersion(McpClient client) {
-        Allure.parameter("Переданный protocolVersion", McpTestData.UNSUPPORTED_PROTOCOL_VERSION);
-        Allure.parameter("Поддерживаемый protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("Переданный protocolVersion", McpTestData.getUnsupportedProtocolVersion());
+        Allure.parameter("Поддерживаемый protocolVersion", McpTestData.getStatelessProtocolVersion());
         ObjectNode params = OBJECT_MAPPER.createObjectNode();
         ObjectNode metadata = params.putObject("_meta");
-        metadata.put("io.modelcontextprotocol/protocolVersion", McpTestData.UNSUPPORTED_PROTOCOL_VERSION);
+        metadata.put("io.modelcontextprotocol/protocolVersion", McpTestData.getUnsupportedProtocolVersion());
         metadata.putObject("io.modelcontextprotocol/clientCapabilities");
 
-        JsonNode response = Allure.step("Вызвать server/discover с protocolVersion=" + McpTestData.UNSUPPORTED_PROTOCOL_VERSION,
-                () -> sendRequest(client, McpTestData.SERVER_DISCOVER_METHOD, params));
+        JsonNode response = Allure.step("Вызвать server/discover с protocolVersion=" + McpTestData.getUnsupportedProtocolVersion(),
+                () -> sendRequest(client, McpTestData.getServerDiscoverMethod(), params));
 
-        assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.UNSUPPORTED_PROTOCOL_VERSION).isEqualTo(McpTestData.MCP_UNSUPPORTED_PROTOCOL_VERSION);
+        assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.getUnsupportedProtocolVersion()).isEqualTo(McpTestData.getMcpUnsupportedProtocolVersion());
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
-                .containsExactly(McpTestData.STATELESS_PROTOCOL_VERSION);
+                .containsExactly(McpTestData.getStatelessProtocolVersion());
     
     
     }
@@ -236,7 +236,7 @@ class McpContractIntegrationTest {
     @Tag("negative")
     @Tag("case-MCP-010")
     void shouldReturnToolErrorForUnknownToolWithoutJsonRpcError(McpClient client) {
-        Allure.parameter("MCP method", McpTestData.TOOLS_CALL_METHOD);
+        Allure.parameter("MCP method", McpTestData.getToolsCallMethod());
         Allure.parameter("Tool name", "aqa_unknown_tool");
         JsonNode response = Allure.step("Вызвать неизвестный инструмент name=aqa_unknown_tool с пустыми arguments",
                 () -> callTool(client, "aqa_unknown_tool", OBJECT_MAPPER.createObjectNode()));
@@ -301,20 +301,20 @@ class McpContractIntegrationTest {
     @Feature("Tool Validation")
     @Story("MCP-012 — Вызов инструмента с неверным типом аргумента")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=" + JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (integer вместо string)")
-    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=" + JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (JSON integer).\nОжидаемый результат: вызов с аргументом неверного JSON-типа возвращает MCP tool error (result.isError=true); проверка не зависит от наличия конкретной задачи в Jira.")
+    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=" + 42 + " (integer вместо string)")
+    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=" + 42 + " (JSON integer).\nОжидаемый результат: вызов с аргументом неверного JSON-типа возвращает MCP tool error (result.isError=true); проверка не зависит от наличия конкретной задачи в Jira.")
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
     void shouldRejectWrongToolArgumentType(McpClient client) {
         Allure.parameter("MCP tool", "jira_get_issue");
-        Allure.parameter("Аргумент issue_key", JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (число вместо строки)");
+        Allure.parameter("Аргумент issue_key", JiraTestData.getInvalidIssueKeyNumber() + " (число вместо строки)");
         Allure.parameter("Ожидаемый тип issue_key", "string");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        arguments.put("issue_key", JiraTestData.INVALID_ISSUE_KEY_NUMBER);
-        JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=" + JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (integer вместо string)",
+        arguments.put("issue_key", JiraTestData.getInvalidIssueKeyNumber());
+        JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=" + JiraTestData.getInvalidIssueKeyNumber() + " (integer вместо string)",
                 () -> callTool(client, "jira_get_issue", arguments));
-        assertToolError(invalidResponse, "jira_get_issue с issue_key=" + JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (integer вместо string)");
+        assertToolError(invalidResponse, "jira_get_issue с issue_key=" + JiraTestData.getInvalidIssueKeyNumber() + " (integer вместо string)");
 
     
     }
@@ -332,7 +332,7 @@ class McpContractIntegrationTest {
         Allure.parameter("MCP tool", "jira_get_issue");
         Allure.parameter("Неизвестный аргумент", "unexpected=value");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        arguments.put("issue_key", JiraTestData.ISSUE_KEY);
+        arguments.put("issue_key", JiraTestData.getIssueKey());
         arguments.put("unexpected", "value");
         JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с неизвестным аргументом unexpected=value",
                 () -> callTool(client, "jira_get_issue", arguments));
@@ -358,25 +358,25 @@ class McpContractIntegrationTest {
                                                  McpClient client) {
         Allure.parameter("MCP tool", toolName);
         Allure.parameter("Поле запроса", queryField == null ? "отсутствует" : queryField);
-        Allure.parameter("Минимальный допустимый limit", McpTestData.MIN_LIMIT);
-        Allure.parameter("Максимальный допустимый limit", McpTestData.MAX_LIMIT);
-        Allure.parameter("Контрольный допустимый limit", McpTestData.DEFAULT_LIMIT);
+        Allure.parameter("Минимальный допустимый limit", McpTestData.getMinLimit());
+        Allure.parameter("Максимальный допустимый limit", McpTestData.getMaxLimit());
+        Allure.parameter("Контрольный допустимый limit", McpTestData.getDefaultLimit());
 
-        assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_BELOW_MIN);
-        assertLimitRejected(client, toolName, queryField, query, McpTestData.INVALID_LIMIT_ABOVE_MAX);
+        assertLimitRejected(client, toolName, queryField, query, McpTestData.getInvalidLimitBelowMin());
+        assertLimitRejected(client, toolName, queryField, query, McpTestData.getInvalidLimitAboveMax());
 
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         if (queryField != null) {
             arguments.put(queryField, query);
         }
-        arguments.put("limit", McpTestData.DEFAULT_LIMIT);
+        arguments.put("limit", McpTestData.getDefaultLimit());
 
         JsonNode response = Allure.step(
-                "Вызвать " + toolName + " с допустимым limit=" + McpTestData.DEFAULT_LIMIT,
+                "Вызвать " + toolName + " с допустимым limit=" + McpTestData.getDefaultLimit(),
                 () -> callTool(client, toolName, arguments));
         assertSuccessfulJsonRpc(response);
         assertThat(response.path("result").path("isError").asBoolean())
-                .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.DEFAULT_LIMIT)
+                .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.getDefaultLimit())
                 .isFalse();
     }
 
@@ -384,8 +384,8 @@ class McpContractIntegrationTest {
     @Feature("Confluence Page Updates")
     @Story("CONF-019 — Обновление страницы без полей для изменения")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("CONF-019: confluence_update_page отклоняет запрос только с page_id=" + ConfluenceTestData.PAGE_ID + " без title и content")
-    @Description("Предусловия: В тестовом Confluence-окружении существует страница с ID=" + ConfluenceTestData.PAGE_ID + ".\nШаги: вызвать confluence_update_page с единственным аргументом page_id=" + ConfluenceTestData.PAGE_ID + "; не передавать title и content.\nОжидаемый результат: вызов возвращает MCP tool error с диагностикой отсутствия полей для изменения; запрос не должен запускать обновление страницы.")
+    @DisplayName("CONF-019: confluence_update_page отклоняет запрос только с page_id=" + "1" + " без title и content")
+    @Description("Предусловия: В тестовом Confluence-окружении существует страница с ID=" + "1" + ".\nШаги: вызвать confluence_update_page с единственным аргументом page_id=" + "1" + "; не передавать title и content.\nОжидаемый результат: вызов возвращает MCP tool error с диагностикой отсутствия полей для изменения; запрос не должен запускать обновление страницы.")
     @Tag("negative")
     @Tag("case-CONF-019")
     @Tag("confluence")
@@ -394,11 +394,11 @@ class McpContractIntegrationTest {
         Allure.parameter("Переданные поля", "page_id");
         Allure.parameter("Отсутствующие поля", "title; content");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        arguments.put("page_id", ConfluenceTestData.PAGE_ID);
+        arguments.put("page_id", ConfluenceTestData.getPageId());
 
-        JsonNode response = Allure.step("Вызвать confluence_update_page только с page_id=" + ConfluenceTestData.PAGE_ID + ", без title и content",
+        JsonNode response = Allure.step("Вызвать confluence_update_page только с page_id=" + ConfluenceTestData.getPageId() + ", без title и content",
                 () -> callTool(client, "confluence_update_page", arguments));
-        assertToolError(response, "confluence_update_page с page_id=" + ConfluenceTestData.PAGE_ID + " без title и content");
+        assertToolError(response, "confluence_update_page с page_id=" + ConfluenceTestData.getPageId() + " без title и content");
     
     
     }
@@ -414,9 +414,9 @@ class McpContractIntegrationTest {
         params.put("name", name);
         params.set("arguments", arguments);
         return client.requestStateless(
-                McpTestData.TOOLS_CALL_METHOD,
+                McpTestData.getToolsCallMethod(),
                 params,
-                McpTestData.STATELESS_PROTOCOL_VERSION,
+                McpTestData.getStatelessProtocolVersion(),
                 OBJECT_MAPPER.createObjectNode(),
                 null,
                 REQUEST_TIMEOUT
@@ -426,12 +426,12 @@ class McpContractIntegrationTest {
     @Step("Получить tools/list в stateless-режиме и проверить структуру ответа")
     private static JsonNode getStatelessTools(McpClient client) {
         JsonNode response = client.listToolsStateless(
-                McpTestData.STATELESS_PROTOCOL_VERSION,
+                McpTestData.getStatelessProtocolVersion(),
                 REQUEST_TIMEOUT
         );
         assertSuccessfulJsonRpc(response);
         JsonNode tools = response.path("result").path("tools");
-        assertThat(tools.isArray()).as("tools/list при protocolVersion=%s должен вернуть массив инструментов, фактически: %s", McpTestData.STATELESS_PROTOCOL_VERSION, tools.getNodeType()).isTrue();
+        assertThat(tools.isArray()).as("tools/list при protocolVersion=%s должен вернуть массив инструментов, фактически: %s", McpTestData.getStatelessProtocolVersion(), tools.getNodeType()).isTrue();
         return tools;
     }
 
@@ -449,7 +449,7 @@ class McpContractIntegrationTest {
 
         JsonNode response = callTool(client, toolName, arguments);
         assertToolError(response, toolName + " с limit=" + limit
-                + " (допустимый диапазон [" + McpTestData.MIN_LIMIT + ", " + McpTestData.MAX_LIMIT + "])");
+                + " (допустимый диапазон [" + McpTestData.getMinLimit() + ", " + McpTestData.getMaxLimit() + "])");
     }
 
     @Step("Проверить успешный результат MCP-инструмента: {context}")
@@ -464,7 +464,7 @@ class McpContractIntegrationTest {
     private static void assertSuccessfulJsonRpc(JsonNode response) {
         assertThat(response.path("jsonrpc").asText())
                 .as("Ответ должен соответствовать JSON-RPC версии 2.0")
-                .isEqualTo(McpTestData.JSON_RPC_VERSION);
+                .isEqualTo(McpTestData.getJsonRpcVersion());
         assertThat(response.has("id"))
                 .as("Ответ на запрос должен содержать исходный request id")
                 .isTrue();
