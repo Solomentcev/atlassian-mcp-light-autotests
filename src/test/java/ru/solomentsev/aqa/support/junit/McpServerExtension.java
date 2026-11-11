@@ -15,8 +15,6 @@ import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.support.diagnostics.AllureDiagnostics;
 import ru.solomentsev.aqa.mcp.McpProcessSession;
 
-import java.io.IOException;
-
 /**
  * Создаёт одну отдельную MCP-сессию на тестовый класс и закрывает её после класса.
  *
@@ -60,9 +58,9 @@ public final class McpServerExtension
             try {
                 Allure.step("Закрыть MCP-сессию тестового класса", session::close);
                 LOG.info("Завершение тестового класса: {}", context.getRequiredTestClass().getSimpleName());
-            } catch (IOException exception) {
+            } catch (RuntimeException exception) {
                 AllureDiagnostics.attachStderr(session.stderr());
-                throw new IOException("Failed to close MCP session after "
+                throw new IllegalStateException("Failed to close MCP session after "
                         + context.getRequiredTestClass().getName(), exception);
             }
         }
