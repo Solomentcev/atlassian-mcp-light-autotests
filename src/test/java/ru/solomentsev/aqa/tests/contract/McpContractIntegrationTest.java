@@ -297,7 +297,7 @@ class McpContractIntegrationTest {
     @Story("MCP-012 — Вызов инструмента с неверным типом аргумента")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=42 (integer вместо string); валидный ключ=" + JiraTestData.ISSUE_KEY)
-    @Description("Предусловия: Инициализация завершена\nШаги: 1. Передать аргумент с типом, не соответствующим JSON Schema.\nОжидаемый результат: Запрос отклоняется; сервер возвращает контролируемую ошибку, не завершая процесс.")
+    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=42 (JSON integer); затем повторить вызов с валидным issue_key=" + JiraTestData.ISSUE_KEY + ".\nОжидаемый результат: вызов с числом возвращает MCP tool error (result.isError=true); вызов с валидной строкой возвращает result.isError=false.")
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
@@ -307,7 +307,7 @@ class McpContractIntegrationTest {
         Allure.parameter("Ожидаемый тип issue_key", "string");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
         arguments.put("issue_key", 42);
-        assertToolError(callTool(client, "jira_get_issue", arguments));
+        assertToolError(callTool(client, "jira_get_issue", arguments), "jira_get_issue с issue_key=42 (integer вместо string)");
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
@@ -320,7 +320,7 @@ class McpContractIntegrationTest {
     @Story("MCP-013 — Вызов инструмента с неизвестным аргументом")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("MCP-013: jira_get_issue отклоняет неизвестный аргумент unexpected=value")
-    @Description("Предусловия: Инициализация завершена\nШаги: 1. Передать дополнительный аргумент, не объявленный схемой.\nОжидаемый результат: Сервер отклоняет вызов с `result.isError=true`, поскольку для всех 13 инструментов `additionalProperties=false`; обработка следующего корректного запроса продолжается.")
+    @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue содержит только объявленные аргументы issue_key.\nШаги: вызвать jira_get_issue с валидным issue_key и дополнительным unexpected=value; затем повторить вызов без неизвестного аргумента.\nОжидаемый результат: первый вызов возвращает MCP tool error (result.isError=true), так как additionalProperties=false; контрольный вызов возвращает result.isError=false.")
     @Tag("negative")
     @Tag("case-MCP-013")
     @Tag("jira")
@@ -334,7 +334,7 @@ class McpContractIntegrationTest {
 
         ObjectNode validArguments = OBJECT_MAPPER.createObjectNode();
         validArguments.put("issue_key", JiraTestData.ISSUE_KEY);
-        assertSuccessfulJsonRpc(callTool(client, "jira_get_issue", validArguments));
+        assertSuccessfulToolCall(callTool(client, "jira_get_issue", validArguments), "jira_get_issue с issue_key=" + JiraTestData.ISSUE_KEY);
     
     }
 
