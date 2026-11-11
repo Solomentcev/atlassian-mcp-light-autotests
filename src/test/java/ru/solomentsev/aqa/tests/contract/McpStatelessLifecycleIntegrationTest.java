@@ -42,8 +42,8 @@ class McpStatelessLifecycleIntegrationTest {
     @Feature("Classic Lifecycle")
     @Story("MCP-017 — Запрос до инициализации")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + ")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32001 (сервер ещё не инициализирован); инструменты не перечисляются.")
+    @DisplayName("MCP-017: classic tools/list в состоянии NEW до initialize возвращает error=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + ")")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; initialize и notifications/initialized не отправлялись.\nШаги: отправить classic JSON-RPC request method=tools/list без stateless metadata.\nОжидаемый результат: сервер возвращает JSON-RPC error code=" + McpTestData.MCP_SERVER_NOT_INITIALIZED + " (сервер ещё не инициализирован); инструменты не перечисляются.")
     @Tag("case-MCP-017")
     void shouldRejectClassicToolsListBeforeInitialize() throws Exception {
         Allure.parameter("MCP method", McpTestData.TOOLS_LIST_METHOD);
@@ -53,7 +53,7 @@ class McpStatelessLifecycleIntegrationTest {
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode response = sendRequest(session.client(), McpTestData.TOOLS_LIST_METHOD, null, REQUEST_TIMEOUT);
             assertThat(response.path("error").path("code").asInt())
-                    .as("До initialize сервер должен отклонять tools/list с ошибкой состояния -32001")
+                    .as("До initialize сервер должен отклонять tools/list с ошибкой состояния " + McpTestData.MCP_SERVER_NOT_INITIALIZED)
                     .isEqualTo(McpTestData.MCP_SERVER_NOT_INITIALIZED);
         }
     
