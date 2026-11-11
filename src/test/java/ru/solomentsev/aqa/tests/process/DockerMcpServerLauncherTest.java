@@ -47,7 +47,7 @@ class DockerMcpServerLauncherTest {
 
         assertThat(command).as("Docker run должен включать параметры интерактивного STDIO-запуска без TTY").containsSubsequence(
                 DockerTestData.getExecutable(), "run", "--rm", "--name", DockerTestData.getContainerName(),
-                "--label", "aqa.run-id=build_123", "-i", "--env-file"
+                "--label", "aqa.run-id=" + DockerTestData.getRunId(), "-i", "--env-file"
         );
         int envFileOptionIndex = command.indexOf("--env-file");
         assertThat(envFileOptionIndex)
@@ -77,7 +77,7 @@ class DockerMcpServerLauncherTest {
                 DockerTestData.getImage(),
                 DockerTestData.getEnvFile(),
                 DockerTestData.getUnsafeRunId(),
-                5
+                DockerTestData.getStopTimeoutSeconds()
         ))).as("При AQA_RUN_ID=unsafe/run-id ожидается IllegalArgumentException с указанием runId")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("runId");
