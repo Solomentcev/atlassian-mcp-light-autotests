@@ -128,7 +128,7 @@ class McpStatelessLifecycleIntegrationTest {
                     .isFalse();
             assertThat(response.path("result").path("tools").size())
                     .as("Stateless tools/list должен вернуть все инструменты, объявленные в публичном контракте")
-                    .isEqualTo(McpTestData.getExpectedToolCount());
+                    .isEqualTo(McpContractTestData.getExpectedTools().size());
             assertThat(response.path("result").path("resultType").asText())
                     .as("Stateless-ответ должен иметь resultType=complete")
                     .isEqualTo("complete");
