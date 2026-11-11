@@ -324,27 +324,27 @@ class McpClientTest {
     
     }
 
-    @Step("Выполнить действие или проверку: sendRequest")
+    @Step("Отправить JSON-RPC request: method={method}, timeout={timeout}")
     private static JsonNode sendRequest(McpClient client, String method, ObjectNode params, Duration timeout) {
-        return Allure.step("Отправить JSON-RPC request: method=" + method + ", timeout=" + timeout.toMillis() + " ms", () -> client.request(method, params, timeout));
+        return client.request(method, params, timeout);
     }
 
-    @Step("Выполнить действие или проверку: sendNotification")
+    @Step("Отправить JSON-RPC notification: method={method}")
     private static void sendNotification(McpClient client, String method, ObjectNode params) {
-        Allure.step("Отправить JSON-RPC notification: method=" + method + ", request id отсутствует", () -> client.notification(method, params));
+        client.notification(method, params);
     }
 
-    @Step("Выполнить действие или проверку: initialize")
+    @Step("Выполнить classic initialize: protocolVersion={version}, client={clientName}/{clientVersion}")
     private static JsonNode initialize(McpClient client, String version, String clientName,
                                         String clientVersion, Duration timeout) {
-        return Allure.step("Выполнить initialize: protocolVersion=" + version + ", client=" + clientName + "/" + clientVersion, () -> client.initialize(version, clientName, clientVersion, timeout));
+        return client.initialize(version, clientName, clientVersion, timeout);
     }
 
-    @Step("Выполнить действие или проверку: requestStateless")
+    @Step("Отправить stateless MCP request: method={method}, protocolVersion={version}")
     private static JsonNode requestStateless(McpClient client, String method, ObjectNode params,
                                              String version, ObjectNode capabilities,
                                              ObjectNode clientInfo, Duration timeout) {
-        return Allure.step("Отправить stateless request: method=" + method + ", protocolVersion=" + version + ", params fields=" + (params == null ? "отсутствуют" : "полей=" + params.size()), () -> client.requestStateless(method, params, version, capabilities, clientInfo, timeout));
+        return client.requestStateless(method, params, version, capabilities, clientInfo, timeout);
     }
 
     private static void respondToSingleRequest(PipedInputStream serverStdin,
