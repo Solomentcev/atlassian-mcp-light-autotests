@@ -52,7 +52,7 @@ Jenkins собирает тестируемый сервер из исходни
 - `process` — запуск и управление процессами, Docker launcher и сбор STDERR;
 - `config` — конфигурация запуска тестового сервера;
 - `support/junit`, `support/diagnostics`, `support/fake` — JUnit extension, безопасная диагностика и fake-серверы;
-- `testdata` — общие параметры MCP и тестовые данные Jira/Confluence.
+- `testdata` — неизменяемые тестовые данные с доступом через getters, MethodSource providers и эталонный публичный MCP contract.
 
 ## Текущая реализация
 
@@ -69,7 +69,7 @@ Jenkins собирает тестируемый сервер из исходни
 
 ### Конфигурация запуска тестов
 
-JUnit-аннотация `@McpServerTest` подключает `McpServerExtension`: перед тестами класса создаётся отдельный процесс и выполняется MCP handshake, после класса сессия закрывается. Методы класса выполняются последовательно. В тестовые методы можно внедрять `McpClient` или `McpProcessSession`.
+JUnit-аннотация `@McpServerTest` подключает `McpServerExtension`: для каждого тестового класса создаётся отдельный процесс и MCP-сессия, выполняется readiness handshake, после класса сессия закрывается. Параллельно выполняются разные тестовые классы; методы внутри класса выполняются последовательно и используют его сессию. Настройка находится в `src/test/resources/junit-platform.properties`: фиксированный пул из четырёх потоков. Тесты, которым требуется начальное состояние NEW, например `McpStatelessLifecycleIntegrationTest`, запускают отдельный процесс на каждый метод, чтобы не зависеть от состояния предыдущего сценария. В тестовые методы можно внедрять `McpClient` или `McpProcessSession`.
 
 Режим выбирается переменной `AQA_SERVER_MODE` (или одноимённым system property с префиксом `aqa.`).
 
@@ -84,7 +84,7 @@ JUnit-аннотация `@McpServerTest` подключает `McpServerExtensi
 | `AQA_DOCKER_IMAGE` | Не используется | Имя собранного image |
 | `AQA_DOCKER_ENV_FILE` | Не используется | Путь к env-файлу для контейнера |
 | `AQA_DOCKER_EXECUTABLE` | Не используется | Необязательно; по умолчанию `docker` |
-| `AQA_RUN_ID` | Не используется | Базовый ID Jenkins-прогона; к нему добавляется уникальный суффикс на класс |
+| `AQA_RUN_ID` | Не используется | Базовый ID Jenkins-прогона; к каждому экземпляру сервера добавляется уникальный суффикс |
 | `AQA_SERVER_STARTUP_TIMEOUT_SECONDS` | Необязательно; по умолчанию 15 | Необязательно; по умолчанию 15 |
 | `AQA_DOCKER_STOP_TIMEOUT_SECONDS` | Не используется | Необязательно; по умолчанию 10 |
 | `AQA_MCP_PROTOCOL_VERSION` | Необязательно; по умолчанию `2025-11-25` | Необязательно; по умолчанию `2025-11-25` |
@@ -116,7 +116,7 @@ Stateless API клиента:
 - `listToolsStateless(...)` — `tools/list`;
 - `requestStateless(...)` — произвольный stateless request с обязательной metadata в `params._meta`.
 
-Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, точные свойства/required/type/ограничения схем 13 инструментов, annotations, ошибки валидации аргументов и различение MCP tool error и JSON-RPC error. `McpStatelessLifecycleIntegrationTest` отдельно проверяет tools/list до discovery на новом процессе без предварительного classic initialize. `McpTransportContractIntegrationTest` проверяет пустые строки, parse error с продолжением STDIO-цикла, некорректную форму запроса, неизвестный метод, отсутствие ответа на notification и повторный initialize. Интеграционные тесты не запускаются обычной командой `mvn test`.
+Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, точные свойства/required/type/ограничения схем всех инструментов из эталонного контракта, annotations, ошибки валидации аргументов и различение MCP tool error и JSON-RPC error. `McpStatelessLifecycleIntegrationTest` отдельно проверяет tools/list до discovery на новом процессе без предварительного classic initialize. `McpTransportContractIntegrationTest` проверяет пустые строки, parse error с продолжением STDIO-цикла, некорректную форму запроса, неизвестный метод, отсутствие ответа на notification и повторный initialize. Интеграционные тесты не запускаются обычной командой `mvn test`.
 
 Для запуска интеграционных проверок требуется собранный JAR или Docker image тестируемого сервера и тестовая конфигурация Jira/Confluence (обязательные `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` передаются серверному процессу):
 
@@ -152,8 +152,9 @@ Allure JUnit 5 формирует результаты в `target/allure-results
 - `@Story` — сценарий; для тест-кейсов из `docs/test-cases.md` в названии сохраняется исходный ID.
 - `@Severity` — P0 → BLOCKER, P1 → CRITICAL, P2 → NORMAL.
 - JUnit `@Tag` — фильтры по типу теста и области; связь с каталогом дополнительно отмечается тегом `case-<ID>`.
-- `@DisplayName` и `@Description` показывают название, предусловия, шаги и ожидаемый результат.
-- `Allure.step` фиксирует только фактические действия: отправку и получение JSON-RPC сообщений, notifications, raw STDIO line, запуск и завершение процесса. Подготовка параметров и проверки ответов выполняются вне шагов. Assertions остаются в тестовых методах и снабжаются понятными сообщениями о проверяемом поведении.
+- `@DisplayName` и `@Description` содержат статическое название, предусловия, шаги и ожидаемый результат; фактические параметры сценария добавляются через `Allure.parameter`.
+- `Allure.step` фиксирует только фактические действия: отправку и получение JSON-RPC сообщений, notifications, raw STDIO line, запуск и завершение процесса. Подготовка параметров и проверки ответов выполняются вне шагов.
+- Проверки остаются непосредственно в тестовых методах и используют `AllureAssertions` — универсальную обёртку стандартных AssertJ assertions. Она оформляет каждую проверку отдельным Allure step и показывает описание, actual и expected; доменные assertion-методы в тестах не используются.
 - Для JSON-RPC к Allure прикладываются только безопасные summaries: method/request id, поля верхнего уровня, error code, resultType и количество элементов; params и текстовый content не сохраняются. При падении интеграционного теста дополнительно прикладывается STDERR после маскирования Authorization headers и значений переменных TOKEN/PASSWORD/SECRET. Сырые JSON-RPC payload и содержимое ответов Atlassian не прикладываются.
 
 Для локального просмотра используется Allure Maven Plugin 3.1.0 с явно закреплённым runtime Allure Report 2.39.0 (классический интерфейс Allure 2). Сначала выполни тесты, затем запусти:
