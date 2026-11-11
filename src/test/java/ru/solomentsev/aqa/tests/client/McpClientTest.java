@@ -44,15 +44,15 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Отправка запроса и сопоставление ответа по request id")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отправка ping и сопоставление ответа по request id [method=ping, timeout=" + McpTestData.SHORT_REQUEST_TIMEOUT_MS + " ms]")
-    @Description("Предусловия: MCP Client подключён к имитации сервера через отдельные STDIN/STDOUT-потоки.\nШаги: отправить JSON-RPC request с method=ping; дождаться ответа в пределах " + McpTestData.SHORT_REQUEST_TIMEOUT_MS + " ms.\nОжидаемый результат: ответ имеет jsonrpc=2.0, request id совпадает с отправленным, result является объектом и содержит alive=true.")
+    @DisplayName("Отправка ping и сопоставление ответа по request id [method=ping, timeout=" + 3_000L + " ms]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через отдельные STDIN/STDOUT-потоки.\nШаги: отправить JSON-RPC request с method=ping; дождаться ответа в пределах " + 3_000L + " ms.\nОжидаемый результат: ответ имеет jsonrpc=2.0, request id совпадает с отправленным, result является объектом и содержит alive=true.")
     @Tag("protocol")
     void shouldSendRequestAndMatchResponseById() throws Exception {
-        Allure.parameter("JSON-RPC method", McpTestData.PING_METHOD);
-        Allure.parameter("Request timeout", McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms");
-        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        Allure.parameter("JSON-RPC method", McpTestData.getPingMethod());
+        Allure.parameter("Request timeout", McpTestData.getShortRequestTimeout().toMillis() + " ms");
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
 
         Thread server = new Thread(() -> respondToSingleRequest(serverStdin, serverStdout));
@@ -60,9 +60,9 @@ class McpClientTest {
         server.start();
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            JsonNode response = sendRequest(client, McpTestData.PING_METHOD, null, McpTestData.SHORT_REQUEST_TIMEOUT);
+            JsonNode response = sendRequest(client, McpTestData.getPingMethod(), null, McpTestData.getShortRequestTimeout());
 
-            assertThat(response.path("jsonrpc").asText()).as("Для method=ping ожидается jsonrpc=2.0, фактически: %s", response.path("jsonrpc").asText()).isEqualTo(McpTestData.JSON_RPC_VERSION);
+            assertThat(response.path("jsonrpc").asText()).as("Для method=ping ожидается jsonrpc=2.0, фактически: %s", response.path("jsonrpc").asText()).isEqualTo(McpTestData.getJsonRpcVersion());
             assertThat(response.path("result").isObject()).as("Ответ на ping должен содержать объект result").isTrue();
             assertThat(response.path("result").path("alive").asBoolean()).as("Ответ на ping должен содержать result.alive=true, фактически: %s", response.path("result").path("alive")).isTrue();
         } finally {
@@ -78,15 +78,15 @@ class McpClientTest {
     @Story("Отправка notification без request id")
     @Severity(SeverityLevel.NORMAL)
     @DisplayName("Передача notification notifications/initialized без request id")
-    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более " + McpTestData.ASYNC_EVENT_TIMEOUT_MS + " ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
+    @Description("Предусловия: MCP Client подключён к имитации сервера через STDIO-потоки.\nШаги: отправить notification method=notifications/initialized без request id; дождаться получения строки сервером не более " + 3_000L + " ms.\nОжидаемый результат: сервер получает method=notifications/initialized; поле id отсутствует, клиент не ожидает JSON-RPC response.")
     @Tag("protocol")
     void shouldSendNotificationWithoutRequestId() throws Exception {
-        Allure.parameter("Notification method", McpTestData.INITIALIZED_NOTIFICATION_METHOD);
+        Allure.parameter("Notification method", McpTestData.getInitializedNotificationMethod());
         Allure.parameter("Request id", "отсутствует");
-        Allure.parameter("Ожидание получения", McpTestData.ASYNC_EVENT_TIMEOUT.toMillis() + " ms");
-        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        Allure.parameter("Ожидание получения", McpTestData.getAsyncEventTimeout().toMillis() + " ms");
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         CountDownLatch notificationReceived = new CountDownLatch(1);
         AtomicReference<JsonNode> received = new AtomicReference<>();
@@ -104,12 +104,12 @@ class McpClientTest {
     server.start();
 
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-        sendNotification(client, McpTestData.INITIALIZED_NOTIFICATION_METHOD, null);
+        sendNotification(client, McpTestData.getInitializedNotificationMethod(), null);
 
-        assertThat(notificationReceived.await(McpTestData.ASYNC_EVENT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
+        assertThat(notificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить notification в пределах timeout").isTrue();
         assertThat(received.get().path("method").asText())
                 .as("Fake MCP server должен получить notifications/initialized")
-                .isEqualTo(McpTestData.INITIALIZED_NOTIFICATION_METHOD);
+                .isEqualTo(McpTestData.getInitializedNotificationMethod());
         assertThat(received.get().has("id")).as("Notification method=notifications/initialized не должен содержать поле id").isFalse();
     } finally {
         serverStdin.close();
@@ -123,17 +123,17 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Выполнение classic initialize handshake")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Classic initialize handshake [protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", client=" + McpTestData.CLIENT_NAME + "/" + McpTestData.CLIENT_VERSION + "]")
-    @Description("Предусловия: MCP Client подключён к имитации сервера, которая отвечает на initialize согласованной версией протокола.\nШаги: отправить initialize с protocolVersion=" + McpTestData.CLASSIC_PROTOCOL_VERSION + ", clientInfo.name=" + McpTestData.CLIENT_NAME + " и clientInfo.version=" + McpTestData.CLIENT_VERSION + "; принять ответ; дождаться следующего сообщения клиента.\nОжидаемый результат: ответ initialize содержит согласованную protocolVersion; клиент отправляет notifications/initialized без поля id.")
+    @DisplayName("Classic initialize handshake [protocolVersion=" + "2025-11-25" + ", client=" + "atlassian-mcp-light-autotests" + "/" + "1.0" + "]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера, которая отвечает на initialize согласованной версией протокола.\nШаги: отправить initialize с protocolVersion=" + "2025-11-25" + ", clientInfo.name=" + "atlassian-mcp-light-autotests" + " и clientInfo.version=" + "1.0" + "; принять ответ; дождаться следующего сообщения клиента.\nОжидаемый результат: ответ initialize содержит согласованную protocolVersion; клиент отправляет notifications/initialized без поля id.")
     @Tag("protocol")
     void shouldCompleteClassicInitializeHandshake() throws Exception {
-        Allure.parameter("MCP protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
-        Allure.parameter("Client name", McpTestData.CLIENT_NAME);
-        Allure.parameter("Client version", McpTestData.CLIENT_VERSION);
-        Allure.parameter("Request timeout", McpTestData.SHORT_REQUEST_TIMEOUT.toMillis() + " ms");
-        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        Allure.parameter("MCP protocolVersion", McpTestData.getClassicProtocolVersion());
+        Allure.parameter("Client name", McpTestData.getClientName());
+        Allure.parameter("Client version", McpTestData.getClientVersion());
+        Allure.parameter("Request timeout", McpTestData.getShortRequestTimeout().toMillis() + " ms");
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         CountDownLatch initializedNotificationReceived = new CountDownLatch(1);
         AtomicReference<JsonNode> initializedNotification = new AtomicReference<>();
@@ -145,12 +145,12 @@ class McpClientTest {
                          new OutputStreamWriter(serverStdout, StandardCharsets.UTF_8))) {
                 JsonNode initializeRequest = OBJECT_MAPPER.readTree(reader.readLine());
                 var response = OBJECT_MAPPER.createObjectNode();
-                response.put("jsonrpc", McpTestData.JSON_RPC_VERSION);
+                response.put("jsonrpc", McpTestData.getJsonRpcVersion());
                 response.set("id", initializeRequest.get("id"));
                 var result = response.putObject("result");
-                result.put("protocolVersion", McpTestData.CLASSIC_PROTOCOL_VERSION);
+                result.put("protocolVersion", McpTestData.getClassicProtocolVersion());
                 result.putObject("capabilities").putObject("tools");
-                result.putObject("serverInfo").put("name", McpTestData.SERVER_NAME).put("version", McpTestData.SERVER_VERSION);
+                result.putObject("serverInfo").put("name", McpTestData.getServerName()).put("version", McpTestData.getServerVersion());
                 writer.write(OBJECT_MAPPER.writeValueAsString(response));
                 writer.newLine();
                 writer.flush();
@@ -166,19 +166,19 @@ class McpClientTest {
 
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
         JsonNode response = initialize(client, 
-                McpTestData.CLASSIC_PROTOCOL_VERSION,
-                McpTestData.CLIENT_NAME,
-                McpTestData.CLIENT_VERSION,
-                McpTestData.SHORT_REQUEST_TIMEOUT
+                McpTestData.getClassicProtocolVersion(),
+                McpTestData.getClientName(),
+                McpTestData.getClientVersion(),
+                McpTestData.getShortRequestTimeout()
         );
 
         assertThat(response.path("result").path("protocolVersion").asText())
                 .as("Initialize должен согласовать ожидаемую версию MCP-протокола")
-                .isEqualTo(McpTestData.CLASSIC_PROTOCOL_VERSION);
-        assertThat(initializedNotificationReceived.await(McpTestData.ASYNC_EVENT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)).as("После initialize клиент должен отправить notifications/initialized").isTrue();
+                .isEqualTo(McpTestData.getClassicProtocolVersion());
+        assertThat(initializedNotificationReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("После initialize клиент должен отправить notifications/initialized").isTrue();
         assertThat(initializedNotification.get().path("method").asText())
                 .as("После initialize клиент должен отправить notifications/initialized")
-                .isEqualTo(McpTestData.INITIALIZED_NOTIFICATION_METHOD);
+                .isEqualTo(McpTestData.getInitializedNotificationMethod());
         assertThat(initializedNotification.get().has("id"))
                 .as("Notification initialized не должен содержать request id").isFalse();
     } finally {
@@ -193,19 +193,19 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Добавление stateless metadata без изменения исходных params")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("tools/list stateless metadata [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ", исходный params.filter=all]")
-    @Description("Предусловия: MCP Client подключён к имитации сервера; исходный params содержит filter=all, capabilities содержат experimental=true, clientInfo задан.\nШаги: отправить stateless tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "; проверить полученную сервером строку запроса и исходный объект params.\nОжидаемый результат: в переданном запросе сохранён filter=all и добавлены protocolVersion, clientCapabilities и clientInfo; исходный params не получает поле _meta и остаётся неизменным.")
+    @DisplayName("tools/list stateless metadata [protocolVersion=" + "2026-07-28" + ", исходный params.filter=all]")
+    @Description("Предусловия: MCP Client подключён к имитации сервера; исходный params содержит filter=all, capabilities содержат experimental=true, clientInfo задан.\nШаги: отправить stateless tools/list с protocolVersion=" + "2026-07-28" + "; проверить полученную сервером строку запроса и исходный объект params.\nОжидаемый результат: в переданном запросе сохранён filter=all и добавлены protocolVersion, clientCapabilities и clientInfo; исходный params не получает поле _meta и остаётся неизменным.")
     @Tag("protocol")
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
-        Allure.parameter("JSON-RPC method", McpTestData.TOOLS_LIST_METHOD);
-        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("JSON-RPC method", McpTestData.getToolsListMethod());
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         Allure.parameter("Исходный params.filter", "all");
         Allure.parameter("clientCapabilities.experimental", true);
-        Allure.parameter("clientInfo.name", McpTestData.MOCK_CLIENT_NAME);
-        Allure.parameter("clientInfo.version", McpTestData.MOCK_CLIENT_VERSION);
-        PipedInputStream clientStdout = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        Allure.parameter("clientInfo.name", McpTestData.getMockClientName());
+        Allure.parameter("clientInfo.version", McpTestData.getMockClientVersion());
+        PipedInputStream clientStdout = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream serverStdout = new PipedOutputStream(clientStdout);
-        PipedInputStream serverStdin = new PipedInputStream(McpTestData.PIPE_BUFFER_SIZE_BYTES);
+        PipedInputStream serverStdin = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
         PipedOutputStream clientStdin = new PipedOutputStream(serverStdin);
         AtomicReference<JsonNode> received = new AtomicReference<>();
         CountDownLatch requestReceived = new CountDownLatch(1);
@@ -219,7 +219,7 @@ class McpClientTest {
                 requestReceived.countDown();
 
                 var response = OBJECT_MAPPER.createObjectNode();
-                response.put("jsonrpc", McpTestData.JSON_RPC_VERSION);
+                response.put("jsonrpc", McpTestData.getJsonRpcVersion());
                 response.set("id", received.get().get("id"));
                 response.putObject("result").put("resultType", "complete");
                 writer.write(OBJECT_MAPPER.writeValueAsString(response));
@@ -235,29 +235,29 @@ class McpClientTest {
     var originalParams = OBJECT_MAPPER.createObjectNode().put("filter", "all");
     var capabilities = OBJECT_MAPPER.createObjectNode().put("experimental", true);
     var clientInfo = OBJECT_MAPPER.createObjectNode()
-            .put("name", McpTestData.MOCK_CLIENT_NAME)
-            .put("version", McpTestData.MOCK_CLIENT_VERSION);
+            .put("name", McpTestData.getMockClientName())
+            .put("version", McpTestData.getMockClientVersion());
 
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
         JsonNode response = requestStateless(client, 
-                McpTestData.TOOLS_LIST_METHOD,
+                McpTestData.getToolsListMethod(),
                 originalParams,
-                McpTestData.STATELESS_PROTOCOL_VERSION,
+                McpTestData.getStatelessProtocolVersion(),
                 capabilities,
                 clientInfo,
-                McpTestData.SHORT_REQUEST_TIMEOUT
+                McpTestData.getShortRequestTimeout()
         );
 
         assertThat(response.path("result").path("resultType").asText())
                 .as("Stateless MCP-ответ должен иметь resultType=complete")
                 .isEqualTo("complete");
-        assertThat(requestReceived.await(McpTestData.ASYNC_EVENT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
+        assertThat(requestReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
         assertThat(received.get().path("params").path("filter").asText())
                 .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo("all");
         assertThat(received.get().path("params").path("_meta")
                 .path("io.modelcontextprotocol/protocolVersion").asText())
                 .as("В stateless metadata должна передаваться согласованная версия MCP-протокола")
-                .isEqualTo(McpTestData.STATELESS_PROTOCOL_VERSION);
+                .isEqualTo(McpTestData.getStatelessProtocolVersion());
         assertThat(received.get().path("params").path("_meta")
                 .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean())
                 .as("В stateless metadata должны передаваться client capabilities")
@@ -265,11 +265,11 @@ class McpClientTest {
         assertThat(received.get().path("params").path("_meta")
                  .path("io.modelcontextprotocol/clientInfo").path("name").asText())
                 .as("В stateless metadata должно передаваться имя MCP-клиента")
-                .isEqualTo(McpTestData.MOCK_CLIENT_NAME);
+                .isEqualTo(McpTestData.getMockClientName());
         assertThat(received.get().path("params").path("_meta")
                 .path("io.modelcontextprotocol/clientInfo").path("version").asText())
                 .as("В stateless metadata должна передаваться версия MCP-клиента")
-                .isEqualTo(McpTestData.MOCK_CLIENT_VERSION);
+                .isEqualTo(McpTestData.getMockClientVersion());
         assertThat(originalParams.path("filter").asText())
                 .as("Исходный params.filter должен остаться равным all после отправки запроса")
                 .isEqualTo("all");
@@ -286,12 +286,12 @@ class McpClientTest {
     @Feature("MCP Client")
     @Story("Отклонение params с уже заданным _meta")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение stateless tools/list при уже заданном params._meta [protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + "]")
-    @Description("Предусловия: Исходный params уже содержит поле _meta; MCP Client подключён к STDIO-потокам без запущенного обработчика сервера.\nШаги: вызвать requestStateless для method=tools/list с protocolVersion=" + McpTestData.STATELESS_PROTOCOL_VERSION + ".\nОжидаемый результат: метод завершается IllegalArgumentException с упоминанием _meta до записи каких-либо данных в STDIN.")
+    @DisplayName("Отклонение stateless tools/list при уже заданном params._meta [protocolVersion=" + "2026-07-28" + "]")
+    @Description("Предусловия: Исходный params уже содержит поле _meta; MCP Client подключён к STDIO-потокам без запущенного обработчика сервера.\nШаги: вызвать requestStateless для method=tools/list с protocolVersion=" + "2026-07-28" + ".\nОжидаемый результат: метод завершается IllegalArgumentException с упоминанием _meta до записи каких-либо данных в STDIN.")
     @Tag("negative")
     void shouldRejectStatelessParamsContainingMetadata() throws Exception {
-        Allure.parameter("JSON-RPC method", McpTestData.TOOLS_LIST_METHOD);
-        Allure.parameter("MCP protocolVersion", McpTestData.STATELESS_PROTOCOL_VERSION);
+        Allure.parameter("JSON-RPC method", McpTestData.getToolsListMethod());
+        Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
         Allure.parameter("Исходный params._meta", "уже присутствует");
         PipedInputStream clientStdout = new PipedInputStream(1_024);
         PipedInputStream serverStdin = new PipedInputStream(1_024);
@@ -302,14 +302,14 @@ class McpClientTest {
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
             ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThatThrownBy(() -> Allure.step(
                     "Выполнить stateless tools/list с уже существующим params._meta и protocolVersion="
-                            + McpTestData.STATELESS_PROTOCOL_VERSION,
+                            + McpTestData.getStatelessProtocolVersion(),
                     () -> client.requestStateless(
-                            McpTestData.TOOLS_LIST_METHOD,
+                            McpTestData.getToolsListMethod(),
                             params,
-                            McpTestData.STATELESS_PROTOCOL_VERSION,
+                            McpTestData.getStatelessProtocolVersion(),
                             OBJECT_MAPPER.createObjectNode(),
                             null,
-                            McpTestData.INVALID_REQUEST_TIMEOUT
+                            McpTestData.getInvalidRequestTimeout()
                     ))).as("Stateless tools/list с уже существующим params._meta должен быть отклонён до отправки")
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("_meta");
@@ -355,7 +355,7 @@ class McpClientTest {
                      new OutputStreamWriter(serverStdout, StandardCharsets.UTF_8))) {
             JsonNode request = OBJECT_MAPPER.readTree(reader.readLine());
             var response = OBJECT_MAPPER.createObjectNode();
-            response.put("jsonrpc", McpTestData.JSON_RPC_VERSION);
+            response.put("jsonrpc", McpTestData.getJsonRpcVersion());
             response.set("id", request.get("id"));
             response.putObject("result").put("alive", true);
             writer.write(OBJECT_MAPPER.writeValueAsString(response));
