@@ -62,7 +62,8 @@ class McpContractIntegrationTest {
     @Story("MCP-005 — Получение списка инструментов")
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-005: tools/list возвращает массив инструментов")
-    @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с обязательными metadata.\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")    @Tag("case-MCP-005")
+    @Description("Предусловия: тестовый MCP-сервер запущен; доступен stateless tools/list с обязательными metadata.\nШаги: отправить tools/list с обязательными stateless metadata; проверить JSON-RPC response и поле result.tools.\nОжидаемый результат: response не содержит error; result является объектом; result.tools является массивом.")
+    @Tag("case-MCP-005")
     @Tag("smoke")
     void shouldReturnToolsList(McpClient client) {
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
@@ -90,7 +91,8 @@ class McpContractIntegrationTest {
     @Story("MCP-006 — Проверка состава инструментов")
     @Severity(SeverityLevel.BLOCKER)
     @DisplayName("MCP-006: Состав tools/list совпадает с контрактом")
-    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с эталонным публичным контрактом.\nОжидаемый результат: количество и набор уникальных имён полностью совпадают с публичным контрактом.")    @Tag("case-MCP-006")
+    @Description("Предусловия: MCP-сервер отвечает на stateless tools/list.\nШаги: извлечь name каждого элемента result.tools; сравнить количество и полный набор имён с эталонным публичным контрактом.\nОжидаемый результат: количество и набор уникальных имён полностью совпадают с публичным контрактом.")
+    @Tag("case-MCP-006")
     @Tag("smoke")
     void shouldExposeExpectedToolNames(McpClient client) {
         Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
@@ -126,7 +128,7 @@ class McpContractIntegrationTest {
         }
         assertThat(tools.size()).as("Ожидалось %d инструментов по контракту, фактически получено %d", EXPECTED_TOOLS.size(), tools.size()).isEqualTo(EXPECTED_TOOLS.size());
         assertThat(actualNames).as("Имена tools должны совпадать с контрактом; фактически получены: %s", actualNames).containsExactlyInAnyOrderElementsOf(EXPECTED_TOOLS.keySet());
-    
+
     }
 
     @Test
@@ -134,7 +136,8 @@ class McpContractIntegrationTest {
     @Story("MCP-007 — Проверка описаний инструментов")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-007: У каждого инструмента есть непустой description")
-    @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")    @Tag("case-MCP-007")
+    @Description("Предусловия: MCP-сервер вернул массив инструментов через tools/list.\nШаги: для каждого элемента result.tools прочитать name и description.\nОжидаемый результат: у каждого инструмента description является непустой строкой; при нарушении сообщение указывает имя конкретного инструмента.")
+    @Tag("case-MCP-007")
     void shouldExposeNonEmptyToolDescriptions(McpClient client) {
         Allure.parameter("Ожидаемое количество инструментов", EXPECTED_TOOLS.size());
         JsonNode response = requestStatelessTools(client);
@@ -166,7 +169,7 @@ class McpContractIntegrationTest {
                     .as("Инструмент %s должен содержать непустое описание", name)
                     .isNotBlank();
         }
-    
+
     }
 
     @Test
@@ -174,7 +177,8 @@ class McpContractIntegrationTest {
     @Story("MCP-008 — Проверка JSON Schema и annotations инструментов")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-008: JSON Schema и annotations инструментов соответствуют контракту")
-    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый публичный контракт.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")    @Tag("case-MCP-008")
+    @Description("Предусловия: MCP-сервер вернул инструменты через stateless tools/list; в тесте задан ожидаемый публичный контракт.\nШаги: для каждого инструмента сравнить inputSchema.type, properties, required, additionalProperties, типы и ограничения аргументов; затем проверить readOnlyHint, destructiveHint, idempotentHint и openWorldHint.\nОжидаемый результат: набор инструментов, схемы аргументов и все четыре annotation-флага каждого инструмента совпадают с ожидаемым контрактом; сообщение об ошибке указывает имя инструмента и проверяемое поле.")
+    @Tag("case-MCP-008")
     @Tag("jira")
     @Tag("confluence")
     void shouldExposeExactToolSchemasAndAnnotations(McpClient client) {
@@ -324,7 +328,7 @@ class McpContractIntegrationTest {
             assertThat(annotations.path("openWorldHint").isBoolean()).as("%s: openWorldHint должен иметь boolean type", name).isTrue();
             assertThat(annotations.path("openWorldHint").asBoolean()).as("%s: openWorldHint должен быть true", name).isTrue();
         }
-    
+
     }
 
     @ParameterizedTest(name = "MCP-023: отклонение stateless-запроса без {0}")
@@ -406,8 +410,7 @@ class McpContractIntegrationTest {
         assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.getUnsupportedProtocolVersion()).isEqualTo(McpTestData.getMcpUnsupportedProtocolVersion());
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
                 .containsExactly(McpTestData.getStatelessProtocolVersion());
-    
-    
+
     }
 
     @Test
@@ -435,8 +438,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
         assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
-    
-    
+
     }
 
     @Test
@@ -466,8 +468,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
         assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
-    
-    
+
     }
 
     @ParameterizedTest(name = "MCP-034: jira_get_issue отклоняет issue_key={0}")
@@ -539,7 +540,6 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
-    
     }
 
     @Test
@@ -571,7 +571,6 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
-    
     }
 
     @ParameterizedTest(name = "MCP-028: {0} проверяет границы limit")
@@ -679,8 +678,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
         assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
-    
-    
+
     }
 
 }
