@@ -362,10 +362,21 @@ class McpContractIntegrationTest {
         Allure.parameter("MCP method", method);
         Allure.parameter("Отсутствующее поле metadata", missingField);
         JsonNode invalidResponse = sendRequest(client, method, requestParams);
+        assertThat(invalidResponse.has("error"))
+                .as("%s без обязательного %s должен вернуть JSON-RPC error", method, missingField)
+                .isTrue();
+        assertThat(invalidResponse.path("error").isObject())
+                .as("JSON-RPC error должен быть объектом")
+                .isTrue();
+        assertThat(invalidResponse.path("error").has("code"))
+                .as("JSON-RPC error должен содержать code")
+                .isTrue();
+        assertThat(invalidResponse.path("error").path("code").isIntegralNumber())
+                .as("JSON-RPC error.code должен быть целым числом")
+                .isTrue();
         assertThat(invalidResponse.path("error").path("code").asInt())
-                .as("%s без обязательного %s должен вернуть JSON-RPC error code=%d, фактически: %s",
-                        method, missingField, McpTestData.getJsonRpcInvalidParams(),
-                        invalidResponse.path("error").path("code"))
+                .as("%s без обязательного %s должен вернуть JSON-RPC error code=%d",
+                        method, missingField, McpTestData.getJsonRpcInvalidParams())
                 .isEqualTo(McpTestData.getJsonRpcInvalidParams());
 
         JsonNode validResponse = Allure.step(
@@ -406,7 +417,15 @@ class McpContractIntegrationTest {
 
         JsonNode response = sendRequest(client, McpTestData.getServerDiscoverMethod(), params);
 
-        assertThat(response.path("error").path("code").asInt()).as("protocolVersion=%s должна завершаться ошибкой -32022", McpTestData.getUnsupportedProtocolVersion()).isEqualTo(McpTestData.getMcpUnsupportedProtocolVersion());
+        assertThat(response.has("error"))
+                .as("Неподдерживаемая protocolVersion должна вернуть JSON-RPC error")
+                .isTrue();
+        assertThat(response.path("error").path("code").isIntegralNumber())
+                .as("JSON-RPC error.code должен быть целым числом")
+                .isTrue();
+        assertThat(response.path("error").path("code").asInt())
+                .as("Неподдерживаемая protocolVersion должна вернуть error code -32022")
+                .isEqualTo(McpTestData.getMcpUnsupportedProtocolVersion());
         assertThat(textValues(response.path("error").path("data").path("supportedVersions"))).as("В ошибке должны быть перечислены поддерживаемые версии протокола")
                 .containsExactly(McpTestData.getStatelessProtocolVersion());
 
@@ -634,6 +653,12 @@ class McpContractIntegrationTest {
                 .isFalse();
         assertThat(response.path("result").isObject())
                 .as("Вызов MCP-инструмента: response должен содержать объект result")
+                .isTrue();
+        assertThat(response.path("result").has("isError"))
+                .as("%s должен возвращать result.isError", toolName)
+                .isTrue();
+        assertThat(response.path("result").path("isError").isBoolean())
+                .as("%s: result.isError должен иметь boolean type", toolName)
                 .isTrue();
         assertThat(response.path("result").path("isError").asBoolean())
                 .as("%s должен принимать допустимый limit=%d", toolName, McpTestData.getDefaultLimit())
