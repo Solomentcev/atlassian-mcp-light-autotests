@@ -23,6 +23,18 @@ public final class McpTestData {
     public static final String SERVER_NAME = "atlassian-lite";
     public static final String SERVER_VERSION = "1.0.0";
 
+    public static final String JSON_RPC_VERSION = "2.0";
+    public static final String INITIALIZE_METHOD = "initialize";
+    public static final String PING_METHOD = "ping";
+    public static final String TOOLS_LIST_METHOD = "tools/list";
+    public static final String INITIALIZED_NOTIFICATION_METHOD = "notifications/initialized";
+
+    public static final int JSON_RPC_PARSE_ERROR = -32700;
+    public static final int JSON_RPC_INVALID_REQUEST = -32600;
+    public static final int JSON_RPC_METHOD_NOT_FOUND = -32601;
+    public static final int JSON_RPC_INVALID_PARAMS = -32602;
+    public static final int MCP_UNSUPPORTED_PROTOCOL_VERSION = -32022;
+
     public static final int EXPECTED_TOOL_COUNT = 13;
     public static final long DISCOVERY_TTL_MS = 300_000L;
     public static final String DISCOVERY_CACHE_SCOPE = "public";
