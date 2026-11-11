@@ -22,7 +22,7 @@ public final class McpTestData {
     public static final String SERVER_VERSION = "1.0.0";
 
     public static final int EXPECTED_TOOL_COUNT = 13;
-    public static final int DISCOVERY_TTL_MS = 300_000;
+    public static final long DISCOVERY_TTL_MS = 300_000L;
     public static final String DISCOVERY_CACHE_SCOPE = "public";
 
     public static final int DEFAULT_LIMIT = 1;
