@@ -303,17 +303,17 @@ class McpContractIntegrationTest {
     @Feature("Tool Validation")
     @Story("MCP-012 — Вызов инструмента с неверным типом аргумента")
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=42 (integer вместо string)")
+    @DisplayName("MCP-012: jira_get_issue отклоняет issue_key=" + JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (integer вместо string)")
     @Description("Предусловия: MCP-сервер запущен; схема jira_get_issue объявляет issue_key строковым обязательным аргументом.\nШаги: вызвать jira_get_issue с issue_key=42 (JSON integer).\nОжидаемый результат: вызов с аргументом неверного JSON-типа возвращает MCP tool error (result.isError=true); проверка не зависит от наличия конкретной задачи в Jira.")
     @Tag("negative")
     @Tag("case-MCP-012")
     @Tag("jira")
     void shouldRejectWrongToolArgumentType(McpClient client) {
         Allure.parameter("MCP tool", "jira_get_issue");
-        Allure.parameter("Аргумент issue_key", "42 (число вместо строки)");
+        Allure.parameter("Аргумент issue_key", JiraTestData.INVALID_ISSUE_KEY_NUMBER + " (число вместо строки");
         Allure.parameter("Ожидаемый тип issue_key", "string");
         ObjectNode arguments = OBJECT_MAPPER.createObjectNode();
-        arguments.put("issue_key", 42);
+        arguments.put("issue_key", JiraTestData.INVALID_ISSUE_KEY_NUMBER);
         JsonNode invalidResponse = Allure.step("Вызвать jira_get_issue с issue_key=42 (integer вместо string)",
                 () -> callTool(client, "jira_get_issue", arguments));
         assertToolError(invalidResponse, "jira_get_issue с issue_key=42 (integer вместо string)");
