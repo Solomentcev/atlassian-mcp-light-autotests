@@ -27,6 +27,7 @@ public final class McpServerConfiguration {
     private static final int DEFAULT_DOCKER_STOP_TIMEOUT_SECONDS = 10;
 
     private final String mode;
+    private final Map<String, String> processEnvironment;
     private final Path serverJar;
     private final String javaExecutable;
     private final Path workingDirectory;
@@ -42,6 +43,7 @@ public final class McpServerConfiguration {
         Objects.requireNonNull(environment, "environment");
         Objects.requireNonNull(properties, "properties");
 
+        processEnvironment = Map.copyOf(environment);
         mode = value(environment, properties, "aqa.server.mode", "AQA_SERVER_MODE", "local")
                 .toLowerCase(Locale.ROOT);
         if (!mode.equals("local") && !mode.equals("docker")) {
@@ -147,12 +149,12 @@ public final class McpServerConfiguration {
         }
 
         if (!initialize) {
-            return McpProcessSession.startWithoutHandshake(launcher, Map.of(), workingDirectory);
+            return McpProcessSession.startWithoutHandshake(launcher, processEnvironment, workingDirectory);
         }
 
         return McpProcessSession.start(
                 launcher,
-                Map.of(),
+                processEnvironment,
                 workingDirectory,
                 protocolVersion,
                 McpTestData.CLIENT_NAME,
