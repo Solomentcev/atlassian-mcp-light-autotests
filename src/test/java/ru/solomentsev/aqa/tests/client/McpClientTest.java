@@ -240,7 +240,7 @@ class McpClientTest {
                 var response = OBJECT_MAPPER.createObjectNode();
                 response.put("jsonrpc", McpTestData.getJsonRpcVersion());
                 response.set("id", received.get().get("id"));
-                response.putObject("result").put("resultType", "complete");
+                response.putObject("result").put("resultType", McpTestData.getCompleteResultType());
                 writer.write(OBJECT_MAPPER.writeValueAsString(response));
                 writer.newLine();
                 writer.flush();
@@ -269,7 +269,7 @@ class McpClientTest {
 
         assertThat(response.path("result").path("resultType").asText())
                 .as("Stateless MCP-ответ должен иметь resultType=complete")
-                .isEqualTo("complete");
+                .isEqualTo(McpTestData.getCompleteResultType());
         assertThat(requestReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
         assertThat(received.get().path("params").path("filter").asText())
                 .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo("all");
