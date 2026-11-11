@@ -56,8 +56,14 @@ class McpStatelessLifecycleIntegrationTest {
         try (McpProcessSession session =
                      McpServerConfiguration.fromEnvironment().startStatelessSession()) {
             JsonNode response = sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
+            assertThat(response.has("error"))
+                    .as("До initialize сервер должен вернуть JSON-RPC error")
+                    .isTrue();
+            assertThat(response.path("error").path("code").isIntegralNumber())
+                    .as("JSON-RPC error.code должен быть целым числом")
+                    .isTrue();
             assertThat(response.path("error").path("code").asInt())
-                    .as("До initialize сервер должен отклонять tools/list с ошибкой состояния " + McpTestData.getMcpServerNotInitialized())
+                    .as("До initialize сервер должен отклонять tools/list с ошибкой состояния")
                     .isEqualTo(McpTestData.getMcpServerNotInitialized());
         }
 
@@ -97,7 +103,15 @@ class McpStatelessLifecycleIntegrationTest {
 
             boolean toolsCapabilityIsObject = result.path("capabilities").path("tools").isObject();
             assertThat(toolsCapabilityIsObject).as("result.capabilities.tools является объектом" + " должно быть истинным").isTrue();
-            assertThat(result.path("ttlMs").asLong()).as("result.ttlMs" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getDiscoveryTtlMs());
+            assertThat(result.has("ttlMs"))
+                    .as("result.ttlMs должен присутствовать")
+                    .isTrue();
+            assertThat(result.path("ttlMs").isIntegralNumber())
+                    .as("result.ttlMs должен быть целым числом")
+                    .isTrue();
+            assertThat(result.path("ttlMs").asLong())
+                    .as("result.ttlMs должен совпадать с контрактом")
+                    .isEqualTo(McpTestData.getDiscoveryTtlMs());
             assertThat(result.path("cacheScope").asText()).as("result.cacheScope" + " должен совпадать с ожидаемым значением").isEqualTo(McpTestData.getDiscoveryCacheScope());
 
             JsonNode serverInfo = result.path("_meta").path("io.modelcontextprotocol/serverInfo");
@@ -173,6 +187,12 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(response.has("error"))
                     .as("Stateless MCP-запрос должен завершиться без JSON-RPC error")
                     .isFalse();
+            assertThat(response.path("result").has("isError"))
+                    .as("MCP tool result должен содержать isError")
+                    .isTrue();
+            assertThat(response.path("result").path("isError").isBoolean())
+                    .as("MCP tool result.isError должен иметь boolean type")
+                    .isTrue();
             assertThat(response.path("result").path("isError").asBoolean())
                     .as("Успешный read-инструмент не должен возвращать MCP tool error")
                     .isFalse();
@@ -256,6 +276,12 @@ class McpStatelessLifecycleIntegrationTest {
 
             JsonNode toolsBeforeReady =
                     sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
+            assertThat(toolsBeforeReady.has("error"))
+                    .as("До notifications/initialized tools/list должен вернуть JSON-RPC error")
+                    .isTrue();
+            assertThat(toolsBeforeReady.path("error").path("code").isIntegralNumber())
+                    .as("JSON-RPC error.code должен быть целым числом")
+                    .isTrue();
             assertThat(toolsBeforeReady.path("error").path("code").asInt())
                     .as("До notifications/initialized инструменты должны оставаться недоступными")
                     .isEqualTo(McpTestData.getMcpServerNotInitialized());
