@@ -37,14 +37,6 @@ public final class McpContractTestSupport {
         });
     }
 
-    public static JsonNode requestStatelessTools(McpClient client) {
-        return Allure.step("Выполнить stateless tools/list",
-                () -> client.listToolsStateless(
-                        McpTestData.getStatelessProtocolVersion(),
-                        McpTestData.getRequestTimeout()
-                ));
-    }
-
     public static List<String> textValues(JsonNode array) {
         List<String> values = new ArrayList<>();
         array.forEach(value -> values.add(value.asText()));
