@@ -73,8 +73,7 @@ class McpClientTest {
             serverStdin.close();
             serverStdout.close();
         }
-    
-    
+
     }
 
     @Test
@@ -120,7 +119,6 @@ class McpClientTest {
         serverStdout.close();
     }
 
-    
     }
 
     @Test
@@ -169,7 +167,7 @@ class McpClientTest {
     server.start();
 
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-        JsonNode response = initialize(client, 
+        JsonNode response = initialize(client,
                 McpTestData.getClassicProtocolVersion(),
                 McpTestData.getClientName(),
                 McpTestData.getClientVersion(),
@@ -190,7 +188,6 @@ class McpClientTest {
         serverStdout.close();
     }
 
-    
     }
 
     @Test
@@ -243,7 +240,7 @@ class McpClientTest {
             .put("version", McpTestData.getMockClientVersion());
 
     try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-        JsonNode response = requestStateless(client, 
+        JsonNode response = requestStateless(client,
                 McpTestData.getToolsListMethod(),
                 originalParams,
                 McpTestData.getStatelessProtocolVersion(),
@@ -283,7 +280,6 @@ class McpClientTest {
         serverStdout.close();
     }
 
-    
     }
 
     @Test
@@ -324,8 +320,7 @@ class McpClientTest {
             clientStdout.close();
             serverStdin.close();
         }
-    
-    
+
     }
 
 }
