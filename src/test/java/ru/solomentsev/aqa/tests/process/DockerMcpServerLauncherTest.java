@@ -27,7 +27,7 @@ class DockerMcpServerLauncherTest {
     @Feature("Docker Launcher")
     @Story("Формирование Docker run-команды для STDIO без TTY и опубликованных портов")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Формирование Docker run-команды для STDIO без TTY и опубликованных портов")
+    @DisplayName("docker run: image=atlassian-mcp-light:latest, stdin=-i, --rm; без -t и -p")
     @Description("Предусловия: Заданы Docker executable, run id, env-файл и image.\nШаги: сформировать docker run command.\nОжидаемый результат: команда содержит --rm, --name, label текущего прогона, -i и --env-file; не содержит TTY и публикацию портов.")
     @Tag("process")
     void shouldBuildInteractiveStdioRunCommandWithoutTtyOrPublishedPorts() {
@@ -56,7 +56,7 @@ class DockerMcpServerLauncherTest {
     @Feature("Docker Launcher")
     @Story("Отклонение небезопасного Docker run id")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение небезопасного Docker run id")
+    @DisplayName("Docker launcher отклоняет небезопасный AQA_RUN_ID [runId содержит недопустимые символы]")
     @Description("Предусловия: Передан run id с недопустимым символом /.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием runId.")
     @Tag("negative")
     void shouldRejectUnsafeRunId() {
@@ -79,7 +79,7 @@ class DockerMcpServerLauncherTest {
     @Feature("Docker Launcher")
     @Story("Отклонение нулевого timeout остановки контейнера")
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Отклонение нулевого timeout остановки контейнера")
+    @DisplayName("Docker launcher отклоняет stopTimeoutSeconds=0")
     @Description("Предусловия: stop timeout задан равным нулю.\nШаги: создать DockerMcpServerLauncher.\nОжидаемый результат: конструктор выбрасывает IllegalArgumentException с указанием stopTimeoutSeconds.")
     @Tag("negative")
     void shouldRejectZeroStopTimeout() {
