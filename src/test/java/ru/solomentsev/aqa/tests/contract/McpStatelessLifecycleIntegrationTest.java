@@ -417,6 +417,18 @@ class McpStatelessLifecycleIntegrationTest {
             assertThat(initialize.has("error"))
                     .as("Корректный initialize должен завершиться без JSON-RPC error")
                     .isFalse();
+            assertThat(initialize.path("result").isObject())
+                    .as("Успешный initialize должен вернуть объект result")
+                    .isTrue();
+            assertThat(initialize.path("result").has("protocolVersion"))
+                    .as("Initialize result должен содержать согласованную protocolVersion")
+                    .isTrue();
+            assertThat(initialize.path("result").path("protocolVersion").isTextual())
+                    .as("Initialize result.protocolVersion должна быть строкой")
+                    .isTrue();
+            assertThat(initialize.path("result").path("protocolVersion").asText())
+                    .as("Initialize должен согласовать classic protocolVersion")
+                    .isEqualTo(McpTestData.getClassicProtocolVersion());
 
             JsonNode pingBeforeReady =
                     sendRequest(session.client(), McpTestData.getPingMethod(), null, REQUEST_TIMEOUT);
@@ -434,6 +446,12 @@ class McpStatelessLifecycleIntegrationTest {
                     sendRequest(session.client(), McpTestData.getToolsListMethod(), null, REQUEST_TIMEOUT);
             assertThat(toolsBeforeReady.has("error"))
                     .as("До notifications/initialized tools/list должен вернуть JSON-RPC error")
+                    .isTrue();
+            assertThat(toolsBeforeReady.path("error").isObject())
+                    .as("JSON-RPC error до READY должен быть объектом")
+                    .isTrue();
+            assertThat(toolsBeforeReady.path("error").has("code"))
+                    .as("JSON-RPC error до READY должен содержать code")
                     .isTrue();
             assertThat(toolsBeforeReady.path("error").path("code").isIntegralNumber())
                     .as("JSON-RPC error.code должен быть целым числом")
