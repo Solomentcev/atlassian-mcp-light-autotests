@@ -453,7 +453,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
         assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
-        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo(McpTestData.getTextContentType());
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     }
@@ -482,7 +482,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
         assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
-        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo(McpTestData.getTextContentType());
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     }
@@ -521,7 +521,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
         assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
-        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo(McpTestData.getTextContentType());
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
     }
 
@@ -550,7 +550,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
         assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
-        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo(McpTestData.getTextContentType());
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     }
@@ -580,7 +580,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
         assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
-        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo(McpTestData.getTextContentType());
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     }
@@ -691,7 +691,7 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("isError").asBoolean()).as("Проверка MCP tool error: result.isError должен быть true").isTrue();
         assertThat(toolErrorResult.path("content").isArray()).as("Проверка MCP tool error: result.content должен быть массивом").isTrue();
         assertThat(toolErrorResult.path("content").size()).as("Проверка MCP tool error: result.content должен содержать диагностическое сообщение").isGreaterThan(0);
-        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo("text");
+        assertThat(toolErrorResult.path("content").path(0).path("type").asText()).as("Проверка MCP tool error: content[0].type должен быть text").isEqualTo(McpTestData.getTextContentType());
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
 
     }
