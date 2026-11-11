@@ -79,7 +79,7 @@ public final class McpClientTestActions {
 
     /**
      * Отвечает на один запрос в изолированном fake STDIO endpoint.
-     * Исключение в серверном потоке проявится как timeout/ошибка обмена в тесте клиента.
+     * Исключение серверного потока сохраняется для явной проверки в тесте.
      */
     public static void respondToSingleRequest(PipedInputStream serverStdin,
                                               PipedOutputStream serverStdout,
