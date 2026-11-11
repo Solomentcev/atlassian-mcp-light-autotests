@@ -1,7 +1,6 @@
-package ru.solomentsev.aqa.tests.process;
+package ru.solomentsev.aqa.process;
 
 
-import ru.solomentsev.aqa.process.DockerMcpServerLauncher;
 import ru.solomentsev.aqa.testdata.DockerTestData;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
