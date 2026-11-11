@@ -1,7 +1,6 @@
 package ru.solomentsev.aqa.tests.contract;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.Step;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -23,9 +22,12 @@ import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.testdata.JiraTestData;
 import ru.solomentsev.aqa.testdata.ConfluenceTestData;
 import ru.solomentsev.aqa.testdata.McpContractTestData;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.callTool;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.fieldNames;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.requestStatelessTools;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.sendRequest;
+import static ru.solomentsev.aqa.support.mcp.McpContractTestSupport.textValues;
 
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +50,6 @@ import static ru.solomentsev.aqa.support.assertions.AllureAssertions.assertThat;
 @Tag("regression")
 class McpContractIntegrationTest {
 
-    private static final Duration REQUEST_TIMEOUT = McpTestData.getRequestTimeout();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final Map<String, McpContractTestData.ToolContract> EXPECTED_TOOLS = McpContractTestData.getExpectedTools();
@@ -677,48 +678,6 @@ class McpContractIntegrationTest {
         assertThat(toolErrorResult.path("content").path(0).path("text").asText()).as("Проверка MCP tool error: текст диагностики должен начинаться с «Ошибка: »").startsWith("Ошибка: ");
     
     
-    }
-
-    @Step("Отправить JSON-RPC request: method={method}")
-    private static JsonNode sendRequest(McpClient client, String method, ObjectNode params) {
-        return client.request(method, params, REQUEST_TIMEOUT);
-    }
-
-    @Step("Вызвать MCP-инструмент через tools/call: name={name}")
-    private static JsonNode callTool(McpClient client, String name, ObjectNode arguments) {
-        ObjectNode params = OBJECT_MAPPER.createObjectNode();
-        params.put("name", name);
-        params.set("arguments", arguments);
-        return client.requestStateless(
-                McpTestData.getToolsCallMethod(),
-                params,
-                McpTestData.getStatelessProtocolVersion(),
-                OBJECT_MAPPER.createObjectNode(),
-                null,
-                REQUEST_TIMEOUT
-        );
-    }
-
-    @Step("Выполнить stateless tools/list")
-    private static JsonNode requestStatelessTools(McpClient client) {
-        return client.listToolsStateless(
-                McpTestData.getStatelessProtocolVersion(),
-                REQUEST_TIMEOUT
-        );
-    }
-
-    private static List<String> textValues(JsonNode array) {
-        List<String> values = new ArrayList<>();
-        if (array.isArray()) {
-            array.forEach(value -> values.add(value.asText()));
-        }
-        return values;
-    }
-
-    private static Set<String> fieldNames(JsonNode object) {
-        Set<String> names = new HashSet<>();
-        object.fieldNames().forEachRemaining(names::add);
-        return names;
     }
 
 }
