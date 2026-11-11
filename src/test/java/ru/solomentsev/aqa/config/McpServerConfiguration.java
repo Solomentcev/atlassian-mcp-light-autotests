@@ -11,13 +11,14 @@ import ru.solomentsev.aqa.process.McpServerLauncher;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
-/** Читает настройки запуска MCP-сервера из system properties и environment. */
+/** Читает настройки запуска MCP-сервера из system properties, environment и .env. */
 public final class McpServerConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpServerConfiguration.class);
@@ -89,9 +90,32 @@ public final class McpServerConfiguration {
         }
     }
 
-    /** @return конфигурация, прочитанная из environment и system properties */
+    /** @return конфигурация из .env текущего каталога, environment и system properties */
     public static McpServerConfiguration fromEnvironment() {
-        return new McpServerConfiguration(System.getenv(), System.getProperties());
+        return fromEnvironment(Path.of(".env"), System.getenv(), System.getProperties());
+    }
+
+    /** @return конфигурация из указанного dotenv-файла и системных источников */
+    public static McpServerConfiguration fromEnvironment(Path envFile) {
+        return fromEnvironment(envFile, System.getenv(), System.getProperties());
+    }
+
+    /**
+     * @return конфигурация с приоритетом system properties, environment, .env и значений по умолчанию
+     */
+    public static McpServerConfiguration fromEnvironment(
+            Path envFile, Map<String, String> environment, Properties properties) {
+        Objects.requireNonNull(environment, "environment");
+        Objects.requireNonNull(properties, "properties");
+
+        Map<String, String> mergedEnvironment = new LinkedHashMap<>();
+        try {
+            mergedEnvironment.putAll(EnvFileLoader.load(envFile));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Не удалось прочитать .env файл: " + envFile, exception);
+        }
+        mergedEnvironment.putAll(environment);
+        return new McpServerConfiguration(mergedEnvironment, properties);
     }
 
     public static McpServerConfiguration from(Map<String, String> environment, Properties properties) {
