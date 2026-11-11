@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import ru.solomentsev.aqa.mcp.McpClient;
+import ru.solomentsev.aqa.testdata.McpClientTestData;
 import ru.solomentsev.aqa.testdata.McpTestData;
 
 import static ru.solomentsev.aqa.mcp.McpClientTestActions.initialize;
@@ -219,8 +220,8 @@ class McpClientTest {
     void shouldAddStatelessMetadataWithoutMutatingOriginalParams() throws Exception {
         Allure.parameter("JSON-RPC method", McpTestData.getToolsListMethod());
         Allure.parameter("MCP protocolVersion", McpTestData.getStatelessProtocolVersion());
-        Allure.parameter("Исходный params.filter", "all");
-        Allure.parameter("clientCapabilities.experimental", true);
+        Allure.parameter("Исходный params.filter", McpClientTestData.getFilterValue());
+        Allure.parameter("clientCapabilities.experimental", McpClientTestData.isExperimentalCapabilityEnabled());
         Allure.parameter("clientInfo.name", McpTestData.getMockClientName());
         Allure.parameter("clientInfo.version", McpTestData.getMockClientVersion());
         PipedInputStream clientStdout = new PipedInputStream(McpTestData.getPipeBufferSizeBytes());
@@ -252,8 +253,8 @@ class McpClientTest {
         server.setDaemon(true);
         server.start();
 
-        var originalParams = OBJECT_MAPPER.createObjectNode().put("filter", "all");
-        var capabilities = OBJECT_MAPPER.createObjectNode().put("experimental", true);
+        var originalParams = OBJECT_MAPPER.createObjectNode().put("filter", McpClientTestData.getFilterValue());
+        var capabilities = OBJECT_MAPPER.createObjectNode().put("experimental", McpClientTestData.isExperimentalCapabilityEnabled());
         var clientInfo = OBJECT_MAPPER.createObjectNode()
                 .put("name", McpTestData.getMockClientName())
                 .put("version", McpTestData.getMockClientVersion());
@@ -273,7 +274,7 @@ class McpClientTest {
                     .isEqualTo(McpTestData.getCompleteResultType());
             assertThat(requestReceived.await(McpTestData.getAsyncEventTimeout().toMillis(), TimeUnit.MILLISECONDS)).as("Fake MCP server должен получить stateless-запрос в пределах timeout").isTrue();
             assertThat(received.get().path("params").path("filter").asText())
-                    .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo("all");
+                    .as("Исходный параметр filter должен быть передан серверу без изменения").isEqualTo(McpClientTestData.getFilterValue());
             assertThat(received.get().path("params").path("_meta")
                     .path("io.modelcontextprotocol/protocolVersion").asText())
                     .as("В stateless metadata должна передаваться согласованная версия MCP-протокола")
@@ -288,8 +289,8 @@ class McpClientTest {
                     .isTrue();
             assertThat(received.get().path("params").path("_meta")
                     .path("io.modelcontextprotocol/clientCapabilities").path("experimental").asBoolean())
-                    .as("В stateless metadata должны передаваться client capabilities")
-                    .isTrue();
+                    .as("В stateless metadata должно передаваться исходное значение client capabilities")
+                    .isEqualTo(McpClientTestData.isExperimentalCapabilityEnabled());
             assertThat(received.get().path("params").path("_meta")
                      .path("io.modelcontextprotocol/clientInfo").path("name").asText())
                     .as("В stateless metadata должно передаваться имя MCP-клиента")
@@ -299,8 +300,8 @@ class McpClientTest {
                     .as("В stateless metadata должна передаваться версия MCP-клиента")
                     .isEqualTo(McpTestData.getMockClientVersion());
             assertThat(originalParams.path("filter").asText())
-                    .as("Исходный params.filter должен остаться равным all после отправки запроса")
-                    .isEqualTo("all");
+                    .as("Исходный params.filter должен остаться равным исходному значению после отправки запроса")
+                    .isEqualTo(McpClientTestData.getFilterValue());
             assertThat(originalParams.has("_meta")).as("После stateless tools/list исходный params.filter=all не должен получить поле _meta").isFalse();
         } finally {
             serverStdin.close();
