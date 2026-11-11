@@ -291,14 +291,17 @@ class McpClientTest {
         params.putObject("_meta");
 
         try (McpClient client = new McpClient(clientStdout, clientStdin)) {
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> client.requestStateless( 
-                    "tools/list",
-                    params,
-                    McpTestData.STATELESS_PROTOCOL_VERSION,
-                    OBJECT_MAPPER.createObjectNode(),
-                    null,
-                    McpTestData.INVALID_REQUEST_TIMEOUT
-             )).as("Stateless request с уже существующим _meta должен быть отклонён до отправки")
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> Allure.step(
+                    "Выполнить stateless tools/list с уже существующим params._meta и protocolVersion="
+                            + McpTestData.STATELESS_PROTOCOL_VERSION,
+                    () -> client.requestStateless(
+                            "tools/list",
+                            params,
+                            McpTestData.STATELESS_PROTOCOL_VERSION,
+                            OBJECT_MAPPER.createObjectNode(),
+                            null,
+                            McpTestData.INVALID_REQUEST_TIMEOUT
+                    ))).as("Stateless tools/list с уже существующим params._meta должен быть отклонён до отправки")
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("_meta");
         } finally {
