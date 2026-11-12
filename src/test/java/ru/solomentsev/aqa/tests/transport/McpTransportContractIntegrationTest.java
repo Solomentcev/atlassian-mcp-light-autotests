@@ -334,7 +334,7 @@ class McpTransportContractIntegrationTest {
     @Test
     @Feature("STDIO Transport")
     @Story("MCP-038 — Сохранение UTF-8 в JSON-RPC сообщениях")
-    @Severity(SeverityLevel.NORMAL)
+    @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-038: неизвестный method с кириллицей возвращает -32601 без искажения текста")
     @Description("Предусловия: MCP STDIO-процесс запущен; обмен выполняется в UTF-8.\nШаги: отправить JSON-RPC request с method=aqa/неизвестный-метод; прочитать response.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32601; error.message содержит исходное кириллическое имя метода без потери или искажения символов.")
     @Tag("contract")
