@@ -36,7 +36,7 @@ Atlassian MCP Light — Java 17 MCP-сервер для работы с Jira и 
 1. Запуск тестового экземпляра сервера из собранного JAR.
 2. STDIO framing: UTF-8, JSONL, последовательность сообщений, EOF.
 3. Разделение потоков: MCP-ответы в STDOUT, диагностика в STDERR.
-4. JSON-RPC: запросы, уведомления, идентификаторы, ошибки и некорректные сообщения.
+4. JSON-RPC: запросы, уведомления, идентификаторы, ошибки и некорректные сообщения; сохранение UTF-8 в имени метода и тексте error.message.
 5. Классический initialize/notifications/initialized lifecycle.
 6. Stateless server/discover, tools/list и tools/call.
 7. Контракт 13 MCP-инструментов: имена, схемы аргументов, результат и ошибки.
