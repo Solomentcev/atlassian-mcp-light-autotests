@@ -270,7 +270,7 @@ class McpStatelessLifecycleIntegrationTest {
     @Story("MCP-021 — Вызов tools/call в stateless-режиме")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("MCP-021: stateless tools/call read-инструмента без initialize")
-    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; доступен read-инструмент Confluence.\nШаги: вызвать tools/call с допустимыми arguments и обязательными stateless metadata.\nОжидаемый результат: JSON-RPC error отсутствует; result.isError=false; resultType=complete; content содержит текстовый элемент; serverInfo соответствует контракту.")
+    @Description("Предусловия: запущен новый MCP STDIO-процесс; classic initialize не выполнялся; доступен read-инструмент Confluence.\nШаги: вызвать tools/call с допустимыми arguments и обязательными stateless metadata.\nОжидаемый результат: JSON-RPC error отсутствует; result.isError отсутствует или равен false; resultType=complete; content содержит непустой текстовый элемент; serverInfo соответствует контракту.")
     @Tag("case-MCP-021")
     @Tag("smoke")
     void shouldCallReadToolStatelessWithoutInitialize() throws Exception {
