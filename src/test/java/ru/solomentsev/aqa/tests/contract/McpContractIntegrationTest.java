@@ -667,7 +667,7 @@ class McpContractIntegrationTest {
     @Story("CONF-019 — Обновление страницы без полей для изменения")
     @Severity(SeverityLevel.CRITICAL)
     @DisplayName("CONF-019: confluence_update_page отклоняет запрос без title и content")
-    @Description("Предусловия: MCP STDIO-процесс запущен; доступен инструмент confluence_update_page.\nШаги: вызвать confluence_update_page с arguments={page_id:"1"} без title и content.\nОжидаемый результат: JSON-RPC response содержит result.isError=true и непустую текстовую диагностику, начинающуюся с «Ошибка: »; существование страницы и отсутствие её изменения этим тестом не проверяются.")
+    @Description("Предусловия: MCP STDIO-процесс запущен; доступен инструмент confluence_update_page.\nШаги: вызвать confluence_update_page с arguments, содержащим page_id, но без title и content.\nОжидаемый результат: JSON-RPC response содержит result.isError=true и непустую текстовую диагностику, начинающуюся с «Ошибка: »; существование страницы и отсутствие её изменения этим тестом не проверяются.")
     @Tag("negative")
     @Tag("case-CONF-019")
     @Tag("confluence")
