@@ -184,23 +184,55 @@
 | DATA-006 | Восстановление незавершённого write intent | P1 | Negative | В журнале есть `WRITE_INTENT` без терминального события | — | 1. Принудительно завершить AQA-процесс до записи результата. 2. Запустить восстановление журнала. | Intent не теряется и переводится в `UNKNOWN_OUTCOME`; он не считается подтверждённым объектом; требуется сверка до любых дальнейших действий. | — | Запланировано |
 | DATA-007 | Восстановление после частичной записи последней строки | P1 | Negative | В изолированном workspace реестр содержит валидные завершённые записи и неполную последнюю JSONL-строку без newline; соответствующий write-запрос не отправлялся | — | 1. Запустить recovery TestDataManager. 2. Проверить основной журнал и файл `<registry>.corrupt`. 3. Проверить отсутствие сетевого write-вызова для operationId из повреждённого хвоста. | Валидные записи сохранены; неполная строка сохранена в `<registry>.corrupt`, основной журнал обрезан до последнего полного newline и не интерпретирует её как WRITE_INTENT/UNKNOWN_OUTCOME; write-запрос не повторяется и не отправляется; последующие записи могут безопасно дописываться. | — | Запланировано |
 
-## 6. Матрица покрытия инструментов
+## 6. Матрица покрытия MCP-контракта
 
-| MCP-инструмент | Основные тесты |
-|---|---|
-| `jira_search` | JIRA-004, JIRA-005, JIRA-006, JIRA-007, JIRA-008 |
-| `jira_create_issue` | JIRA-009, JIRA-010, JIRA-023 |
-| `jira_add_comment` | JIRA-013, JIRA-016, JIRA-017 |
-| `jira_get_project` | JIRA-014, JIRA-019 |
-| `jira_get_user` | JIRA-015, JIRA-020, JIRA-022 |
-| `jira_get_issue` | JIRA-001, JIRA-002, JIRA-003, JIRA-018 |
-| `jira_transition` | JIRA-011, JIRA-012, JIRA-021 |
-| `confluence_get_page` | CONF-001, CONF-002, CONF-003, CONF-018 |
-| `confluence_get_space` | CONF-005, CONF-023 |
-| `confluence_search` | CONF-006, CONF-007, CONF-008, CONF-015, CONF-021 |
-| `confluence_create_page` | CONF-009, CONF-010, CONF-017, CONF-020 |
-| `confluence_list_spaces` | CONF-004, CONF-008, CONF-016, CONF-022 |
-| `confluence_update_page` | CONF-011, CONF-012, CONF-013, CONF-014, CONF-019 |
+### Общий контракт tools/list
+
+| Область | Автоматизированные проверки | Что именно проверяется |
+|---|---|---|
+| Набор инструментов | MCP-006 | Ровно 13 уникальных имён, совпадающих с эталонным контрактом |
+| Описания | MCP-007 | У каждого инструмента непустой description |
+| JSON Schema и annotations | MCP-008 | properties, required, типы, minLength, minimum/maximum, additionalProperties и четыре annotation-флага |
+
+### Вызовы отдельных инструментов
+
+| MCP-инструмент | Автоматизированное покрытие tools/call | Запланированные функциональные кейсы |
+|---|---|---|
+| `jira_get_issue` | MCP-011 — отсутствует issue_key; MCP-012 — issue_key числом; MCP-013 — лишний аргумент; MCP-034 — null/пустая/пробельная строка | JIRA-001, JIRA-002, JIRA-003, JIRA-018 |
+| `jira_search` | MCP-028 — limit=0 и 101 отклоняются, limit=1 принимается; запрос JQL `project = AQA` | JIRA-004, JIRA-005, JIRA-006, JIRA-007, JIRA-008 |
+| `jira_create_issue` | — | JIRA-009, JIRA-010, JIRA-023 |
+| `jira_transition` | — | JIRA-011, JIRA-012, JIRA-021 |
+| `jira_add_comment` | — | JIRA-013, JIRA-016, JIRA-017 |
+| `jira_get_project` | — | JIRA-014, JIRA-019 |
+| `jira_get_user` | — | JIRA-015, JIRA-020, JIRA-022 |
+| `confluence_get_page` | — | CONF-001, CONF-002, CONF-003, CONF-018 |
+| `confluence_list_spaces` | MCP-021 — успешный stateless read с limit=1; MCP-028 — limit=0/101 отклоняются, limit=1 принимается | CONF-004, CONF-008, CONF-016, CONF-022 |
+| `confluence_get_space` | — | CONF-005, CONF-023 |
+| `confluence_search` | MCP-028 — limit=0/101 отклоняются, limit=1 принимается; запрос CQL `type = page` | CONF-006, CONF-007, CONF-008, CONF-015, CONF-021 |
+| `confluence_create_page` | — | CONF-009, CONF-010, CONF-017, CONF-020 |
+| `confluence_update_page` | CONF-019 — вызов без title и content возвращает MCP tool error | CONF-011, CONF-012, CONF-013, CONF-014 |
+
+MCP-010 дополнительно проверяет dispatch ошибки неизвестного инструмента `aqa_unknown_tool`. MCP-023 проверяет три варианта отсутствующей stateless metadata; MCP-022 — неподдерживаемую protocolVersion.
+
+### Протокольное и транспортное покрытие
+
+| Область | Автоматизированные кейсы | Ограничения текущей проверки |
+|---|---|---|
+| Classic lifecycle | MCP-017, MCP-025, MCP-036 | MCP-001, MCP-002, MCP-003, MCP-024, MCP-026, MCP-027 и MCP-037 остаются запланированными |
+| Stateless lifecycle | MCP-019, MCP-020, MCP-021, MCP-022, MCP-023 | Не проверяются все варианты неверных типов metadata и все дополнительные поля |
+| JSON-RPC ошибки и восстановление | MCP-014, MCP-015, MCP-016, MCP-030, MCP-031, MCP-032 | MCP-031 проверяет только корневой массив `[]`, не JSON-строку |
+| STDIO framing и notifications | MCP-004, MCP-029, MCP-030, MCP-031, MCP-032, MCP-038 | MCP-004 и MCP-029 проверяют последующий ping, но не утверждают напрямую отсутствие отдельных ответов на notification/пустые строки |
+| Контракт инструментов | MCP-005, MCP-006, MCP-007, MCP-008 | Проверяется публикация всех 13 схем; это не означает позитивное выполнение каждого инструмента |
+
+### Основные пробелы
+
+- Позитивные Jira/Confluence CRUD-сценарии через MCP не реализованы.
+- Позитивное получение `jira_get_issue`, `confluence_get_page`, `confluence_get_space`, `jira_get_project` и `jira_get_user` пока не автоматизировано.
+- Write-инструменты `jira_create_issue`, `jira_transition`, `jira_add_comment` и `confluence_create_page` не выполняются интеграционными тестами.
+- MCP-037 — проверка обязательных полей initialize — остаётся запланированным.
+- Отсутствие response на notification и пустые STDIO-строки не проверяется отдельным ожиданием отсутствия сообщения.
+- MCP-031 проверяет массив как не-объектный JSON-root; сценарий со строковым JSON-root отдельно не автоматизирован.
+- Реальные Docker runtime, аварийный cleanup контейнера и Jenkins Pipeline остаются вне подтверждённого покрытия.
 
 ## 7. Повторы, конкурентность и сохранность
 
