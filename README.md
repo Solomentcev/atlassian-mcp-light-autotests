@@ -88,7 +88,7 @@ AQA_RUN_ID=${BUILD_TAG:-local} \
 mvn -Pintegration test
 ```
 
-Docker-режим запускает новый контейнер командой `docker run -i`; подключение к уже работающему контейнеру не используется. Реальный запуск контейнера и его аварийный cleanup пока не подтверждены интеграционным прогоном.
+Docker-режим запускает отдельный контейнер командой `docker run -i --rm`; подключение к уже работающему контейнеру не используется. Реальный запуск контейнеров, штатное завершение и удаление после успешного прогона подтверждены Jenkins integration run (57 тестов). Очистка после принудительного прерывания Docker CLI или потери Jenkins agent отдельно не проверялась.
 
 ### Наборы тестов
 
@@ -134,7 +134,13 @@ mvn -Pintegration clean test
 - STDIO/JSON-RPC: MCP-014–016, MCP-029–032, MCP-038;
 - Confluence validation: CONF-019.
 
-Отдельные unit-тесты покрывают MCP Client, конфигурацию, session lifecycle, ProcessBuilder, ManagedProcess, построение Docker-команды и маскирование диагностических данных. Они не означают, что соответствующие end-to-end сценарии PROC/Docker/Jenkins уже подтверждены. Подробная матрица находится в [каталоге тест-кейсов](docs/test-cases.md).
+Отдельные unit-тесты покрывают MCP Client, конфигурацию, session lifecycle, ProcessBuilder, ManagedProcess, построение Docker-команды и маскирование диагностических данных. Реальный Docker runtime и Jenkins Pipeline дополнительно подтверждены успешным integration run; аварийные сценарии и end-to-end проверка canary-секретов остаются отдельными задачами. Подробная матрица находится в [каталоге тест-кейсов](docs/test-cases.md).
+
+## Jenkins Pipeline
+
+В корне репозитория находится `Jenkinsfile`. Pipeline получает AQA-репозиторий и отдельно checkout основного проекта, фиксирует commit SHA сервера, собирает Docker image из исходников, получает конфигурацию Atlassian из Jenkins Secret file credential `atlassian-mcp-env`, запускает `mvn -B -Pintegration clean test`, публикует JUnit results и Allure report, затем удаляет оставшиеся контейнеры текущего запуска и временный Docker image.
+
+Успешный прогон Jenkins от 12.11.2026: 57 тестов, 0 failures, 0 errors, 0 skipped. Ревизия сервера сохраняется в артефакте `server-revision.txt`. Для Jenkins agent необходимы Git, Java 17, Maven, Docker CLI и доступ к Docker Engine. Секреты хранятся в Jenkins Credentials и не должны выводиться в лог или попадать в артефакты.
 
 ## Allure и логи
 
@@ -148,8 +154,8 @@ Allure assertions остаются в тестах и используют ун�
 
 ## Ограничения и незавершённые работы
 
-- Jenkins Pipeline в репозитории пока не реализован; документирована целевая последовательность CI.
-- Docker launcher проверен unit-тестами формирования команды, но реальный Docker runtime и cleanup контейнера требуют отдельной проверки.
+- Jenkins Pipeline реализован и прошёл успешный integration run; аварийное восстановление после потери Jenkins agent/host не проверено.
+- Docker runtime и штатное удаление контейнеров подтверждены успешным прогоном; cleanup после принудительного прерывания Docker CLI требует отдельной проверки.
 - Полноценные Jira/Confluence CRUD integration tests, TestData registry, write-safety/recovery и preflight пока не реализованы.
 - MCP-контракт не содержит delete-инструментов. AQA не должна обходить MCP через прямой Atlassian REST API для удаления тестовых объектов.
 - Статус каждого сценария и каждой архитектурной меры фиксируется в каталоге тест-кейсов и реестре рисков.
