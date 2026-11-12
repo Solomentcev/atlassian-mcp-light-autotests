@@ -28,7 +28,7 @@ pipeline {
         stage('Checkout server') {
             steps {
                 dir('server') {
-                    git branch: 'master', url: "${env.SERVER_REPOSITORY}"
+                    git branch: "${env.SERVER_BRANCH}", url: "${env.SERVER_REPOSITORY}"
                     script {
                         env.SERVER_COMMIT = sh(
                             script: 'git rev-parse HEAD',
@@ -36,6 +36,10 @@ pipeline {
                         ).trim()
                     }
                 }
+                writeFile(
+                    file: 'server-revision.txt',
+                    text: "Repository: ${env.SERVER_REPOSITORY}\\nBranch: ${env.SERVER_BRANCH}\\nCommit: ${env.SERVER_COMMIT}\\n"
+                )
                 echo "Server revision: ${env.SERVER_COMMIT}"
             }
         }
@@ -73,6 +77,12 @@ pipeline {
                 junit(
                     testResults: 'target/surefire-reports/*.xml',
                     allowEmptyResults: true
+                )
+
+                archiveArtifacts(
+                    artifacts: 'server-revision.txt',
+                    allowEmptyArchive: true,
+                    fingerprint: true
                 )
 
                 if (fileExists('target/allure-results')) {
