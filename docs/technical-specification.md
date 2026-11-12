@@ -313,7 +313,7 @@ Allure labels и структура сценария:
 - JUnit `@Tag` — тип/область теста и тег `case-<ID>` для связи с каталогом;
 - `@DisplayName` и `@Description` — читаемое название, предусловия, шаги и ожидаемый результат;
 - `Allure.step` — только фактические действия: отправка/получение MCP-сообщений и управление lifecycle процесса. Проверки выполняются вне шагов и снабжаются сообщениями, объясняющими ожидаемое поведение.
-- Тестовые классы находятся в пакетах `tests.*`; MCP client/session, process launchers, config, JUnit support и diagnostics вынесены в отдельные инфраструктурные пакеты. Общие параметры и тестовые данные находятся в `testdata`.
+- Сценарные и интеграционные тестовые классы находятся в пакетах `tests.*`. `DockerMcpServerLauncherTest` расположен рядом с `DockerMcpServerLauncher` в пакете `process`, поскольку проверяет package-private построитель команды без расширения публичного API. MCP client/session, process launchers, config, JUnit support и diagnostics вынесены в отдельные инфраструктурные пакеты. Общие параметры и тестовые данные находятся в `testdata`.
 - `AllureDiagnosticsTest` проверяет собственную функцию маскирования секретов; отдельные тесты стороннего Allure framework не создаются.
 
 Результаты Allure сохраняются в `target/allure-results`, JUnit XML — в `target/surefire-reports`. HTML-отчёт локально формируется через Allure Maven Plugin 3.1.0 с явно закреплённым runtime Allure Report 2.39.0 (классический интерфейс Allure 2) командами `mvn allure:serve` (просмотр в браузере) или `mvn allure:report` (статический HTML в `target/site/allure-maven/index.html`); в Jenkins используется Jenkins Allure plugin.
