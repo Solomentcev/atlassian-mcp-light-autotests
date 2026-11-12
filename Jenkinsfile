@@ -38,7 +38,7 @@ pipeline {
                 }
                 writeFile(
                     file: 'server-revision.txt',
-                    text: "Repository: ${env.SERVER_REPOSITORY}\\nBranch: ${env.SERVER_BRANCH}\\nCommit: ${env.SERVER_COMMIT}\\n"
+                    text: "Repository: ${env.SERVER_REPOSITORY}\nBranch: ${env.SERVER_BRANCH}\nCommit: ${env.SERVER_COMMIT}\n"
                 )
                 echo "Server revision: ${env.SERVER_COMMIT}"
             }
