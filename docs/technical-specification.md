@@ -28,16 +28,16 @@ AQA проверяет собранное приложение через пуб
 | MCP Client и STDIO | Реализовано | Unit- и integration-тесты request/response, notifications, JSON-RPC и framing |
 | Classic и stateless session | Реализовано | `McpProcessSession`, JUnit extension и отдельные stateless lifecycle tests |
 | Local JAR launcher | Реализовано | Launcher и управление процессом входят в unit/integration инфраструктуру |
-| Docker launcher | Частично | Проверяется построение безопасной `docker run -i --rm` команды; запуск реального контейнера и его cleanup не подтверждены |
+| Docker launcher | Реализовано для штатного lifecycle | Jenkins integration run подтвердил запуск отдельных контейнеров и их штатное удаление после тестов; аварийное прерывание Docker CLI отдельно не проверялось |
 | Конфигурация AQA | Реализовано | Environment, system properties, `.env`, режимы local/docker, таймауты и уникальный run ID |
 | Allure diagnostics | Частично | Есть маскирование и unit-тесты; end-to-end проверка canary-секретов во всех CI-артефактах не выполнена |
 | MCP tools contract | Реализовано | Сравнение состава, описаний, JSON Schema и annotations с эталонными TestData |
 | Jira/Confluence CRUD integration | Не реализовано | Реальные создание/чтение/изменение бизнес-объектов не покрыты отдельным набором AQA |
 | Test data registry / write safety | Не реализовано | Нет устойчивого WRITE_INTENT/UNKNOWN_OUTCOME журнала и retry-policy adapter |
-| Jenkins Pipeline | Не реализовано | В репозитории нет подтверждённого Pipeline, описана только целевая схема |
-| Реальный Docker runtime в CI | Не проверено | Нужен отдельный прогон на агенте с Docker Engine |
+| Jenkins Pipeline | Реализовано | `Jenkinsfile`: checkout двух репозиториев, сборка Docker image, запуск integration profile, публикация JUnit/Allure, cleanup; успешный прогон 57/57 от 12.11.2026 |
+| Реальный Docker runtime в CI | Проверено для штатного прогона | Контейнеры запускались и штатно удалялись; аварийный cleanup при потере агента или Docker CLI не подтверждён |
 
-Последняя локальная проверка, подтверждённая до текущего аудита: `mvn -Pintegration -DskipTests test-compile` завершилась `BUILD SUCCESS` и скомпилировала 42 test source files под release 17. Это подтверждает компиляцию, но не выполнение тестов. В исходниках определено 51 тестовый метод: 48 `@Test` и 3 `@ParameterizedTest`; каждый параметризованный источник возвращает по три набора данных, поэтому полный прогон содержит 57 выполнений. Ранее выполнялся integration-прогон с 57 тестами без failures/errors, но после последующих изменений контрактных TestData, package declarations и привязки MCP-038 полный прогон необходимо повторить. Текущий аудит не является подтверждением нового запуска Maven.
+12.11.2026 полный integration-набор был выполнен в Jenkins Pipeline командой `mvn -B -Pintegration clean test`: 57 тестов, 0 failures, 0 errors, 0 skipped, `BUILD SUCCESS`. Pipeline собрал Docker image тестируемого сервера из отдельного checkout, запустил контейнеры для тестовых MCP-сессий, опубликовал JUnit results и сформировал Allure report. Логи подтверждают штатное завершение контейнеров; post-блок не обнаружил оставшихся контейнеров и удалил временный image. Это подтверждает успешный Docker runtime и cleanup при штатном завершении, но не аварийную очистку при потере Jenkins agent/host или Docker Engine.
 
 ## 2. Репозитории и стек
 
@@ -255,20 +255,22 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 ## 10. Jenkins Pipeline
 
-**Статус: не реализован.** Ниже приведена целевая последовательность этапов, а не описание существующего Jenkinsfile.
+**Статус: реализован; успешный прогон подтверждён 12.11.2026.** Реализация находится в корневом `Jenkinsfile`.
 
-Рекомендуемые логические этапы:
+Pipeline выполняет следующие этапы:
 
-1. **Checkout AQA** — получить AQA repository.
-2. **Checkout server** — получить выбранную ветку/ревизию основного проекта; зафиксировать commit SHA.
-3. **Build server** — собрать основной проект из исходников выбранной ревизии. Для локального режима выполнить `./mvnw clean package` из корня server checkout и передать найденный исполняемый JAR launcher. Для Docker режима выполнить `docker build -t atlassian-mcp-light:latest .` из корня server checkout: существующий Dockerfile сам собирает приложение на builder stage и формирует runtime image. Не требуется предварительно собирать JAR отдельным Jenkins stage, если выбран только Docker-режим.
-4. **Test** — выполнить AQA Maven tests с выбранным launcher mode и необходимыми credentials.
-5. **Publish** — опубликовать JUnit XML и Allure Report; сохранить commit SHA, логи процесса и реестр тестовых данных.
-6. **Cleanup** — завершить тестовый процесс/контейнер и удалить только ресурсы текущего AQA run.
+1. **Checkout AQA** — получает репозиторий через `checkout scm`.
+2. **Checkout server** — получает `Solomentsev/atlassian-mcp-light` в каталог `server` из ветки `master`, фиксирует полный commit SHA и сохраняет URL, branch и SHA в `server-revision.txt`.
+3. **Build Docker image** — выполняет `docker build --pull` из корня server checkout. Dockerfile основного проекта самостоятельно собирает приложение на builder stage.
+4. **Integration tests** — получает Secret file credential `atlassian-mcp-env`, передаёт путь к нему через `AQA_DOCKER_ENV_FILE` и запускает `mvn -B -Pintegration clean test` с `AQA_SERVER_MODE=docker` и уникальными image/run ID.
+5. **Publish** — Jenkins JUnit plugin записывает результаты из `target/surefire-reports`; Jenkins Allure plugin формирует и архивирует HTML report из `target/allure-results`; `server-revision.txt` архивируется как build artifact.
+6. **Cleanup** — в `post { always { ... } }` удаляются оставшиеся контейнеры с префиксом текущего run ID и временный Docker image.
 
-Jenkins controller может работать в Docker. Это не обязывает запускать AQA в отдельном контейнере. Тесты выполняются на Jenkins agent, который имеет JDK 17/Maven для локального режима; для Docker режима дополнительно необходимы Docker CLI и доступ к Docker Engine. Checkout AQA и checkout основного проекта должны находиться в разных каталогах workspace, чтобы второй checkout не перезаписал `.git` и файлы первого.
+Подтверждённый прогон: 57 тестов, 0 failures, 0 errors, 0 skipped; JUnit и Allure публикация успешны. Docker launcher штатно завершил тестовые контейнеры; дополнительный cleanup не обнаружил оставшихся контейнеров. `disableConcurrentBuilds()` запрещает параллельные сборки одной Jenkins job.
 
-Pipeline post { always { ... } } используется как страховка для cleanup и публикации доступных артефактов. Он не может гарантировать очистку при потере самого Jenkins agent/host или Docker Engine; для orphan Docker resources при необходимости предусматривается отдельная host-level политика.
+Jenkins agent должен иметь Git, Java 17, Maven, Docker CLI и доступ к Docker Engine. В текущей конфигурации Jenkins controller работает в Docker и использует подключённый Docker socket. Credentials хранятся в Jenkins Credentials как Secret file; содержимое env-файла не выводится в лог.
+
+Границы подтверждения: аварийное завершение при потере Jenkins agent/host или Docker Engine не проверялось; `post { always { ... } }` может выполнить cleanup только пока доступны agent и Docker Engine. Отдельная end-to-end проверка отсутствия canary-секретов во всех CI-артефактах также не выполнялась.
 
 ## 11. Тестовые данные и write safety
 
