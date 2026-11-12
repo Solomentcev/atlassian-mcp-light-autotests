@@ -134,7 +134,7 @@ mvn -Pintegration clean test
 - STDIO/JSON-RPC: MCP-014–016, MCP-029–032, MCP-038;
 - Confluence validation: CONF-019.
 
-Отдельные unit-тесты покрывают MCP Client, конфигурацию, session lifecycle, ProcessBuilder, ManagedProcess, построение Docker-команды и маскирование диагностических данных. Они не означают, что соответствующие end-to-end сценарии PROC/Docker/Jenkins уже подтверждены. Подробная матрица находится в [каталоге тест-кейсов](docs/test-cases.md).
+Отдельные unit-тесты покрывают MCP Client, конфигурацию, session lifecycle, ProcessBuilder, ManagedProcess, построение Docker-команды и маскирование диагностических данных. Реальный Docker runtime и Jenkins Pipeline дополнительно подтверждены успешным integration run; аварийные сценарии и end-to-end проверка canary-секретов остаются отдельными задачами. Подробная матрица находится в [каталоге тест-кейсов](docs/test-cases.md).
 
 ## Jenkins Pipeline
 
