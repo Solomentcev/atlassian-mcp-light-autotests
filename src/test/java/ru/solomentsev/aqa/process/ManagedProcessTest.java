@@ -1,6 +1,4 @@
-package ru.solomentsev.aqa.tests.process;
-
-import ru.solomentsev.aqa.process.ManagedProcess;
+package ru.solomentsev.aqa.process;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
