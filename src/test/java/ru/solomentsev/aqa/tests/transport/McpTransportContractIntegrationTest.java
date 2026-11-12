@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.mcp;
+package ru.solomentsev.aqa.tests.transport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.testdata.McpTransportTestData;
