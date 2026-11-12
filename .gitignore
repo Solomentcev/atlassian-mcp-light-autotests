@@ -19,6 +19,7 @@ target/
 dependency-reduced-pom.xml
 
 # Test results and reports
+.allure/
 allure-results/
 allure-report/
 surefire-reports/

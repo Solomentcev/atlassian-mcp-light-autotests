@@ -1,110 +1,76 @@
 # Atlassian MCP Light Autotests
 
-Внешний black-box AQA-проект для проверки [Atlassian MCP Light](https://github.com/Solomentcev/atlassian-mcp-light).
+Внешний black-box AQA-проект для проверки [Atlassian MCP Light](https://github.com/Solomentcev/atlassian-mcp-light) через публичный MCP/JSON-RPC контракт поверх STDIO.
 
-AQA взаимодействует с сервером через его штатный MCP/JSON-RPC интерфейс поверх STDIO. Тесты не импортируют внутренние классы основного проекта и не обращаются напрямую к Jira/Confluence REST API. Фактический контракт классического и stateless MCP-режимов, JSON-RPC ошибок и 13 инструментов описан в [mcp-contract.md](docs/mcp-contract.md).
+AQA не импортирует внутренние классы сервера, не подключает основной проект как Maven dependency и не обращается напрямую к Jira/Confluence REST API. Тестируемый сервер запускается отдельным процессом или новым Docker-контейнером; оба режима используют один MCP Client.
 
 ## Технологии
 
-- Java 17
-- Maven
-- JUnit 5
-- AssertJ
-- Jackson
-- Allure Report
-- Jenkins
-- Docker (для Docker-режима запуска сервера и Jenkins-инфраструктуры)
-
-Для первой версии используется собственный минимальный MCP Client на Java/Jackson. MCP SDK и Mockito не добавляются без отдельной технической необходимости.
+- Java 17 (компиляция через `maven.compiler.release=17`);
+- Maven, JUnit 5, AssertJ, Jackson;
+- Allure JUnit 5, SLF4J, Logback;
+- ProcessBuilder и Docker CLI.
 
 ## Документация
 
-- [Стратегия и план тестирования](docs/test-strategy.md)
-- [Каталог тест-кейсов](docs/test-cases.md)
-- [Структура Jira-бэклога](docs/jira-backlog.md)
-- [Техническая спецификация AQA-фреймворка](docs/technical-specification.md)
-- [Фактический MCP/JSON-RPC контракт сервера](docs/mcp-contract.md)
-- [Реестр архитектурных рисков и мер контроля](docs/risk-register.md)
+| Документ | Назначение |
+|---|---|
+| [Стратегия тестирования](docs/test-strategy.md) | Объём, уровни, окружение и критерии готовности |
+| [Каталог тест-кейсов](docs/test-cases.md) | Сценарии, стабильные ID и статус автоматизации |
+| [Техническая спецификация](docs/technical-specification.md) | Архитектура, компоненты, конфигурация и CI |
+| [MCP-контракт](docs/mcp-contract.md) | Фактическое поведение тестируемого сервера |
+| [Jira-бэклог](docs/jira-backlog.md) | Реализованные и оставшиеся работы |
+| [Реестр рисков](docs/risk-register.md) | Риски, меры контроля и статус проверки |
 
-## Архитектура запуска
+## Архитектура
 
-Jenkins получает два независимых репозитория:
-
-1. atlassian-mcp-light-autotests — исходный код AQA.
-2. atlassian-mcp-light — исходный код тестируемого сервера на выбранном commit SHA.
-
-Jenkins собирает тестируемый сервер из исходников. Затем AQA запускает отдельный тестовый экземпляр сервера одним из двух способов:
-
-- **Локальный JAR:** AQA запускает Java-процесс через ProcessBuilder.
-- **Docker:** AQA запускает Docker CLI через ProcessBuilder; команда docker run -i запускает отдельный контейнер и передаёт его STDIN/STDOUT через потоки Docker CLI.
-
-В обоих режимах MCP Client работает одинаково: отправляет JSON-RPC сообщения в STDIN процесса и читает ответы из STDOUT. Отличается только способ создания процесса. AQA управляет жизненным циклом запущенного тестового экземпляра: запуск до тестов, штатное завершение после тестов и принудительная очистка при сбое или таймауте.
-
-Основной проект не является Maven-зависимостью AQA. Между проектами сохраняется black-box граница: AQA использует только собранный исполняемый артефакт и публичный STDIO/MCP контракт.
-
-## Текущая реализация
-
-В ветке `feature/mcp-client` начата реализация базового STDIO-слоя:
-
-- `DefaultProcessLauncher` запускает команду через `ProcessBuilder`, не объединяя STDOUT и STDERR.
-- `ManagedProcess` предоставляет потоки процесса и выполняет штатное/принудительное завершение.
-- `StderrCollector` независимо читает STDERR и хранит ограниченный хвост диагностики.
-- `McpClient` отправляет JSON-RPC сообщения по STDIN, читает ответы из STDOUT, проверяет request id и поддерживает классический `initialize → notifications/initialized`.
-- `McpProcessSession` объединяет запуск процесса, сбор STDERR, при необходимости classic MCP handshake и последующее завершение процесса; stateless-сессия запускается без initialize.
-- `DockerProcessLauncher` запускает отдельный контейнер через `docker run --rm -i`, без TTY и опубликованных портов. Для контейнера назначаются уникальные имя и label AQA run; cleanup проверяет label, выполняет stop и при необходимости rm -f.
-
-Docker launcher использует тот же `ManagedProcess`, `McpProcessSession` и `McpClient`, что и локальный режим. Для Docker CLI нужны доступный Docker Engine, собранный image и env-файл; AQA не подключается к уже работающему контейнеру.
-
-### Конфигурация запуска тестов
-
-JUnit-аннотация `@McpServerTest` подключает `McpServerExtension`: перед тестами класса создаётся отдельный процесс и выполняется MCP handshake, после класса сессия закрывается. Методы класса выполняются последовательно. В тестовые методы можно внедрять `McpClient` или `McpProcessSession`.
-
-Режим выбирается переменной `AQA_SERVER_MODE` (или одноимённым system property с префиксом `aqa.`). System properties имеют приоритет над environment.
-
-| Переменная | Локальный режим | Docker-режим |
-|---|---|---|
-| `AQA_SERVER_MODE` | `local` | `docker` |
-| `AQA_SERVER_JAR` | Путь к собранному исполняемому JAR | Не используется |
-| `AQA_SERVER_JAVA` | Необязательно; по умолчанию Java из текущей JVM | Не используется |
-| `AQA_SERVER_WORKING_DIRECTORY` | Необязательно; рабочий каталог процесса | Необязательно; рабочий каталог Docker CLI |
-| `AQA_DOCKER_IMAGE` | Не используется | Имя собранного image |
-| `AQA_DOCKER_ENV_FILE` | Не используется | Путь к env-файлу для контейнера |
-| `AQA_DOCKER_EXECUTABLE` | Не используется | Необязательно; по умолчанию `docker` |
-| `AQA_RUN_ID` | Не используется | Базовый ID Jenkins-прогона; к нему добавляется уникальный суффикс на класс |
-| `AQA_SERVER_STARTUP_TIMEOUT_SECONDS` | Необязательно; по умолчанию 15 | Необязательно; по умолчанию 15 |
-| `AQA_DOCKER_STOP_TIMEOUT_SECONDS` | Не используется | Необязательно; по умолчанию 10 |
-| `AQA_MCP_PROTOCOL_VERSION` | Необязательно; по умолчанию `2025-11-25` | Необязательно; по умолчанию `2025-11-25` |
-
-Пример локального запуска:
-
-```bash
-AQA_SERVER_MODE=local \
-AQA_SERVER_JAR=../atlassian-mcp-light/atlassian-mcp-app/target/atlassian-mcp-light-1.0-SNAPSHOT.jar \
-mvn test
+```text
+             JUnit tests
+                  |
+            McpProcessSession
+             /          \
+        McpClient    McpServerLauncher
+            |              |
+            |        ManagedProcess
+            |              |
+            +-- STDIN/STDOUT --+
+                    |
+            Atlassian MCP Light
+                    |
+              Jira / Confluence API
 ```
 
-Пример Docker-режима:
+- `McpClient` выполняет JSON-RPC обмен по STDIN/STDOUT, сопоставляет request ID и поддерживает classic и stateless запросы.
+- `McpProcessSession` объединяет launcher, управляемый процесс, сбор STDERR и lifecycle сессии.
+- `ProcessBuilderLauncher` запускает системные команды; `ManagedProcess` управляет процессом и его завершением.
+- `LocalMcpServerLauncher` запускает JAR, `DockerMcpServerLauncher` формирует команду запуска нового контейнера.
+- `McpServerExtension` создаёт отдельную сессию на тестовый класс. Методы класса выполняются последовательно; независимые классы могут выполняться параллельно.
+- `McpStatelessLifecycleIntegrationTest` самостоятельно создаёт отдельную stateless-сессию на каждый тестовый метод.
+- STDERR читается отдельно от STDOUT. В STDOUT не должны попадать диагностические сообщения.
+
+## Запуск
+
+### Unit-тесты
+
+Не требуют запущенного Atlassian MCP Light:
 
 ```bash
-AQA_SERVER_MODE=docker \
-AQA_DOCKER_IMAGE=atlassian-mcp-light:latest \
-AQA_DOCKER_ENV_FILE=.runtime.env \
-AQA_RUN_ID=${BUILD_TAG:-local} \
-mvn test
+mvn clean test
 ```
 
-В локальном режиме процесс наследует environment Jenkins agent. В Docker-режиме переменные тестируемого приложения передаются через указанный env-файл. Не передавайте секреты через Maven arguments и не выводите содержимое env-файла в лог.
+### Компиляция тестовых исходников
 
-JUnit-проверки покрывают запуск процесса, раздельный сбор STDERR, JSON-RPC request/response, notifications, классический handshake, stateless metadata, запуск stateless-сессии без initialize и валидацию конфигурации. Добавлены Docker launcher, JUnit lifecycle extension и Allure JUnit 5.
+Команда проверяет компиляцию, но не запускает тесты:
 
-Stateless API клиента:
-- `discoverStateless(...)` — `server/discover`;
-- `listToolsStateless(...)` — `tools/list`;
-- `requestStateless(...)` — произвольный stateless request с обязательной metadata в `params._meta`.
+```bash
+mvn -Pintegration -DskipTests test-compile
+```
 
-Интеграционные проверки публичного контракта находятся в `McpContractIntegrationTest`: discovery, поддерживаемые версии, точные свойства/required/type/ограничения схем 13 инструментов, annotations, ошибки валидации аргументов и различение MCP tool error и JSON-RPC error. `McpStatelessLifecycleIntegrationTest` отдельно проверяет tools/list до discovery на новом процессе без предварительного classic initialize. `McpTransportContractIntegrationTest` проверяет пустые строки, parse error с продолжением STDIO-цикла, некорректную форму запроса, неизвестный метод, отсутствие ответа на notification и повторный initialize. Интеграционные тесты не запускаются обычной командой `mvn test`.
+### Интеграционные тесты
 
-Для запуска интеграционных проверок требуется собранный JAR или Docker image тестируемого сервера и тестовая конфигурация Jira/Confluence (обязательные `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN` передаются серверному процессу):
+Требуется собранный JAR или Docker image тестируемого сервера, а также валидная конфигурация приложения. Jira URL, email и token обязательны для запуска сервера; credentials передаются серверному процессу, а не MCP Client.
+
+Локальный режим:
 
 ```bash
 AQA_SERVER_MODE=local \
@@ -112,31 +78,78 @@ AQA_SERVER_JAR=../atlassian-mcp-light/atlassian-mcp-app/target/atlassian-mcp-lig
 mvn -Pintegration test
 ```
 
-Для Docker-режима дополнительно задаются `AQA_DOCKER_IMAGE` и `AQA_DOCKER_ENV_FILE`. Обычная команда `mvn test` выполняет только unit-тесты и не требует запуска Atlassian MCP Light.
+Docker-режим:
 
-Локальную сборку и выполнение тестов ещё необходимо подтвердить; до этого реализация не считается проверенной.
+```bash
+AQA_SERVER_MODE=docker \
+AQA_DOCKER_IMAGE=atlassian-mcp-light:latest \
+AQA_DOCKER_ENV_FILE=.runtime.env \
+AQA_RUN_ID=${BUILD_TAG:-local} \
+mvn -Pintegration test
+```
 
-## Jenkins Pipeline
+Docker-режим запускает новый контейнер командой `docker run -i`; подключение к уже работающему контейнеру не используется. Реальный запуск контейнера и его аварийный cleanup пока не подтверждены интеграционным прогоном.
 
-1. Checkout AQA-репозитория.
-2. Checkout выбранной ревизии основного проекта в отдельный каталог workspace; commit SHA сохраняется в результатах прогона.
-3. Сборка основного проекта из исходников в зависимости от выбранного режима запуска.
-4. Сборка и запуск AQA-тестов.
-5. Публикация JUnit XML и Allure Report.
-6. Архивирование диагностических логов и реестра тестовых данных.
-7. Cleanup в завершающем блоке Pipeline независимо от результата тестов.
+### Наборы тестов
 
-Для локального режима агенту нужны JDK 17 и Maven. Для Docker-режима дополнительно нужны Docker CLI и доступ к Docker Engine. Сам факт запуска Jenkins controller в Docker не означает, что AQA обязана работать в отдельном контейнере.
+```bash
+# Smoke: интеграционный запуск и методы с @Tag("smoke")
+mvn -Pintegration,smoke clean test
 
-## Конфигурация и безопасность
+# Regression: unit- и integration-классы с @Tag("regression")
+mvn -Pintegration,regression clean test
 
-- Jira/Confluence credentials хранятся в Jenkins Credentials и передаются только тестируемому серверу через environment.
-- Секреты не хранятся в репозитории, не передаются MCP Client без необходимости и не прикладываются к Allure.
-- STDOUT процесса зарезервирован под MCP/JSON-RPC. Диагностика читается отдельно из STDERR.
-- Не использовать production-проекты, пространства и данные.
-- Автоматические повторы неидемпотентных write-операций запрещены. При потере ответа после отправки запроса фиксируется UNKNOWN_OUTCOME.
-- В фактическом MCP-контракте нет инструментов удаления Jira-задач и Confluence-страниц. AQA сохраняет реестр созданных объектов для последующей административной очистки, но не удаляет их обходным вызовом Atlassian REST API.
+# Полный набор без дополнительного фильтра по тегам
+mvn -Pintegration clean test
+```
 
-## Статус документации
+Интеграционные классы включаются Maven-профилем `integration`, который устанавливает `AQA_RUN_INTEGRATION=true`. Без профиля выполняются unit-тесты.
 
-Документы описывают согласованную целевую архитектуру и требования. Описанная мера не считается реализованной до появления реализации и подтверждающего теста.
+## Конфигурация
+
+Перед чтением параметров AQA загружает необязательный файл `.env` из текущего рабочего каталога. Приоритет: JVM system properties `aqa.*` → environment variables `AQA_*` → значения из `.env` → defaults. Файл `.env` исключён из Git.
+
+| Параметр | Назначение |
+|---|---|
+| `AQA_SERVER_MODE` | `local` или `docker`; по умолчанию `local` |
+| `AQA_SERVER_JAR` | Путь к исполняемому JAR в local mode |
+| `AQA_SERVER_JAVA` | Необязательный Java executable для local mode |
+| `AQA_SERVER_WORKING_DIRECTORY` | Необязательный рабочий каталог |
+| `AQA_DOCKER_IMAGE` | Image для Docker mode |
+| `AQA_DOCKER_ENV_FILE` | Env-файл, передаваемый внутрь контейнера |
+| `AQA_DOCKER_EXECUTABLE` | Docker executable; по умолчанию `docker` |
+| `AQA_RUN_ID` | Базовый идентификатор запуска; экземплярам добавляется уникальный суффикс |
+| `AQA_SERVER_STARTUP_TIMEOUT_SECONDS` | Таймаут готовности MCP; default 15 секунд |
+| `AQA_DOCKER_STOP_TIMEOUT_SECONDS` | Таймаут остановки Docker; default 10 секунд |
+| `AQA_MCP_PROTOCOL_VERSION` | Версия classic MCP handshake; default `2025-11-25` |
+
+В local mode значения окружения, доступные AQA, передаются серверному Java-процессу. В Docker mode конфигурация самого приложения передаётся через `AQA_DOCKER_ENV_FILE`. Не храните credentials в репозитории, Maven arguments или Allure attachments и не выводите содержимое env-файлов в лог.
+
+## Реализованное покрытие
+
+Стабильный ID тест-кейса связывается с автоматизацией через Allure `@Story` и JUnit tag `case-<ID>`. В каталоге 113 сценариев: 28 связаны с автоматизированными тестами, 85 остаются запланированными. На текущий момент автоматизированы следующие сценарии:
+
+- MCP tools contract: MCP-005–008, MCP-010–013, MCP-022, MCP-023, MCP-028, MCP-034;
+- MCP lifecycle: MCP-004, MCP-017, MCP-019–021, MCP-025, MCP-036;
+- STDIO/JSON-RPC: MCP-014–016, MCP-029–032, MCP-038;
+- Confluence validation: CONF-019.
+
+Отдельные unit-тесты покрывают MCP Client, конфигурацию, session lifecycle, ProcessBuilder, ManagedProcess, построение Docker-команды и маскирование диагностических данных. Они не означают, что соответствующие end-to-end сценарии PROC/Docker/Jenkins уже подтверждены. Подробная матрица находится в [каталоге тест-кейсов](docs/test-cases.md).
+
+## Allure и логи
+
+- JUnit XML: `target/surefire-reports`.
+- Allure results: `target/allure-results`.
+- AQA log: `target/logs/aqa.log`.
+- Локальный просмотр: `mvn allure:serve`.
+- Статический отчёт: `mvn allure:report`.
+
+Allure assertions остаются в тестах и используют универсальную обёртку `AllureAssertions`. Allure steps описывают действия, а не дублируют проверки. Диагностические вложения должны содержать только безопасные summaries; секреты маскируются до публикации.
+
+## Ограничения и незавершённые работы
+
+- Jenkins Pipeline в репозитории пока не реализован; документирована целевая последовательность CI.
+- Docker launcher проверен unit-тестами формирования команды, но реальный Docker runtime и cleanup контейнера требуют отдельной проверки.
+- Полноценные Jira/Confluence CRUD integration tests, TestData registry, write-safety/recovery и preflight пока не реализованы.
+- MCP-контракт не содержит delete-инструментов. AQA не должна обходить MCP через прямой Atlassian REST API для удаления тестовых объектов.
+- Статус каждого сценария и каждой архитектурной меры фиксируется в каталоге тест-кейсов и реестре рисков.
