@@ -1,4 +1,4 @@
-package ru.solomentsev.aqa.mcp;
+package ru.solomentsev.aqa.tests.transport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import ru.solomentsev.aqa.mcp.McpClient;
 import ru.solomentsev.aqa.support.junit.McpServerTest;
 import ru.solomentsev.aqa.testdata.McpTestData;
 import ru.solomentsev.aqa.testdata.McpTransportTestData;
@@ -332,11 +333,12 @@ class McpTransportContractIntegrationTest {
 
     @Test
     @Feature("STDIO Transport")
-    @Story("Сохранение UTF-8 в JSON-RPC сообщениях")
-    @Severity(SeverityLevel.NORMAL)
-    @DisplayName("Сохранение UTF-8 в имени неизвестного метода [method=aqa/неизвестный-метод, error=-32601]")
-    @Description("Предусловия: MCP STDIO-процесс запущен; обмен выполняется в UTF-8.\nШаги: отправить JSON-RPC request с кириллическим method=aqa/неизвестный-метод; прочитать response.\nОжидаемый результат: сервер возвращает error=-32601; текст error.message содержит исходное кириллическое имя метода без потери или искажения символов.")
+    @Story("MCP-038 — Сохранение UTF-8 в JSON-RPC сообщениях")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("MCP-038: неизвестный method с кириллицей возвращает -32601 без искажения текста")
+    @Description("Предусловия: MCP STDIO-процесс запущен; обмен выполняется в UTF-8.\nШаги: отправить JSON-RPC request с method=aqa/неизвестный-метод; прочитать response.\nОжидаемый результат: сервер возвращает JSON-RPC error code=-32601; error.message содержит исходное кириллическое имя метода без потери или искажения символов.")
     @Tag("contract")
+    @Tag("case-MCP-038")
     void shouldPreserveUtf8InJsonRpcMessages(McpClient client) {
         Allure.parameter("JSON-RPC method", McpTransportTestData.getUnknownMethodUtf8());
         Allure.parameter("Кодировка", "UTF-8");

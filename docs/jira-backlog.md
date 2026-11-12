@@ -10,12 +10,12 @@
 
 ## Текущий статус
 
-Ниже приведён бэклог оставшихся работ. Сводный статус на 11.11.2026:
+Ниже приведён бэклог оставшихся работ. Сводный статус на 12.11.2026:
 
 | Epic | Статус | Что подтверждено |
 |---|---|---|
 | EPIC 1 — AQA Process Management | Частично реализован | Local launcher, ProcessBuilder, ManagedProcess, MCP session, JUnit extension, конфигурация и параллельный режим существуют. Реальный Docker runtime/аварийный cleanup не проверены |
-| EPIC 2 — MCP Protocol Testing | Частично реализован | Автоматизированы contract, stateless lifecycle и STDIO/JSON-RPC кейсы, перечисленные в [каталоге](test-cases.md). Не все сценарии MCP-001…MCP-037 покрыты |
+| EPIC 2 — MCP Protocol Testing | Частично реализован | Автоматизированы contract, stateless lifecycle и STDIO/JSON-RPC кейсы, перечисленные в [каталоге](test-cases.md). Не все сценарии MCP-001…MCP-038 покрыты |
 | EPIC 3 — Jira Integration Testing | Запланирован | Реальные Jira CRUD/search/permission integration tests отсутствуют |
 | EPIC 4 — Confluence Integration Testing | Запланирован | CONF-019 проверяет validation error; полноценные Confluence CRUD/search integration tests отсутствуют |
 | EPIC 5 — Jenkins CI | Не реализован | Jenkinsfile/Pipeline и публикация артефактов не подтверждены |

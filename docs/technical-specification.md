@@ -20,7 +20,7 @@ AQA проверяет собранное приложение через пуб
 
 Описанное целевое поведение не считается реализованным до появления кода и подтверждающих тестов.
 
-### 1.1. Статус реализации на 11.11.2026
+### 1.1. Статус реализации на 12.11.2026
 
 | Область | Состояние | Подтверждение / ограничение |
 |---|---|---|
@@ -37,7 +37,7 @@ AQA проверяет собранное приложение через пуб
 | Jenkins Pipeline | Не реализовано | В репозитории нет подтверждённого Pipeline, описана только целевая схема |
 | Реальный Docker runtime в CI | Не проверено | Нужен отдельный прогон на агенте с Docker Engine |
 
-Последняя локальная проверка, подтверждённая в текущей рабочей ветке: `mvn -Pintegration -DskipTests test-compile` завершилась `BUILD SUCCESS` и скомпилировала 42 test source files под release 17. Это подтверждает компиляцию, но не выполнение тестов. Ранее выполнялся integration-прогон с 57 тестами без failures/errors; после последующих изменений контрактных TestData полный прогон необходимо повторить.
+Последняя локальная проверка, подтверждённая до текущего аудита: `mvn -Pintegration -DskipTests test-compile` завершилась `BUILD SUCCESS` и скомпилировала 42 test source files под release 17. Это подтверждает компиляцию, но не выполнение тестов. В исходниках определено 51 тестовый метод: 48 `@Test` и 3 `@ParameterizedTest`; каждый параметризованный источник возвращает по три набора данных, поэтому полный прогон содержит 57 выполнений. Ранее выполнялся integration-прогон с 57 тестами без failures/errors, но после последующих изменений контрактных TestData, package declarations и привязки MCP-038 полный прогон необходимо повторить. Текущий аудит не является подтверждением нового запуска Maven.
 
 ## 2. Репозитории и стек
 
@@ -249,7 +249,7 @@ Jira/Confluence credentials хранятся в Jenkins Credentials. Они пе
 
 `McpStatelessLifecycleIntegrationTest` запускает отдельный процесс без classic initialize и проверяет, что classic `tools/list` до READY возвращает `-32001`, `ping` доступен до READY, а stateless `tools/list` и `tools/call` работают ещё до `server/discover`.
 
-`McpTransportContractIntegrationTest` проверяет STDIO framing и JSON-RPC поведение реального процесса: пропуск пустых строк, parse error с продолжением обработки следующих сообщений, некорректную форму запроса, неизвестный метод, notification без ответа и повторный initialize.
+`McpTransportContractIntegrationTest` проверяет STDIO framing и JSON-RPC поведение реального процесса: пропуск пустых строк, parse error с продолжением обработки следующих сообщений, некорректную форму запроса, неизвестный метод, notification без request id с последующим ping, повторный initialize и сохранение UTF-8 в сообщении об ошибке (MCP-038). Отсутствие отдельного response на notification напрямую этим набором не проверяется.
 
 Интеграционный прогон запускает реальный сервер и поэтому требует тестовой конфигурации Jira/Confluence. Проверки discovery/list и неизвестного инструмента не создают и не изменяют Atlassian-объекты. Обычный `mvn test` пропускает интеграционный класс и не требует серверного JAR или Docker image.
 
@@ -313,7 +313,7 @@ Allure labels и структура сценария:
 - JUnit `@Tag` — тип/область теста и тег `case-<ID>` для связи с каталогом;
 - `@DisplayName` и `@Description` — читаемое название, предусловия, шаги и ожидаемый результат;
 - `Allure.step` — только фактические действия: отправка/получение MCP-сообщений и управление lifecycle процесса. Проверки выполняются вне шагов и снабжаются сообщениями, объясняющими ожидаемое поведение.
-- Тестовые классы находятся в пакетах `tests.*`; MCP client/session, process launchers, config, JUnit support и diagnostics вынесены в отдельные инфраструктурные пакеты. Общие параметры и тестовые данные находятся в `testdata`.
+- Сценарные и интеграционные тестовые классы находятся в пакетах `tests.*`. `DockerMcpServerLauncherTest` расположен рядом с `DockerMcpServerLauncher` в пакете `process`, поскольку проверяет package-private построитель команды без расширения публичного API. MCP client/session, process launchers, config, JUnit support и diagnostics вынесены в отдельные инфраструктурные пакеты. Общие параметры и тестовые данные находятся в `testdata`.
 - `AllureDiagnosticsTest` проверяет собственную функцию маскирования секретов; отдельные тесты стороннего Allure framework не создаются.
 
 Результаты Allure сохраняются в `target/allure-results`, JUnit XML — в `target/surefire-reports`. HTML-отчёт локально формируется через Allure Maven Plugin 3.1.0 с явно закреплённым runtime Allure Report 2.39.0 (классический интерфейс Allure 2) командами `mvn allure:serve` (просмотр в браузере) или `mvn allure:report` (статический HTML в `target/site/allure-maven/index.html`); в Jenkins используется Jenkins Allure plugin.
