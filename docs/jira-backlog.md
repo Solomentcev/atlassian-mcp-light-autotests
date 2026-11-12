@@ -14,11 +14,11 @@
 
 | Epic | Статус | Что подтверждено |
 |---|---|---|
-| EPIC 1 — AQA Process Management | Частично реализован | Local launcher, ProcessBuilder, ManagedProcess, MCP session, JUnit extension, конфигурация и параллельный режим существуют. Реальный Docker runtime/аварийный cleanup не проверены |
+| EPIC 1 — AQA Process Management | Частично реализован | Local/Docker launcher, ProcessBuilder, ManagedProcess, MCP session, JUnit extension, конфигурация и параллельный режим существуют. Docker runtime и штатное удаление подтверждены Jenkins run; аварийный cleanup не проверен |
 | EPIC 2 — MCP Protocol Testing | Частично реализован | Автоматизированы contract, stateless lifecycle и STDIO/JSON-RPC кейсы, перечисленные в [каталоге](test-cases.md). Не все сценарии MCP-001…MCP-038 покрыты |
 | EPIC 3 — Jira Integration Testing | Запланирован | Реальные Jira CRUD/search/permission integration tests отсутствуют |
 | EPIC 4 — Confluence Integration Testing | Запланирован | CONF-019 проверяет validation error; полноценные Confluence CRUD/search integration tests отсутствуют |
-| EPIC 5 — Jenkins CI | Не реализован | Jenkinsfile/Pipeline и публикация артефактов не подтверждены |
+| EPIC 5 — Jenkins CI | Частично реализован | Jenkinsfile прошёл успешный прогон: 57/57 integration tests, JUnit и Allure опубликованы, Docker image удалён. Остаются аварийные сценарии cleanup, проверка canary-секретов и параллельность разных jobs |
 | EPIC 6 — Reliability and Safe Test Data | Частично реализован | Есть unit-тесты маскирования диагностических данных; registry, recovery и write-safety adapter отсутствуют |
 
 Статус «реализован» присваивается отдельной задаче только при наличии кода и подтверждающего теста. Остальные пункты ниже являются целевыми задачами, а не описанием уже существующей функциональности.
@@ -121,15 +121,16 @@
 ## EPIC 5 — Jenkins CI
 
 ### Feature 5.1 — Pipeline
-- Task: checkout AQA repository.
-- Task: checkout основного проекта на выбранной ревизии.
-- Task: сохранить commit SHA тестируемого сервера.
-- Task: собирать сервер из исходников.
-- Task: выбирать локальный JAR или Docker режим.
-- Task: запускать Maven tests с выбранными tags.
-- Task: публиковать JUnit XML и Allure Report.
-- Task: архивировать STDERR/stdout diagnostics и test data registry.
-- Task: выполнять cleanup в post/always.
+- [x] Checkout AQA repository и основного проекта в разные каталоги.
+- [x] Фиксация commit SHA тестируемого сервера в `server-revision.txt` и публикация артефакта.
+- [x] Сборка Docker image из исходников основного проекта.
+- [x] Запуск полного integration profile с Jenkins Secret file credential.
+- [x] Публикация JUnit XML и Allure Report.
+- [x] Cleanup контейнеров текущего run и временного Docker image в `post/always`.
+- [ ] Проверить принудительное прерывание Docker CLI и cleanup после assertion failure/timeout на уровне Pipeline.
+- [ ] Добавить запуск smoke и regression профилей по параметру job.
+- [ ] Проверить отсутствие canary-секретов во всех CI logs и Allure attachments.
+- [ ] Архивировать STDERR/stdout diagnostics и test data registry после реализации соответствующей инфраструктуры.
 
 ### Feature 5.2 — Agent requirements
 - Task: JDK 17 и Maven для локального режима.
